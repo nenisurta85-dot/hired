@@ -7,13 +7,10 @@
 function MyFiles() {
   const { openUpload, showToast } = usePortal();
   const I = window.Icons;
-  const [tab, setTab] = React.useState("All");
   const [q, setQ] = React.useState("");
-  const tabs = ["All", "Résumé", "LinkedIn", "Other"];
 
   const match = (f) =>
-    (tab === "All" || f.cat === tab) &&
-    (!q || f.name.toLowerCase().includes(q.toLowerCase()));
+    !q || f.name.toLowerCase().includes(q.toLowerCase());
 
   const from = window.GHH.FILES_FROM.filter(match);
   const to = window.GHH.FILES_TO.filter(match);
@@ -29,7 +26,6 @@ function MyFiles() {
         </div>
         <button className="btn btn-primary" onClick={openUpload}><I.Plus size={15} /> Upload File</button>
       </div>
-      <Tabs tabs={tabs} active={tab} onChange={setTab} />
 
       <Card style={{ marginBottom: 14 }}>
         <div className="label" style={{ marginBottom: 6 }}>From Get Her Hired to me</div>
