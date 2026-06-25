@@ -204,6 +204,320 @@ function ProjectTimelineBar({ project, onMore }) {
   );
 }
 
+/* ---------------- New Task Creation Modal (two-step) ---------------- */
+function NewTaskModal({ phase, onClose }) {
+  const { ADM, Icons } = window;
+  const { showToast } = useAdmin();
+  const [step, setStep] = React.useState("select"); // "select" | "deliverable" | "ordinary"
+  const [title, setTitle] = React.useState("");
+  const [status, setStatus] = React.useState("not_started");
+  const [dueDate, setDueDate] = React.useState("");
+  const [docType, setDocType] = React.useState("Resume");
+  const [phaseVal, setPhaseVal] = React.useState(phase || "Week 1");
+  const [visible, setVisible] = React.useState(false);
+  const [instructions, setInstructions] = React.useState("");
+  const [notes, setNotes] = React.useState("");
+  const [pasteLink, setPasteLink] = React.useState("");
+  const [dragOver, setDragOver] = React.useState(false);
+  const [uploadedFiles, setUploadedFiles] = React.useState([]);
+  const [writerSearch, setWriterSearch] = React.useState("");
+  const [assignedWriter, setAssignedWriter] = React.useState(null);
+  const inputRef = React.useRef(null);
+
+  const STATUS_LABELS = { not_started: "Not Started", in_progress: "In Progress", overdue: "Overdue", complete: "Complete" };
+  const DOC_TYPES = ["Resume", "Cover Letter", "LinkedIn Audit", "Career Strategy Doc", "Bio", "Thank You Note", "Other"];
+  const WRITERS = ["Mimi Bishop", "Kate Wade", "Jhoneth B.", "Lourdes H-D"];
+  const filteredWriters = WRITERS.filter(w => w.toLowerCase().includes(writerSearch.toLowerCase()));
+
+  const handleDrop = (e) => {
+    e.preventDefault(); setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    setUploadedFiles(prev => [...prev, ...files.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(0) + " KB" }))]);
+  };
+  const handleBrowse = (e) => {
+    const files = Array.from(e.target.files);
+    setUploadedFiles(prev => [...prev, ...files.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(0) + " KB" }))]);
+    e.target.value = "";
+  };
+
+  React.useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, []);
+
+  const FieldLabel = ({ children }) => (
+    <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 6 }}>{children}</div>
+  );
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: step === "select" ? 440 : 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18 }}>
+            {step === "select" ? "New Task" : step === "deliverable" ? "New Deliverable Task" : "New Ordinary Task"}
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
+        </div>
+
+        {/* Step 1 — type select */}
+        {step === "select" && (
+          <div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 20 }}>What type of task is this?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <button onClick={() => setStep("deliverable")}
+                style={{ border: "1.5px solid var(--border)", borderRadius: 12, padding: "18px 20px", textAlign: "left", cursor: "pointer", background: "#fff", transition: "border-color 150ms, background 150ms" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.background = "#F8F7FF"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "#fff"; }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.FileText size={18} /></span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>Deliverable</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>Documents, drafts, reviews &amp; file upload</div>
+                  </div>
+                  <Icons.ChevronRight size={16} style={{ marginLeft: "auto", color: "var(--text-muted)" }} />
+                </div>
+              </button>
+              <button onClick={() => setStep("ordinary")}
+                style={{ border: "1.5px solid var(--border)", borderRadius: 12, padding: "18px 20px", textAlign: "left", cursor: "pointer", background: "#fff", transition: "border-color 150ms, background 150ms" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#00A06C"; e.currentTarget.style.background = "#F4FBF7"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "#fff"; }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.ListChecks size={18} /></span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>Ordinary Task</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>Action item, admin task, or follow-up</div>
+                  </div>
+                  <Icons.ChevronRight size={16} style={{ marginLeft: "auto", color: "var(--text-muted)" }} />
+                </div>
+              </button>
+            </div>
+            <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end" }}>
+              <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2a — Deliverable */}
+        {step === "deliverable" && (
+          <div>
+            {/* Title */}
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel>Task Title</FieldLabel>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Create Resume — Draft v1"
+                style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+            </div>
+
+            {/* Status + Due Date */}
+            <div style={{ display: "flex", gap: 16, marginBottom: 18 }}>
+              <div style={{ width: 180 }}>
+                <FieldLabel>Status</FieldLabel>
+                <select value={status} onChange={e => setStatus(e.target.value)}
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", fontFamily: "inherit" }}>
+                  {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <FieldLabel>Due Date</FieldLabel>
+                <input type="text" value={dueDate} onChange={e => setDueDate(e.target.value)} placeholder="e.g. May 3"
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+              </div>
+            </div>
+
+            {/* Document Type */}
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel>Document Type</FieldLabel>
+              <select value={docType} onChange={e => setDocType(e.target.value)}
+                style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", fontFamily: "inherit" }}>
+                {DOC_TYPES.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+
+            {/* Upload or Paste Link */}
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel>Document Upload</FieldLabel>
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => inputRef.current && inputRef.current.click()}
+                style={{ border: `2px dashed ${dragOver ? "var(--purple)" : "var(--border)"}`, borderRadius: 10, padding: "20px 16px", background: dragOver ? "#F8F7FF" : "#FAFAFA", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", transition: "border-color 150ms, background 150ms", marginBottom: 8 }}>
+                <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Upload size={16} /></span>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)" }}>Drop file or browse</div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>PDF, DOCX, PNG — max 20 MB</div>
+                <input ref={inputRef} type="file" multiple style={{ display: "none" }} onChange={handleBrowse} />
+              </div>
+              {uploadedFiles.map((f, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", background: "#F8F7FF", borderRadius: 8, marginBottom: 4, fontSize: 12 }}>
+                  <Icons.FileText size={13} style={{ color: "var(--purple)", flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontWeight: 500 }}>{f.name}</span>
+                  <span style={{ color: "var(--text-muted)" }}>{f.size}</span>
+                  <button onClick={() => setUploadedFiles(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "#aaa", padding: 2 }}><Icons.X size={12} /></button>
+                </div>
+              ))}
+              <div style={{ marginTop: 10 }}>
+                <FieldLabel>Or Paste Link</FieldLabel>
+                <input value={pasteLink} onChange={e => setPasteLink(e.target.value)} placeholder="https://docs.google.com/…"
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+              </div>
+            </div>
+
+            {/* Assign Subtasks */}
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel>Assign Subtasks</FieldLabel>
+              <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* Editor — auto-assigned */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Avatar initials="KW" color="var(--purple)" size={28} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Kate Wade</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Editor · Auto-assigned</div>
+                  </div>
+                  <span className="badge" style={{ background: "rgba(130,17,255,0.1)", color: "var(--purple)", fontWeight: 600 }}>Auto</span>
+                </div>
+                {/* Writer search */}
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 5 }}>Writer</div>
+                  {assignedWriter ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Avatar initials={assignedWriter.split(" ").map(w => w[0]).join("").slice(0, 2)} color="#00A06C" size={28} />
+                      <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{assignedWriter}</div>
+                      <button onClick={() => setAssignedWriter(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#aaa" }}><Icons.X size={14} /></button>
+                    </div>
+                  ) : (
+                    <div style={{ position: "relative" }}>
+                      <input value={writerSearch} onChange={e => setWriterSearch(e.target.value)} placeholder="Search writer…"
+                        style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                      {writerSearch && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden" }}>
+                          {filteredWriters.length ? filteredWriters.map(w => (
+                            <button key={w} onClick={() => { setAssignedWriter(w); setWriterSearch(""); }}
+                              style={{ display: "block", width: "100%", padding: "9px 12px", fontSize: 13, textAlign: "left", background: "none", border: "none", cursor: "pointer", borderBottom: "0.5px solid var(--border-light)" }}
+                              onMouseEnter={e => e.currentTarget.style.background = "#F8F7FF"}
+                              onMouseLeave={e => e.currentTarget.style.background = "none"}>{w}</button>
+                          )) : <div style={{ padding: "10px 12px", fontSize: 12, color: "var(--text-muted)" }}>No match</div>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Phase + Visible toggle row */}
+            <div style={{ display: "flex", gap: 16, marginBottom: 18, alignItems: "flex-end" }}>
+              <div style={{ flex: 1 }}>
+                <FieldLabel>Phase</FieldLabel>
+                <select value={phaseVal} onChange={e => setPhaseVal(e.target.value)}
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", fontFamily: "inherit" }}>
+                  {ADM.PHASES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div style={{ paddingBottom: 2 }}>
+                <FieldLabel>Visible to client</FieldLabel>
+                <button onClick={() => setVisible(v => !v)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", fontSize: 13, background: visible ? "#F8F7FF" : "#fff", cursor: "pointer", color: visible ? "var(--purple)" : "var(--text-muted)", fontFamily: "inherit", transition: "all 150ms" }}>
+                  <span style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${visible ? "var(--purple)" : "var(--border)"}`, background: visible ? "var(--purple)" : "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {visible && <Icons.Check size={10} style={{ color: "#fff" }} />}
+                  </span>
+                  {visible ? "Yes" : "No"}
+                </button>
+              </div>
+            </div>
+
+            {/* Client Instructions */}
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel>Client Instructions</FieldLabel>
+              <textarea value={instructions} onChange={e => setInstructions(e.target.value)} placeholder="What should the client do or know about this task?"
+                style={{ width: "100%", minHeight: 72, border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
+            </div>
+
+            {/* Internal Notes */}
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel>Internal Notes</FieldLabel>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes visible only to the team…"
+                style={{ width: "100%", minHeight: 72, border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
+            </div>
+
+            {/* Footer */}
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button className="btn btn-ghost" onClick={() => setStep("select")} style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 5 }}>
+                <Icons.ChevronLeft size={14} /> Back
+              </button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn btn-ghost" onClick={onClose} style={{ fontSize: 13 }}>Cancel</button>
+                <button className="btn btn-primary" style={{ borderRadius: 8, padding: "0 20px", height: 38, fontSize: 13, fontWeight: 600 }}
+                  onClick={() => { showToast("Task created."); onClose(); }}>Create Task</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2b — Ordinary Task */}
+        {step === "ordinary" && (
+          <div>
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel>Task Title</FieldLabel>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Send follow-up email"
+                style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div style={{ display: "flex", gap: 16, marginBottom: 18 }}>
+              <div style={{ width: 180 }}>
+                <FieldLabel>Status</FieldLabel>
+                <select value={status} onChange={e => setStatus(e.target.value)}
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", fontFamily: "inherit" }}>
+                  {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <FieldLabel>Due Date</FieldLabel>
+                <input type="text" value={dueDate} onChange={e => setDueDate(e.target.value)} placeholder="e.g. May 3"
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 16, marginBottom: 18, alignItems: "flex-end" }}>
+              <div style={{ flex: 1 }}>
+                <FieldLabel>Phase</FieldLabel>
+                <select value={phaseVal} onChange={e => setPhaseVal(e.target.value)}
+                  style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", fontFamily: "inherit" }}>
+                  {ADM.PHASES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div style={{ paddingBottom: 2 }}>
+                <FieldLabel>Visible to client</FieldLabel>
+                <button onClick={() => setVisible(v => !v)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", fontSize: 13, background: visible ? "#F8F7FF" : "#fff", cursor: "pointer", color: visible ? "var(--purple)" : "var(--text-muted)", fontFamily: "inherit" }}>
+                  <span style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${visible ? "var(--purple)" : "var(--border)"}`, background: visible ? "var(--purple)" : "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {visible && <Icons.Check size={10} style={{ color: "#fff" }} />}
+                  </span>
+                  {visible ? "Yes" : "No"}
+                </button>
+              </div>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel>Internal Notes</FieldLabel>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes visible only to the team…"
+                style={{ width: "100%", minHeight: 80, border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
+            </div>
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button className="btn btn-ghost" onClick={() => setStep("select")} style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 5 }}>
+                <Icons.ChevronLeft size={14} /> Back
+              </button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn btn-ghost" onClick={onClose} style={{ fontSize: 13 }}>Cancel</button>
+                <button className="btn btn-primary" style={{ borderRadius: 8, padding: "0 20px", height: 38, fontSize: 13, fontWeight: 600 }}
+                  onClick={() => { showToast("Task created."); onClose(); }}>Create Task</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Split-view tasks ---------------- */
 function ProjectTasks({ project, focusPhase }) {
   const { ADM, Icons } = window;
@@ -318,7 +632,7 @@ function ProjectTasks({ project, focusPhase }) {
         </div>
       </div>
       {openTask && React.createElement(window.AdminTaskModal, { task: openTask, onClose: () => setOpenTask(null) })}
-      {showNewTask && React.createElement(window.AdminTaskModal, { task: { title: "New Task", status: "not_started" }, onClose: () => setShowNewTask(false) })}
+      {showNewTask && React.createElement(NewTaskModal, { phase: sel, onClose: () => setShowNewTask(false) })}
     </div>
   );
 }
