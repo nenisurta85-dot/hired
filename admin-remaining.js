@@ -614,22 +614,31 @@ function TeamRowMenu({ member, onEdit, onToggleStatus, onDelete }) {
 }
 
 /* ---- Team member expanded detail card ---- */
-function TeamMemberDetail({ member }) {
+function TeamMemberDetail({ member, navigate }) {
   const { ADM, Icons } = window;
+
   const STATUS_STYLE = {
-    "On Track":  { bg: "rgba(0,160,108,0.1)",   fg: "#007A52" },
-    "Behind":    { bg: "rgba(229,83,53,0.1)",    fg: "#C0391C" },
-    "At Risk":   { bg: "rgba(229,115,0,0.1)",    fg: "#A05800" },
-    "Overdue":   { bg: "rgba(229,57,53,0.1)",    fg: "#C0241F" },
-    "90-day":    { bg: "rgba(26,138,154,0.1)",   fg: "#0F6B78" },
+    "On Track":    { bg: "rgba(0,160,108,0.1)",  fg: "#007A52" },
+    "Behind":      { bg: "rgba(229,83,53,0.1)",  fg: "#C0391C" },
+    "At Risk":     { bg: "rgba(229,115,0,0.1)",  fg: "#A05800" },
+    "Overdue":     { bg: "rgba(229,57,53,0.1)",  fg: "#C0241F" },
+    "90-day":      { bg: "rgba(26,138,154,0.1)", fg: "#0F6B78" },
     "not_started": { bg: "#F1EFE8", fg: "#5F5E5A" },
     "in_progress": { bg: "#E6F1FB", fg: "#185FA5" },
     "overdue":     { bg: "#FDEAEA", fg: "#E53935" },
     "complete":    { bg: "#E8F5EE", fg: "#0F9E75" },
   };
+  const STATUS_LABEL = {
+    "not_started": "Not Started",
+    "in_progress": "In Progress",
+    "overdue":     "Overdue",
+    "complete":    "Complete",
+  };
+
   const SBadge = ({ s }) => {
     const st = STATUS_STYLE[s] || { bg: "#F1EFE8", fg: "#888" };
-    return <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 8px", background: st.bg, color: st.fg, whiteSpace: "nowrap" }}>{s}</span>;
+    const label = STATUS_LABEL[s] || s;
+    return <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 8px", background: st.bg, color: st.fg, whiteSpace: "nowrap" }}>{label}</span>;
   };
 
   const projects = (ADM.PROJECTS || []).filter(p =>
@@ -637,7 +646,7 @@ function TeamMemberDetail({ member }) {
   );
 
   const allTasks = Object.values(ADM.TASKS_BY_PHASE || {}).flat();
-  const tasks = allTasks.filter(t => t.assignee === member.name && t.status !== "complete").slice(0, 6);
+  const tasks = allTasks.filter(t => t.assignee === member.name && t.status !== "complete").slice(0, 8);
 
   const ColHeader = ({ children }) => (
     <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 10 }}>{children}</div>
@@ -654,13 +663,22 @@ function TeamMemberDetail({ member }) {
             {projects.length === 0
               ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No active projects</div>
               : projects.map(p => (
-                <div key={p.id} className="row between" style={{ padding: "7px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
+                <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
                     <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.FolderOpen size={13} /></span>
-                    <span style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                    <button onClick={() => navigate("#/admin/projects/" + p.id)}
+                      style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.name}
+                    </button>
                     <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>({p.writer === member.name ? "Writer" : "Editor"})</span>
                   </div>
-                  <SBadge s={p.status} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <SBadge s={p.status} />
+                    <button onClick={() => navigate("#/admin/projects/" + p.id)}
+                      style={{ fontSize: 11, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }}>
+                      View →
+                    </button>
+                  </div>
                 </div>
               ))
             }
@@ -672,12 +690,12 @@ function TeamMemberDetail({ member }) {
             {tasks.length === 0
               ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No open tasks</div>
               : tasks.map((t, i) => (
-                <div key={i} className="row between" style={{ padding: "7px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
                     <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.CheckSquare size={13} /></span>
                     <span style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
                   </div>
-                  <div className="row" style={{ gap: 6, flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                     {t.due && <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>{t.due}</span>}
                     <SBadge s={t.status} />
                   </div>
@@ -800,7 +818,7 @@ function AdminTeam() {
                       </div>
                     </td>
                   </tr>
-                  {expandedId === t.id && <TeamMemberDetail member={t} />}
+                  {expandedId === t.id && <TeamMemberDetail member={t} navigate={navigate} />}
                 </React.Fragment>
               ))}
               {rows.length === 0 && (
