@@ -280,7 +280,13 @@ function AdminSchedule() {
               onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.textDecoration = "none"; }}>
               {m.title}
             </div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{m.client}{m.when ? " · " + m.when : ""}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{m.client}{m.when ? " · " + m.when : ""}</span>
+              <button onClick={() => navigate("#/admin/projects/" + (m.projectId || "p1"))}
+                style={{ fontSize: 11, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: 3 }}>
+                <Icons.FolderOpen size={11} /> View Project →
+              </button>
+            </div>
             {cancelling && (
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Cancel this meeting?</span>
