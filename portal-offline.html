@@ -5398,7 +5398,7 @@ function TeamMemberDetail({ member, navigate }) {
 /* ---- AdminTeam page ---- */
 function AdminTeam() {
   const { Icons } = window;
-  const { showToast } = useAdmin();
+  const { navigate, showToast } = useAdmin();
   const [members, setMembers] = React.useState([...window.ADM.TEAM]);
   const [search, setSearch] = React.useState("");
   const [modal, setModal] = React.useState(null); // null | "new" | member-object
