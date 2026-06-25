@@ -42,18 +42,19 @@ function AdminTasks() {
                 <span className="badge" style={{ background: "#fff", color: "#888", fontSize: 10 }}>{items.length}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {items.map((t, i) => (
-                  <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.title}</div>
-                    <div className="row between">
+                {items.map((t, i) => {
+                  const tt = t.title.toLowerCase();
+                  const typeColor = /schedule|call|session|zoom/.test(tt) ? "#E57300" : /review/.test(tt) ? "var(--purple)" : "#00A06C";
+                  return (
+                    <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${typeColor}`, borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.title}</div>
                       <div className="row" style={{ gap: 7 }}>
                         <span className="meta">{t.client}</span>
                         <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
                       </div>
-                      <Avatar initials={initials2(t.assignee)} color="#B9B4C7" size={20} />
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {items.length === 0 && <div className="meta" style={{ textAlign: "center", padding: "12px 0" }}>Empty</div>}
               </div>
             </div>
