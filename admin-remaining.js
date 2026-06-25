@@ -460,38 +460,256 @@ function AdminInbox() {
 }
 
 /* ---------------- TEAM ---------------- */
+/* ---- Team Member modal (create / edit) ---- */
+function TeamMemberModal({ member, onSave, onClose }) {
+  const { Icons } = window;
+  const isNew = !member;
+  const COLORS = ["#8211FF","#C8005A","#185FA5","#0F9E75","#854F0B","#E57300","#1A8A9A","#555"];
+  const initials = (name) => name.split(" ").map(w => w[0] || "").join("").toUpperCase().slice(0,2);
+
+  const [form, setForm] = React.useState(member ? { ...member } : {
+    name: "", email: "", roles: [], status: "Active", color: COLORS[0], cap: "0 / 5",
+  });
+  const [rolesOpen, setRolesOpen] = React.useState(false);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const toggleRole = (r) => set("roles", form.roles.includes(r) ? form.roles.filter(x => x !== r) : [...form.roles, r]);
+
+  const valid = form.name.trim() && form.email.trim() && form.roles.length > 0;
+
+  const handleSave = () => {
+    if (!valid) return;
+    const updated = { ...form, initials: initials(form.name), id: member?.id || "tm_" + Date.now() };
+    onSave(updated);
+  };
+
+  const ROLE_COLORS = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)" }} onClick={onClose} />
+      <div style={{ position: "relative", background: "#fff", borderRadius: 16, width: 480, maxHeight: "90vh", overflowY: "auto", padding: "28px 28px 24px", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+        {/* Header */}
+        <div className="row between" style={{ marginBottom: 24 }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>{isNew ? "New Team Member" : "Edit Member"}</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{isNew ? "Add someone to the team" : "Update member details"}</div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", display: "flex" }}><Icons.X size={20} /></button>
+        </div>
+
+        {/* Avatar preview */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 99, background: form.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+            {form.name ? initials(form.name) : "?"}
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 7 }}>Avatar colour</div>
+            <div style={{ display: "flex", gap: 7 }}>
+              {COLORS.map(c => (
+                <button key={c} onClick={() => set("color", c)}
+                  style={{ width: 22, height: 22, borderRadius: 99, background: c, border: form.color === c ? "2.5px solid #fff" : "2px solid transparent", outline: form.color === c ? `2.5px solid ${c}` : "none", cursor: "pointer", transition: "outline .1s" }} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Fields */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Full Name *</label>
+            <input className="input" placeholder="e.g. Jane Smith" value={form.name} onChange={e => set("name", e.target.value)} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Email *</label>
+            <input className="input" type="email" placeholder="jane@getherhired.com" value={form.email} onChange={e => set("email", e.target.value)} />
+          </div>
+
+          {/* Roles */}
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 8 }}>Roles * <span style={{ fontWeight: 400, color: "#aaa" }}>(select all that apply)</span></label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {["admin","writer","editor"].map(r => {
+                const active = form.roles.includes(r);
+                return (
+                  <button key={r} onClick={() => toggleRole(r)}
+                    style={{ padding: "7px 16px", borderRadius: 99, fontSize: 12, fontWeight: 600, cursor: "pointer", border: `1.5px solid ${active ? ROLE_COLORS[r] : "var(--border)"}`, background: active ? ROLE_COLORS[r] : "transparent", color: active ? "#fff" : "var(--text-muted)", transition: "all .12s", textTransform: "capitalize" }}>
+                    {r}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Capacity + Status row */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Capacity (active / max)</label>
+              <input className="input" placeholder="0 / 5" value={form.cap} onChange={e => set("cap", e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Status</label>
+              <select className="input" value={form.status} onChange={e => set("status", e.target.value)}>
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="row" style={{ gap: 10, marginTop: 28, justifyContent: "flex-end" }}>
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={!valid} style={{ opacity: valid ? 1 : 0.45 }}>
+            {isNew ? "Add Member" : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Row actions dropdown ---- */
+function TeamRowMenu({ member, onEdit, onToggleStatus, onDelete }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: 6, fontSize: 18, lineHeight: 1, color: "#888", transition: "background .1s" }}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--purple-light)"}
+        onMouseLeave={e => e.currentTarget.style.background = "none"}>⋯</button>
+      {open && (
+        <div style={{ position: "absolute", right: 0, top: "110%", background: "#fff", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, zIndex: 200, overflow: "hidden" }}>
+          {[
+            { label: "Edit member", icon: "Edit", action: onEdit },
+            { label: member.status === "Active" ? "Deactivate" : "Reactivate", icon: "Lock", action: onToggleStatus, color: member.status === "Active" ? "#E57300" : "#00A06C" },
+            { label: "Remove", icon: "X", action: onDelete, color: "#E53935" },
+          ].map(item => (
+            <button key={item.label} onClick={(e) => { e.stopPropagation(); setOpen(false); item.action(); }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: item.color || "var(--text-primary)", textAlign: "left", transition: "background .1s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}>
+              {window.Icons[item.icon] && React.createElement(window.Icons[item.icon], { size: 14 })} {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---- AdminTeam page ---- */
 function AdminTeam() {
-  const { ADM, Icons } = window;
+  const { Icons } = window;
+  const { showToast } = useAdmin();
+  const [members, setMembers] = React.useState([...window.ADM.TEAM]);
   const [search, setSearch] = React.useState("");
-  const roleBg = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
-  const rows = ADM.TEAM.filter((t) => !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.email.toLowerCase().includes(search.toLowerCase()));
+  const [modal, setModal] = React.useState(null); // null | "new" | member-object
+
+  const ROLE_BG = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
+
+  const rows = members.filter(t =>
+    !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleSave = (updated) => {
+    setMembers(prev => {
+      const idx = prev.findIndex(m => m.id === updated.id);
+      if (idx >= 0) { const next = [...prev]; next[idx] = updated; return next; }
+      return [...prev, updated];
+    });
+    showToast(modal === "new" ? `${updated.name} added to team` : "Member updated");
+    setModal(null);
+  };
+
+  const toggleStatus = (id) => {
+    setMembers(prev => prev.map(m => m.id === id ? { ...m, status: m.status === "Active" ? "Inactive" : "Active" } : m));
+    showToast("Status updated");
+  };
+
+  const removeMember = (id) => {
+    setMembers(prev => prev.filter(m => m.id !== id));
+    showToast("Member removed");
+  };
+
   return (
     <div>
-      <AdminHeader icon="User" title="Team" subtitle="Team members and workload" />
+      {modal && (
+        <TeamMemberModal
+          member={modal === "new" ? null : modal}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+        />
+      )}
+      <AdminHeader icon="User" title="Team" subtitle="Team members and workload"
+        action={{ label: "+ New Member", onClick: () => setModal("new") }} />
       <div className="admin-body">
         <div style={{ marginBottom: 14, maxWidth: 320, position: "relative" }}>
           <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#AAA" }}><Icons.Search size={15} /></span>
-          <input className="input" style={{ paddingLeft: 34 }} placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="input" style={{ paddingLeft: 34 }} placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
+
         <Card style={{ padding: 0, overflow: "hidden" }}>
           <table className="atable">
-            <thead><tr>{["Name", "Email", "Roles", "Small / Big", "Status", ""].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+            <thead>
+              <tr>{["Name","Email","Roles","Capacity","Status",""].map(h => <th key={h}>{h}</th>)}</tr>
+            </thead>
             <tbody>
-              {rows.map((t) => {
-                return (
-                  <tr key={t.id} className="clickable">
-                    <td><div className="row" style={{ gap: 9 }}><Avatar initials={t.initials} color={t.color} size={28} /><span style={{ fontWeight: 600 }}>{t.name}</span></div></td>
-                    <td style={{ color: "#888" }}>{t.email}</td>
-                    <td><div className="row" style={{ gap: 5 }}>{t.roles.map((r) => <span key={r} className="badge" style={{ background: roleBg[r], color: "#fff", fontSize: 10 }}>{r}</span>)}</div></td>
-                    <td><div className="row" style={{ gap: 6 }}><span>{t.cap}</span>{t.flagged && <span title="Flagged" style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={14} /></span>}</div></td>
-                    <td><APill status={t.status} /></td>
-                    <td onClick={(e) => e.stopPropagation()}><button className="icon-btn" style={{ border: "none" }}>⋯</button></td>
-                  </tr>
-                );
-              })}
+              {rows.map(t => (
+                <tr key={t.id} className="clickable" onClick={() => setModal(t)}>
+                  <td>
+                    <div className="row" style={{ gap: 9 }}>
+                      <Avatar initials={t.initials} color={t.color} size={28} />
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>{t.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ color: "#888", fontSize: 13 }}>{t.email}</td>
+                  <td>
+                    <div className="row" style={{ gap: 5 }}>
+                      {t.roles.map(r => <span key={r} className="badge" style={{ background: ROLE_BG[r], color: "#fff", fontSize: 10 }}>{r}</span>)}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="row" style={{ gap: 6 }}>
+                      <span style={{ fontSize: 13 }}>{t.cap}</span>
+                      {t.flagged && <span title="At capacity" style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={14} /></span>}
+                    </div>
+                  </td>
+                  <td><APill status={t.status} /></td>
+                  <td onClick={e => e.stopPropagation()}>
+                    <TeamRowMenu
+                      member={t}
+                      onEdit={() => setModal(t)}
+                      onToggleStatus={() => toggleStatus(t.id)}
+                      onDelete={() => removeMember(t.id)}
+                    />
+                  </td>
+                </tr>
+              ))}
+              {rows.length === 0 && (
+                <tr><td colSpan={6} style={{ textAlign: "center", padding: "32px 0", color: "var(--text-muted)" }}>No team members match your search</td></tr>
+              )}
             </tbody>
           </table>
         </Card>
+
+        {/* Summary bar */}
+        <div className="row" style={{ gap: 20, marginTop: 14, padding: "10px 16px", background: "#fff", borderRadius: 10, border: "0.5px solid var(--border)", fontSize: 12, color: "var(--text-muted)" }}>
+          <span><b style={{ color: "var(--text-primary)" }}>{members.filter(m => m.status === "Active").length}</b> active</span>
+          <span><b style={{ color: "var(--text-primary)" }}>{members.filter(m => m.status === "Inactive").length}</b> inactive</span>
+          <span><b style={{ color: "var(--text-primary)" }}>{members.length}</b> total</span>
+        </div>
       </div>
     </div>
   );
