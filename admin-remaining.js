@@ -785,23 +785,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
         )}
 
         {/* Type-specific section */}
-        {isCall ? (
-          <div style={{ marginBottom: 20 }}>
-            <FieldLabel>Booking</FieldLabel>
-            <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FFF8F0" }}>
-              <div style={{ display: "flex", gap: 10, marginBottom: 12, alignItems: "center" }}>
-                <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(229,115,0,0.1)", color: "#E57300", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Calendar size={15} /></span>
-                <div><div style={{ fontSize: 13, fontWeight: 600 }}>Session Link</div><div className="meta">Calendly or booking URL</div></div>
-              </div>
-              <input style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}
-                value={bookingLink} onChange={(e) => setBookingLink(e.target.value)} placeholder="https://calendly.com/…" />
-              {bookingLink && (
-                <button style={{ border: "1.5px solid #E57300", color: "#E57300", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => showToast("Opening booking link…")}><Icons.ArrowUpRight size={13} /> Open Link</button>
-              )}
-            </div>
-          </div>
-        ) : isUpload ? (
+        {isCall ? null : isUpload ? (
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>Documents</FieldLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
