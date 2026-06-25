@@ -25,9 +25,7 @@ function AdminTasks() {
   const { showToast } = useAdmin();
   const [tab, setTab] = React.useState("By Client");
   const [me, setMe] = React.useState(false);
-  const tabs = [["Reviews", 1], ["My Tasks", 3], ["By Client", ADM.PROJECTS.length], ["Board", 24]];
-
-  const reviewTasks = flatTasks().filter((t) => t.status === "overdue");
+  const tabs = [["My Tasks", 3], ["By Client", ADM.PROJECTS.length], ["Board", 24]];
 
   const Board = () => {
     const cols = ["Not Started", "In Progress", "Overdue", "Complete"];
@@ -157,10 +155,9 @@ function AdminTasks() {
         </>}>
         <FilterPill label="Client" options={ADM.CLIENTS.map((c) => c.name)} active="All" onChange={() => {}} />
         <FilterPill label="Phase" options={ADM.PHASES} active="All" onChange={() => {}} />
-        <FilterPill label="Assignee" options={ADM.TEAM.map((t) => t.name)} active="All" onChange={() => {}} />
+        <FilterPill label="Task Type" options={["Deliverable", "Call", "Client Action", "Internal"]} active="All" onChange={() => {}} />
       </FilterBar>
       <div className="admin-body">
-        {tab === "Reviews" && <TaskTable rows={reviewTasks} />}
         {tab === "My Tasks" && <TaskTable rows={flatTasks().filter((t) => t.assignee === "Lourdes H-D")} />}
         {tab === "By Client" && <ByClient />}
         {tab === "Board" && <Board />}
