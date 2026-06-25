@@ -44,13 +44,13 @@
     "Week 1": [
       mkTask(1, "Assign Writer to Project", "Superadmin", "Apr 3", "complete", "—", [], false),
       mkTask(2, "Confirm client has scheduled all working session calls", "Admin assistant", "Apr 5", "complete", "—", [], false),
-      mkTask(3, "Upload Current Resume", "Client", "Apr 3", "complete", "—", [], true),
+      mkTask(3, "Create Resume", "Client", "Apr 3", "complete", "—", [], true),
       mkTask(4, "Add LinkedIn URL", "Client", "Apr 3", "complete", "—", [], true),
-      mkTask(5, "Share Career History / Additional Files", "Client", "Apr 3", "in_progress", "—", [], true),
+      mkTask(5, "Create Career History / Additional Files", "Client", "Apr 3", "in_progress", "—", [], true),
       mkTask(6, "Schedule Working Session #1", "Client", "Apr 3", "complete", "—", [], true),
       mkTask(7, "Schedule Working Session #2", "Client", "Apr 3", "in_progress", "—", [], true),
       mkTask(8, "Schedule Working Session #3", "Client", "Apr 3", "not_started", "—", [], true),
-      mkTask(9, "Single Source of Truth", "Kate Wade", "Apr 24", "complete", "editor", [
+      mkTask(9, "Create Single Source of Truth", "Kate Wade", "Apr 24", "complete", "editor", [
         { text: "Draft Single Source of Truth", done: true, assignee: "Writer" },
         { text: "Editor Review", done: true, assignee: "Editor" },
       ], false),
@@ -58,26 +58,26 @@
       mkTask(11, "Working Session #1 (30-min Zoom)", "Superadmin", "Apr 24", "complete", "—", [], true),
     ],
     "Week 2": [
-      mkTask(1, "Resume", "Kate Wade", "Apr 28", "overdue", "editor", [
+      mkTask(1, "Create Resume", "Kate Wade", "Apr 28", "overdue", "editor", [
         { text: "Draft Resume", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(2, "Optimized Cover Letter Template", "Kate Wade", "Apr 28", "in_progress", "editor", [
+      mkTask(2, "Create Optimized Cover Letter Template", "Kate Wade", "Apr 28", "in_progress", "editor", [
         { text: "Draft Cover Letter Template", done: true, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(3, "Cover Letter Scripts for Emails and LinkedIn", "Mimi Bishop", "Apr 28", "not_started", "editor", [
+      mkTask(3, "Create Cover Letter Scripts for Emails and LinkedIn", "Mimi Bishop", "Apr 28", "not_started", "editor", [
         { text: "Draft Cover Letter Scripts", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(4, "4-Point LinkedIn Audit", "Mimi Bishop", "Apr 28", "in_progress", "editor", [
+      mkTask(4, "Create 4-Point LinkedIn Audit", "Mimi Bishop", "Apr 28", "in_progress", "editor", [
         { text: "Draft LinkedIn Audit", done: true, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(5, "Toolkit (20 Scripts, Worksheets, Guides)", "Lourdes H-D", "Apr 28", "complete", "—", [
+      mkTask(5, "Create Toolkit (20 Scripts, Worksheets, Guides)", "Lourdes H-D", "Apr 28", "complete", "—", [
         { text: "Prepare / Upload Toolkit", done: true, assignee: "Ops admin" },
       ], false),
-      mkTask(6, "5 Custom LinkedIn Banners", "Lourdes H-D", "Apr 28", "not_started", "editor", [
+      mkTask(6, "Create 5 Custom LinkedIn Banners", "Lourdes H-D", "Apr 28", "not_started", "editor", [
         { text: "Submit for Review", done: false, assignee: "Ops admin" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
@@ -89,41 +89,41 @@
       mkTask(12, "Working Session #2 (30-min Zoom)", "Superadmin", "May 1", "not_started", "—", [], true),
     ],
     "Week 3": [
-      mkTask(1, "LinkedIn Profile Rewrite", "Kate Wade", "May 8", "not_started", "editor", [
+      mkTask(1, "Create LinkedIn Profile Rewrite", "Kate Wade", "May 8", "not_started", "editor", [
         { text: "Draft LinkedIn Profile Rewrite", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(2, "1-Page Executive Brief for Networking", "Kate Wade", "May 8", "not_started", "editor", [
+      mkTask(2, "Create 1-Page Executive Brief for Networking", "Kate Wade", "May 8", "not_started", "editor", [
         { text: "Draft Executive Brief", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(3, "Job Search Strategy", "Lourdes H-D", "May 8", "not_started", "editor", [
+      mkTask(3, "Create Job Search Strategy", "Lourdes H-D", "May 8", "not_started", "editor", [
         { text: "Draft Job Search Strategy", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(4, "Exec Bio", "Kate Wade", "May 9", "not_started", "editor", [
+      mkTask(4, "Create Exec Bio", "Kate Wade", "May 9", "not_started", "editor", [
         { text: "Draft Exec Bio", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(5, "5 Stories", "Kate Wade", "May 9", "not_started", "editor", [
+      mkTask(5, "Create 5 Stories", "Kate Wade", "May 9", "not_started", "editor", [
         { text: "Draft 5 Stories", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
         { text: "Share with Client", done: false, assignee: "Writer" },
       ], false),
-      mkTask(6, "Additional Resume", "Mimi Bishop", "May 10", "not_started", "editor", [
+      mkTask(6, "Create Additional Resume", "Mimi Bishop", "May 10", "not_started", "editor", [
         { text: "Draft Additional Resume", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(7, "What I Am Looking For Script", "Kate Wade", "May 10", "not_started", "editor", [
+      mkTask(7, "Create What I Am Looking For Script", "Kate Wade", "May 10", "not_started", "editor", [
         { text: "Draft What I Am Looking For Script", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
         { text: "Share with Client", done: false, assignee: "Writer" },
       ], false),
-      mkTask(8, "So Tell Me About Yourself Script", "Mimi Bishop", "May 11", "not_started", "editor", [
+      mkTask(8, "Create So Tell Me About Yourself Script", "Mimi Bishop", "May 11", "not_started", "editor", [
         { text: "Draft So Tell Me About Yourself Script", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
-      mkTask(9, "Salary Analysis", "Lourdes H-D", "May 12", "not_started", "editor", [
+      mkTask(9, "Create Salary Analysis", "Lourdes H-D", "May 12", "not_started", "editor", [
         { text: "Draft Salary Analysis", done: false, assignee: "Writer" },
         { text: "Editor Review", done: false, assignee: "Editor" },
       ], false),
