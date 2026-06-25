@@ -41,12 +41,14 @@ function UpcomingCallsCard({ navigate, showToast }) {
     { client: "Tessa Wright", initials: "TW", color: "#555", time: "4:00 PM", badge: null },
   ];
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 6px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+    <Card style={{ padding: "18px 18px 6px" }}>
       <div className="row between" style={{ marginBottom: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Upcoming Calls</span>
       </div>
       {calls.map((c, i) => (
-        <div key={i} className="row between" style={{ padding: "9px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "center" }}>
+        <div key={i} className="row between" style={{ padding: "9px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "center", borderRadius: 8, transition: "background .12s" }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <div className="row" style={{ gap: 10, flex: 1, minWidth: 0 }}>
             <div style={{ width: 32, height: 32, borderRadius: 99, background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flex: "0 0 32px" }}>{c.initials}</div>
             <div style={{ minWidth: 0 }}>
@@ -63,7 +65,7 @@ function UpcomingCallsCard({ navigate, showToast }) {
           }
         </div>
       ))}
-    </div>
+    </Card>
   );
 }
 
@@ -73,7 +75,7 @@ function RecentCommentsCard({ navigate }) {
   const filtered = tab === "All" ? ADMIN_COMMENTS : ADMIN_COMMENTS.filter(c => c.role === tab);
   const shown = filtered.slice(0, 3);
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+    <Card style={{ padding: "18px 18px 10px" }}>
       <div className="row between" style={{ marginBottom: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Recent Comments</span>
         <div style={{ display: "flex", gap: 4 }}>
@@ -86,7 +88,9 @@ function RecentCommentsCard({ navigate }) {
         </div>
       </div>
       {shown.map((c, i) => (
-        <div key={c.id} className="row" style={{ gap: 10, padding: "8px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "flex-start" }}>
+        <div key={c.id} className="row" style={{ gap: 10, padding: "8px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "flex-start", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <div style={{ position: "relative", flex: "0 0 28px" }}>
             <div style={{ width: 28, height: 28, borderRadius: 99, background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{c.initials}</div>
             {c.unread && <span style={{ position: "absolute", right: -1, bottom: -1, width: 6, height: 6, borderRadius: 99, background: "#C8005A", border: "1.5px solid #fff" }} />}
@@ -99,7 +103,7 @@ function RecentCommentsCard({ navigate }) {
         </div>
       ))}
       {shown.length === 0 && <div className="meta" style={{ textAlign: "center", padding: "12px 0" }}>No {tab.toLowerCase()} comments</div>}
-    </div>
+    </Card>
   );
 }
 
@@ -113,7 +117,7 @@ function WriterCapacityCard({ navigate }) {
     { name: "Mimi", init: "MB", cur: 1, max: 8 },
   ];
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+    <Card style={{ padding: "18px 18px 10px" }}>
       <div className="row between" style={{ marginBottom: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Writer Capacity</span>
       </div>
@@ -121,7 +125,9 @@ function WriterCapacityCard({ navigate }) {
         const pct = Math.round((w.cur / w.max) * 100);
         const barColor = pct <= 50 ? "#00A06C" : pct <= 80 ? "#E57300" : "#E53935";
         return (
-          <div key={i} style={{ padding: "10px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
+          <div key={i} style={{ padding: "10px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
             <div className="row between" style={{ marginBottom: 6 }}>
               <div className="row" style={{ gap: 9 }}>
                 <div style={{ width: 26, height: 26, borderRadius: 99, background: "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{w.init}</div>
@@ -138,7 +144,7 @@ function WriterCapacityCard({ navigate }) {
           </div>
         );
       })}
-    </div>
+    </Card>
   );
 }
 
@@ -158,7 +164,7 @@ function FocusRightNow({ setActiveTask }) {
   const filtered = tab === "All" ? allTasks : allTasks.filter(t => t.type === tab);
 
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 6px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+    <Card style={{ padding: "18px 18px 6px" }}>
       <div className="row between" style={{ marginBottom: 14 }}>
         <div className="row" style={{ gap: 8 }}>
           <span style={{ color: "var(--raspberry)", display: "flex" }}><Icons.Sparkle size={15} /></span>
@@ -175,7 +181,9 @@ function FocusRightNow({ setActiveTask }) {
       </div>
       {filtered.map((t, i) => (
         <div key={i} onClick={() => setActiveTask(t)}
-          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, paddingLeft: 12, marginLeft: -12 }}>
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, paddingLeft: 12, marginLeft: -12, borderRadius: "0 8px 8px 0", transition: "background .12s" }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <div style={{ width: 8, height: 8, borderRadius: 99, background: t.dot, flex: "0 0 8px" }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</div>
@@ -186,7 +194,7 @@ function FocusRightNow({ setActiveTask }) {
             onClick={(e) => { e.stopPropagation(); setActiveTask(t); }}>{t.action}</button>
         </div>
       ))}
-    </div>
+    </Card>
   );
 }
 
@@ -202,12 +210,16 @@ function ProjectsCard({ navigate }) {
     { label: "90-day",     count: 3,        dot: "#1A8A9A", key: "90day" },
   ];
   return (
-    <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.18)" }}>
+    <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)", transition: "box-shadow .15s ease, transform .15s ease" }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.35)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.25)"; e.currentTarget.style.transform = ""; }}>
       <div className="row between" style={{ marginBottom: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Projects</span>
       </div>
       {rows.map((r, i) => (
-        <div key={r.key} className="row between" style={{ padding: "11px 0", borderTop: i ? "0.5px solid rgba(255,255,255,0.08)" : "none", alignItems: "center" }}>
+        <div key={r.key} className="row between" style={{ padding: "11px 6px", borderTop: i ? "0.5px solid rgba(255,255,255,0.08)" : "none", alignItems: "center", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <div className="row" style={{ gap: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: 99, background: r.dot, flex: "0 0 8px" }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{r.count}</span>
