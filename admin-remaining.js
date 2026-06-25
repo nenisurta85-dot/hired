@@ -607,6 +607,85 @@ function TeamRowMenu({ member, onEdit, onToggleStatus, onDelete }) {
   );
 }
 
+/* ---- Team member expanded detail card ---- */
+function TeamMemberDetail({ member }) {
+  const { ADM, Icons } = window;
+  const STATUS_STYLE = {
+    "On Track":  { bg: "rgba(0,160,108,0.1)",   fg: "#007A52" },
+    "Behind":    { bg: "rgba(229,83,53,0.1)",    fg: "#C0391C" },
+    "At Risk":   { bg: "rgba(229,115,0,0.1)",    fg: "#A05800" },
+    "Overdue":   { bg: "rgba(229,57,53,0.1)",    fg: "#C0241F" },
+    "90-day":    { bg: "rgba(26,138,154,0.1)",   fg: "#0F6B78" },
+    "not_started": { bg: "#F1EFE8", fg: "#5F5E5A" },
+    "in_progress": { bg: "#E6F1FB", fg: "#185FA5" },
+    "overdue":     { bg: "#FDEAEA", fg: "#E53935" },
+    "complete":    { bg: "#E8F5EE", fg: "#0F9E75" },
+  };
+  const SBadge = ({ s }) => {
+    const st = STATUS_STYLE[s] || { bg: "#F1EFE8", fg: "#888" };
+    return <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 8px", background: st.bg, color: st.fg, whiteSpace: "nowrap" }}>{s}</span>;
+  };
+
+  const projects = (ADM.PROJECTS || []).filter(p =>
+    p.writer === member.name || p.editor === member.name
+  );
+
+  const allTasks = Object.values(ADM.TASKS_BY_PHASE || {}).flat();
+  const tasks = allTasks.filter(t => t.assignee === member.name && t.status !== "complete").slice(0, 6);
+
+  const ColHeader = ({ children }) => (
+    <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 10 }}>{children}</div>
+  );
+
+  return (
+    <tr style={{ background: "#F8F7FB" }}>
+      <td colSpan={6} style={{ padding: "16px 20px", borderTop: "1px dashed var(--border)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+
+          {/* Projects column */}
+          <div>
+            <ColHeader>Active Projects</ColHeader>
+            {projects.length === 0
+              ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No active projects</div>
+              : projects.map(p => (
+                <div key={p.id} className="row between" style={{ padding: "7px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                    <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.FolderOpen size={13} /></span>
+                    <span style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>({p.writer === member.name ? "Writer" : "Editor"})</span>
+                  </div>
+                  <SBadge s={p.status} />
+                </div>
+              ))
+            }
+          </div>
+
+          {/* Tasks column */}
+          <div>
+            <ColHeader>Current Tasks</ColHeader>
+            {tasks.length === 0
+              ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No open tasks</div>
+              : tasks.map((t, i) => (
+                <div key={i} className="row between" style={{ padding: "7px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                    <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.CheckSquare size={13} /></span>
+                    <span style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
+                  </div>
+                  <div className="row" style={{ gap: 6, flexShrink: 0 }}>
+                    {t.due && <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>{t.due}</span>}
+                    <SBadge s={t.status} />
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 /* ---- AdminTeam page ---- */
 function AdminTeam() {
   const { Icons } = window;
@@ -614,6 +693,7 @@ function AdminTeam() {
   const [members, setMembers] = React.useState([...window.ADM.TEAM]);
   const [search, setSearch] = React.useState("");
   const [modal, setModal] = React.useState(null); // null | "new" | member-object
+  const [expandedId, setExpandedId] = React.useState(null);
 
   const ROLE_BG = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
 
@@ -641,6 +721,8 @@ function AdminTeam() {
     showToast("Member removed");
   };
 
+  const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
+
   return (
     <div>
       {modal && (
@@ -665,37 +747,44 @@ function AdminTeam() {
             </thead>
             <tbody>
               {rows.map(t => (
-                <tr key={t.id} className="clickable" onClick={() => setModal(t)}>
-                  <td>
-                    <div className="row" style={{ gap: 9 }}>
-                      <Avatar initials={t.initials} color={t.color} size={28} />
-                      <div>
+                <React.Fragment key={t.id}>
+                  <tr className="clickable" onClick={() => toggleExpand(t.id)}
+                    style={{ background: expandedId === t.id ? "rgba(130,17,255,0.03)" : undefined }}>
+                    <td>
+                      <div className="row" style={{ gap: 9 }}>
+                        <Avatar initials={t.initials} color={t.color} size={28} />
                         <div style={{ fontWeight: 600, fontSize: 13 }}>{t.name}</div>
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ color: "#888", fontSize: 13 }}>{t.email}</td>
-                  <td>
-                    <div className="row" style={{ gap: 5 }}>
-                      {t.roles.map(r => <span key={r} className="badge" style={{ background: ROLE_BG[r], color: "#fff", fontSize: 10 }}>{r}</span>)}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="row" style={{ gap: 6 }}>
-                      <span style={{ fontSize: 13 }}>{t.cap}</span>
-                      {t.flagged && <span title="At capacity" style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={14} /></span>}
-                    </div>
-                  </td>
-                  <td><APill status={t.status} /></td>
-                  <td onClick={e => e.stopPropagation()}>
-                    <TeamRowMenu
-                      member={t}
-                      onEdit={() => setModal(t)}
-                      onToggleStatus={() => toggleStatus(t.id)}
-                      onDelete={() => removeMember(t.id)}
-                    />
-                  </td>
-                </tr>
+                    </td>
+                    <td style={{ color: "#888", fontSize: 13 }}>{t.email}</td>
+                    <td>
+                      <div className="row" style={{ gap: 5 }}>
+                        {t.roles.map(r => <span key={r} className="badge" style={{ background: ROLE_BG[r], color: "#fff", fontSize: 10 }}>{r}</span>)}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="row" style={{ gap: 6 }}>
+                        <span style={{ fontSize: 13 }}>{t.cap}</span>
+                        {t.flagged && <span title="At capacity" style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={14} /></span>}
+                      </div>
+                    </td>
+                    <td><APill status={t.status} /></td>
+                    <td onClick={e => e.stopPropagation()}>
+                      <div className="row" style={{ gap: 4, justifyContent: "flex-end" }}>
+                        <span style={{ display: "flex", color: "#AAA", transition: "transform .2s", transform: expandedId === t.id ? "rotate(180deg)" : "rotate(0deg)" }}>
+                          <Icons.ChevronDown size={15} />
+                        </span>
+                        <TeamRowMenu
+                          member={t}
+                          onEdit={() => setModal(t)}
+                          onToggleStatus={() => toggleStatus(t.id)}
+                          onDelete={() => removeMember(t.id)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedId === t.id && <TeamMemberDetail member={t} />}
+                </React.Fragment>
               ))}
               {rows.length === 0 && (
                 <tr><td colSpan={6} style={{ textAlign: "center", padding: "32px 0", color: "var(--text-muted)" }}>No team members match your search</td></tr>
