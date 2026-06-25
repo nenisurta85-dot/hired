@@ -996,9 +996,9 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
 
         {/* Go to Zoom — Call tasks only */}
         {isCall && (
-          <div style={{ marginBottom: 20, display: "flex", justifyContent: "center" }}>
+          <div style={{ marginBottom: 20 }}>
             <button onClick={() => showToast("Opening Zoom…")}
-              style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--purple)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--purple)", color: "#fff", border: "none", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "100%" }}>
               <Icons.Video size={15} /> Go to Zoom
             </button>
           </div>
