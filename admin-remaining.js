@@ -448,14 +448,12 @@ function AdminTeam() {
             <thead><tr>{["Name", "Email", "Roles", "Small / Big", "Status", ""].map((h) => <th key={h}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((t) => {
-                const [cur, max] = t.cap.split("/").map((s) => parseInt(s.trim(), 10));
-                const atCapacity = cur >= max;
                 return (
                   <tr key={t.id} className="clickable">
                     <td><div className="row" style={{ gap: 9 }}><Avatar initials={t.initials} color={t.color} size={28} /><span style={{ fontWeight: 600 }}>{t.name}</span></div></td>
                     <td style={{ color: "#888" }}>{t.email}</td>
                     <td><div className="row" style={{ gap: 5 }}>{t.roles.map((r) => <span key={r} className="badge" style={{ background: roleBg[r], color: "#fff", fontSize: 10 }}>{r}</span>)}</div></td>
-                    <td><div className="row" style={{ gap: 6 }}><span>{t.cap}</span>{atCapacity && <span title="At capacity" style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={14} /></span>}</div></td>
+                    <td><div className="row" style={{ gap: 6 }}><span>{t.cap}</span>{t.flagged && <span title="Flagged" style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={14} /></span>}</div></td>
                     <td><APill status={t.status} /></td>
                     <td onClick={(e) => e.stopPropagation()}><button className="icon-btn" style={{ border: "none" }}>⋯</button></td>
                   </tr>

@@ -4,7 +4,7 @@
 (function () {
   const TEAM = [
     { id: "jb", name: "Jhoneth Briones", email: "jhoneth@getherhired.com", initials: "JB", roles: ["admin", "writer"], cap: "0 / 5", load: 35, status: "Active", color: "#8211FF" },
-    { id: "kw", name: "Kate Wade", email: "kate@getherhired.com", initials: "KW", roles: ["admin", "writer"], cap: "3 / 5", load: 62, status: "Active", color: "#C8005A" },
+    { id: "kw", name: "Kate Wade", email: "kate@getherhired.com", initials: "KW", roles: ["admin", "writer"], cap: "3 / 5", load: 62, status: "Active", color: "#C8005A", flagged: true },
     { id: "lh", name: "Lourdes H-D", email: "lourdes@getherhired.com", initials: "LH", roles: ["admin", "writer"], cap: "2 / 5", load: 48, status: "Active", color: "#185FA5" },
     { id: "mb", name: "Mimi Bishop", email: "mimi@getherhired.com", initials: "MB", roles: ["writer"], cap: "4 / 5", load: 80, status: "Active", color: "#0F9E75" },
     { id: "ed", name: "Erin Doyle", email: "erin@getherhired.com", initials: "ED", roles: ["editor"], cap: "1 / 5", load: 22, status: "Inactive", color: "#854F0B" },
