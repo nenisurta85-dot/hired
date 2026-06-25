@@ -91,9 +91,35 @@ function AdminTasks() {
                 <input className="input" defaultValue={task.due || ""} />
               </div>
             </div>
-            <div className="field">
-              <label className="field-label">Document</label>
-              <input className="input" placeholder="Link or document name…" />
+            <div>
+              <div className="field-label" style={{ marginBottom: 10 }}>Documents</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", background: "#fff" }}>
+                  <div className="row between" style={{ marginBottom: 8 }}>
+                    <div className="row" style={{ gap: 8 }}>
+                      <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={14} /></span>
+                      <div><div style={{ fontSize: 13, fontWeight: 600 }}>Version to work</div><div className="meta">Working draft</div></div>
+                    </div>
+                    <div className="row" style={{ gap: 8 }}>
+                      <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Google Docs…")}><Icons.ArrowUpRight size={13} /> Open in Google Docs</button>
+                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
+                    </div>
+                  </div>
+                  <button style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1px solid #F5C0D2", borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%", textAlign: "center" }} onClick={() => showToast("Published to client.")}>Publish to client</button>
+                </div>
+                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", background: "#FAF9F7" }}>
+                  <div className="row between">
+                    <div className="row" style={{ gap: 8 }}>
+                      <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Eye size={14} /></span>
+                      <div><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
+                    </div>
+                    <div className="row" style={{ gap: 8 }}>
+                      <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Google Docs…")}><Icons.ArrowUpRight size={13} /> Open in Google Docs</button>
+                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             {task.sub && task.sub.length > 0 && (
               <div>
@@ -119,15 +145,9 @@ function AdminTasks() {
                 <button className="notes-post-btn" disabled={!comment.trim()} onClick={() => { showToast("Comment posted."); setComment(""); }}><Icons.Send size={14} /></button>
               </div>
             </div>
-            <div className="row between" style={{ padding: "14px 0 0", borderTop: "0.5px solid var(--border-light)" }}>
-              <div className="row" style={{ gap: 10 }}>
-                <input type="checkbox" id="pub-task" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-                <label htmlFor="pub-task" style={{ fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Publish to client</label>
-              </div>
-              <div className="row" style={{ gap: 10 }}>
-                <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-                <button className="btn btn-primary" onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
-              </div>
+            <div className="row" style={{ justifyContent: "flex-end", gap: 10, padding: "14px 0 0", borderTop: "0.5px solid var(--border-light)" }}>
+              <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
             </div>
           </div>
         </div>
