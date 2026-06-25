@@ -695,6 +695,17 @@ function AdminTeam() {
   const [modal, setModal] = React.useState(null); // null | "new" | member-object
   const [expandedId, setExpandedId] = React.useState(null);
 
+  React.useEffect(() => {
+    if (window._expandTeamMember) {
+      const target = window.ADM.TEAM.find(m =>
+        m.name === window._expandTeamMember ||
+        m.name.toLowerCase().includes(window._expandTeamMember.toLowerCase())
+      );
+      if (target) setExpandedId(target.id);
+      window._expandTeamMember = null;
+    }
+  }, []);
+
   const ROLE_BG = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
 
   const rows = members.filter(t =>

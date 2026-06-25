@@ -121,11 +121,17 @@ function RecentCommentsCard({ navigate, setActiveTask }) {
 function WriterCapacityCard({ navigate }) {
   const { Icons } = window;
   const writers = [
-    { name: "Lourdes", init: "LH", cur: 3, max: 8 },
-    { name: "Jhoneth", init: "JB", cur: 6, max: 8 },
-    { name: "Kate", init: "KW", cur: 8, max: 8, overloaded: true },
-    { name: "Mimi", init: "MB", cur: 1, max: 8 },
+    { name: "Lourdes", fullName: "Lourdes H-D", init: "LH", cur: 3, max: 8 },
+    { name: "Jhoneth", fullName: "Jhoneth Briones", init: "JB", cur: 6, max: 8 },
+    { name: "Kate", fullName: "Kate Wade", init: "KW", cur: 8, max: 8, overloaded: true },
+    { name: "Mimi", fullName: "Mimi Bishop", init: "MB", cur: 1, max: 8 },
   ];
+
+  const goToWriter = (w) => {
+    window._expandTeamMember = w.fullName;
+    navigate("#/admin/team");
+  };
+
   return (
     <Card style={{ padding: "18px 18px 10px" }}>
       <div className="row between" style={{ marginBottom: 14 }}>
@@ -136,12 +142,13 @@ function WriterCapacityCard({ navigate }) {
         const barColor = pct <= 50 ? "#00A06C" : pct <= 80 ? "#E57300" : "#E53935";
         return (
           <div key={i} style={{ padding: "10px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+            onClick={() => goToWriter(w)}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
             <div className="row between" style={{ marginBottom: 6 }}>
               <div className="row" style={{ gap: 9 }}>
                 <div style={{ width: 26, height: 26, borderRadius: 99, background: "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{w.init}</div>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{w.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{w.name}</span>
               </div>
               <div className="row" style={{ gap: 6 }}>
                 {w.overloaded && <span style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={13} /></span>}
