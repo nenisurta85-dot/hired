@@ -58,7 +58,7 @@ function RecentCommentsCard({ navigate }) {
   );
 }
 /* Client-portal-style task card for admin queues */
-function AdminQueueCard({ title, icon, accent, tasks, emptyText }) {
+function AdminQueueCard({ title, icon, accent, tasks, emptyText, onTaskClick }) {
   const { Icons } = window;
   const HeadIcon = Icons[icon];
   return (
@@ -68,7 +68,7 @@ function AdminQueueCard({ title, icon, accent, tasks, emptyText }) {
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".6px", textTransform: "uppercase", color: "var(--text-secondary)" }}>{title}</span>
       </div>
       {tasks.length ? tasks.map((t, i) => (
-        <div key={i} className="row" style={{ gap: 12, padding: "12px 16px", borderTop: "0.5px solid var(--border-light)" }}>
+        <div key={i} className="row" style={{ gap: 12, padding: "12px 16px", borderTop: "0.5px solid var(--border-light)", cursor: "pointer" }} onClick={() => onTaskClick && onTaskClick(t)}>
           <span style={{ width: 36, height: 36, borderRadius: 99, flex: "0 0 36px", background: t.iconBg, color: t.iconFg, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {React.createElement(Icons[t.icon] || Icons.FileText, { size: 16 })}
           </span>
@@ -82,7 +82,7 @@ function AdminQueueCard({ title, icon, accent, tasks, emptyText }) {
               {t.due && <><span>·</span><span style={{ color: "var(--text-muted)" }}>{t.due}</span></>}
             </div>
           </div>
-          <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "7px 12px" }}>{t.action}</button>
+          <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "7px 12px" }} onClick={(e) => { e.stopPropagation(); onTaskClick && onTaskClick(t); }}>{t.action}</button>
         </div>
       )) : (
         <div style={{ padding: "20px 16px", textAlign: "center" }}><span className="meta">{emptyText}</span></div>
@@ -95,6 +95,7 @@ function AdminDashboard() {
   const { navigate, showToast } = useAdmin();
   const { ADM, Icons } = window;
   const [range, setRange] = React.useState("Today");
+  const [activeTask, setActiveTask] = React.useState(null);
 
   const behind = ADM.PROJECTS.filter((p) => p.status === "Behind");
   const onTrack = ADM.PROJECTS.filter((p) => p.status === "On Track").length;
@@ -117,6 +118,7 @@ function AdminDashboard() {
 
   return (
     <div>
+      {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
       <AdminHeader icon="Home" title="Command Center" subtitle="Your birds-eye view of all active work" />
       <div className="admin-body">
 
@@ -176,9 +178,9 @@ function AdminDashboard() {
 
         {/* ROW 2 — four task queue cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          <AdminQueueCard title="Calls to Schedule" icon="Phone" accent="var(--purple)" tasks={callsToSchedule} emptyText="No calls to schedule" />
-          <AdminQueueCard title="Documents to Review" icon="Eye" accent="#C8005A" tasks={docsToReview} emptyText="All caught up!" />
-          <AdminQueueCard title="Documents to Create" icon="FilePlus" accent="#00A06C" tasks={docsToCreate} emptyText="No documents in queue" />
+          <AdminQueueCard title="Calls to Schedule" icon="Phone" accent="var(--purple)" tasks={callsToSchedule} emptyText="No calls to schedule" onTaskClick={setActiveTask} />
+          <AdminQueueCard title="Documents to Review" icon="Eye" accent="#C8005A" tasks={docsToReview} emptyText="All caught up!" onTaskClick={setActiveTask} />
+          <AdminQueueCard title="Documents to Create" icon="FilePlus" accent="#00A06C" tasks={docsToCreate} emptyText="No documents in queue" onTaskClick={setActiveTask} />
 
           {/* Writer Capacity */}
           <Card style={{ borderRadius: 10, borderLeft: "3px solid #E57300", padding: 0, overflow: "hidden" }}>
