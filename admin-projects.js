@@ -694,8 +694,8 @@ function ProjectDocs({ client }) {
 
 /* Sample comments for project */
 const PROJECT_COMMENTS = [
-  { id: "pc1", who: "Kate Wade", initials: "KW", when: "2h ago", role: "Team", text: "Draft v1 is with the editor. Targeting client delivery by Thursday.", taskId: "t7", taskTitle: "Résumé — Draft v1" },
-  { id: "pc2", who: "Maya Chen", initials: "MC", when: "5h ago", role: "Client", text: "Love the direction! A few small edits on the opening paragraph.", taskId: "t7", taskTitle: "Résumé — Draft v1" },
+  { id: "pc1", who: "Kate Wade", initials: "KW", when: "2h ago", role: "Team", text: "Draft v1 is with the editor. Targeting client delivery by Thursday.", taskId: "t7", taskTitle: "Résumé" },
+  { id: "pc2", who: "Maya Chen", initials: "MC", when: "5h ago", role: "Client", text: "Love the direction! A few small edits on the opening paragraph.", taskId: "t7", taskTitle: "Résumé" },
   { id: "pc3", who: "Mimi Bishop", initials: "MB", when: "1d ago", role: "Team", text: "Assigned to me for final edits. ETA end of week.", taskId: "t9", taskTitle: "LinkedIn Audit" },
 ];
 
@@ -745,7 +745,7 @@ function ProjectComments({ setTab }) {
                 style={{ display: "flex", alignItems: "center", gap: 5, border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "var(--text-secondary)", background: "transparent", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, alignSelf: "flex-start", marginTop: 4, transition: "border-color 150ms, color 150ms" }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.color = "var(--purple)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; }}>
-                <Icons.CheckSquare size={12} /> {c.taskTitle || "View task"} →
+                <Icons.CheckSquare size={12} /> {(c.taskTitle || "View task").replace(/\s*—\s*(Draft|v\d+).*$/i, "")} →
               </button>
             )}
           </div>
