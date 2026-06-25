@@ -5340,55 +5340,30 @@ function TeamMemberDetail({ member, navigate }) {
   return (
     <tr style={{ background: "#F8F7FB" }}>
       <td colSpan={6} style={{ padding: "16px 20px", borderTop: "1px dashed var(--border)" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-
-          {/* Projects column */}
-          <div>
-            <ColHeader>Active Projects</ColHeader>
-            {projects.length === 0
-              ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No active projects</div>
-              : projects.map(p => (
-                <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                    <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.FolderOpen size={13} /></span>
-                    <button onClick={() => navigate("#/admin/projects/" + p.id)}
-                      style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {p.name}
-                    </button>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>({p.writer === member.name ? "Writer" : "Editor"})</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    <SBadge s={p.status} />
-                    <button onClick={() => navigate("#/admin/projects/" + p.id)}
-                      style={{ fontSize: 11, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }}>
-                      View →
-                    </button>
-                  </div>
+        <div>
+          <ColHeader>Active Projects</ColHeader>
+          {projects.length === 0
+            ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No active projects</div>
+            : projects.map(p => (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                  <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.FolderOpen size={13} /></span>
+                  <button onClick={() => navigate("#/admin/projects/" + p.id)}
+                    style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.name}
+                  </button>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>({p.writer === member.name ? "Writer" : "Editor"})</span>
                 </div>
-              ))
-            }
-          </div>
-
-          {/* Tasks column */}
-          <div>
-            <ColHeader>Current Tasks</ColHeader>
-            {tasks.length === 0
-              ? <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No open tasks</div>
-              : tasks.map((t, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border-light)", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                    <span style={{ display: "flex", color: "var(--text-muted)", flexShrink: 0 }}><Icons.CheckSquare size={13} /></span>
-                    <span style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                    {t.due && <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>{t.due}</span>}
-                    <SBadge s={t.status} />
-                  </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <SBadge s={p.status} />
+                  <button onClick={() => navigate("#/admin/projects/" + p.id)}
+                    style={{ fontSize: 11, fontWeight: 600, color: "var(--purple)", background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }}>
+                    View →
+                  </button>
                 </div>
-              ))
-            }
-          </div>
-
+              </div>
+            ))
+          }
         </div>
       </td>
     </tr>
