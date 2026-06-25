@@ -245,9 +245,7 @@ function DashboardBanner({ userName }) {
   return (
     <div style={{
       position: "relative",
-      borderRadius: 14,
       overflow: "hidden",
-      marginBottom: 20,
       height: 110,
       background: "linear-gradient(135deg, #1A0840 0%, #2D1060 40%, #3B1878 70%, #2A0F5C 100%)",
     }}>
@@ -322,10 +320,12 @@ function AdminDashboard() {
   return (
     <div>
       {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
-      <div className="admin-body" style={{ maxWidth: 1200 }}>
+      <div className="admin-body" style={{ maxWidth: "none" }}>
 
-        {/* Hero banner */}
-        <DashboardBanner userName="Kate" />
+        {/* Hero banner — full width, bleeds past admin-body padding */}
+        <div style={{ margin: "-24px -32px 24px" }}>
+          <DashboardBanner userName="Kate" />
+        </div>
 
         {/* Row 1: 3 equal columns */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16 }}>
@@ -335,7 +335,7 @@ function AdminDashboard() {
         </div>
 
         {/* Row 2: Focus Right Now (wide) + Projects (narrow) */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", gap: 16 }}>
           <FocusRightNow setActiveTask={setActiveTask} />
           <ProjectsCard navigate={navigate} />
         </div>
