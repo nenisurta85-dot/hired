@@ -228,7 +228,9 @@ function ProjectsCard({ navigate }) {
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>{r.label}</span>
           </div>
           <button onClick={() => navigate("#/admin/projects")}
-            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>
+            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.55)", fontSize: 12, cursor: "pointer", fontWeight: 600, transition: "color .12s" }}
+            onMouseEnter={e => e.currentTarget.style.color = "#fff"}
+            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}>
             View →
           </button>
         </div>
