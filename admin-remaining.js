@@ -85,172 +85,255 @@ function AdminTasks() {
 
   /* ---- Admin Task Modal ---- */
   const AdminTaskModal = ({ task, onClose }) => {
+    const { ADM, Icons } = window;
     const [status, setStatus] = React.useState(task.status || "not_started");
-    const [notes, setNotes] = React.useState("");
-    const [comment, setComment] = React.useState("");
-    const [commentTab, setCommentTab] = React.useState("All");
+    const [description, setDescription] = React.useState("");
+    const [commentFilter, setCommentFilter] = React.useState("All");
+    const [commentText, setCommentText] = React.useState("");
+    const [comments, setComments] = React.useState([
+      { id: 1, who: "Kate Wade", init: "KW", role: "Team", when: "2h ago", text: "Draft v1 is with the editor. Targeting client delivery by Thursday." },
+      { id: 2, who: "Maya Chen", init: "MC", role: "Client", when: "5h ago", text: "Looks great so far! Can we adjust the executive summary section?" },
+    ]);
+    const [editingComment, setEditingComment] = React.useState(null);
+    const [editCommentText, setEditCommentText] = React.useState("");
+    const [hoverComment, setHoverComment] = React.useState(null);
     const [bookingLink, setBookingLink] = React.useState("");
-    const badge = STATUS_STYLE[status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
-    const label = STATUS_LABEL[status] || status;
+    const [subs, setSubs] = React.useState((task?.sub || []).map((s, i) => ({ ...s, id: i, done: s.done || false })));
+
     const tt = (task.title || "").toLowerCase();
     const isCall = /schedule|call|session|zoom/.test(tt);
     const isUpload = /upload|submit|provide/.test(tt) && !isCall;
+
+    const STATUS_OPTIONS = ["not_started", "in_progress", "overdue", "complete"];
+    const STATUS_LABELS = { not_started: "Not Started", in_progress: "In Progress", overdue: "Overdue", complete: "Complete" };
 
     const MOCK_UPLOADS = [
       { name: "Resume_v1.pdf", size: "142 KB", date: "Apr 3" },
       { name: "LinkedIn_screenshot.png", size: "88 KB", date: "Apr 3" },
     ];
 
-    const SharedStatusDue = () => (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div className="field">
-          <label className="field-label">Status</label>
-          <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            {["not_started", "in_progress", "overdue", "complete"].map((s) => <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>)}
-          </select>
-        </div>
-        <div className="field">
-          <label className="field-label">Due Date</label>
-          <input className="input" defaultValue={task.due || ""} />
-        </div>
-      </div>
+    const subRows = subs.length ? [
+      { init: "KW", role: "Editor", name: "Kate Wade", sub: subs.find(s => (s.assignee || "").includes("Editor") || (s.text || "").includes("Editor")) || subs[0] },
+      { init: "MB", role: "Writer", name: "Mimi Bishop", sub: subs.find(s => (s.assignee || "").includes("Writer") || (s.text || "").includes("Writer")) || subs[1] },
+    ].filter(r => r.sub) : [];
+
+    const filteredComments = commentFilter === "All" ? comments : comments.filter(c => c.role === commentFilter);
+
+    const handleSendComment = () => {
+      if (!commentText.trim()) return;
+      setComments(prev => [{ id: Date.now(), who: "Lourdes H-D", init: "LH", role: "Team", when: "just now", text: commentText.trim() }, ...prev]);
+      setCommentText("");
+    };
+
+    const FieldLabel = ({ children }) => (
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 6 }}>{children}</div>
     );
 
-    const CommentsSection = () => (
-      <div>
-        <div className="row between" style={{ marginBottom: 8 }}>
-          <div className="field-label" style={{ marginBottom: 0 }}>Comments</div>
-          <div className="row" style={{ gap: 2 }}>
-            {["All", "Client", "Team"].map((t) => (
-              <button key={t} onClick={() => setCommentTab(t)}
-                style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, border: "1px solid", cursor: "pointer", borderColor: commentTab === t ? "var(--purple)" : "var(--border)", background: commentTab === t ? "var(--purple)" : "transparent", color: commentTab === t ? "#fff" : "var(--text-muted)" }}>{t}</button>
-            ))}
-          </div>
-        </div>
-        <div className="notes-input-row">
-          <textarea placeholder={commentTab === "Client" ? "Visible to client…" : commentTab === "Team" ? "Internal team note…" : "Add a comment…"} value={comment} onChange={(e) => setComment(e.target.value)} rows={1} />
-          <button className="notes-post-btn" disabled={!comment.trim()} onClick={() => { showToast("Comment posted."); setComment(""); }}><Icons.Send size={14} /></button>
-        </div>
-      </div>
-    );
+    React.useEffect(() => {
+      const fn = (e) => { if (e.key === "Escape") onClose(); };
+      document.addEventListener("keydown", fn);
+      return () => document.removeEventListener("keydown", fn);
+    }, []);
 
     return (
-      <div className="overlay" onClick={onClose}>
-        <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
-          <div style={{ padding: "20px 24px 16px", borderBottom: "0.5px solid var(--border-light)" }}>
-            <div className="row between" style={{ alignItems: "flex-start" }}>
-              <div>
-                <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{task.title}</div>
-                <div className="row" style={{ gap: 8 }}>
-                  <span className="badge" style={{ background: badge.bg, color: badge.fg }}>{label}</span>
-                  {task.client && <span className="meta">{task.client}{task.phase ? " · " + task.phase : ""}</span>}
-                </div>
-              </div>
-              <button className="modal-x" onClick={onClose}><Icons.X size={18} /></button>
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+        <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20, flex: 1, lineHeight: 1.3 }}>{task.title || "Untitled task"}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              {task.client && <span className="meta">{task.client}{task.phase ? " · " + task.phase : ""}</span>}
+              <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
             </div>
           </div>
-          <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
-            <SharedStatusDue />
 
-            {isCall ? (
-              <div>
-                <div className="field-label" style={{ marginBottom: 10 }}>Booking</div>
-                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FFF8F0" }}>
-                  <div className="row" style={{ gap: 10, marginBottom: 12 }}>
-                    <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(229,115,0,0.1)", color: "#E57300", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Calendar size={15} /></span>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>Session Link</div>
-                      <div className="meta">Calendly or booking URL</div>
+          {/* Status + Due Date */}
+          <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+            <div style={{ width: 180 }}>
+              <FieldLabel>Status</FieldLabel>
+              <select value={status} onChange={e => setStatus(e.target.value)}
+                style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <FieldLabel>Due Date</FieldLabel>
+              <input type="text" defaultValue={task.due || ""} placeholder="e.g. May 3"
+                style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+            </div>
+          </div>
+
+          {/* Type-specific section */}
+          {isCall ? (
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel>Booking</FieldLabel>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FFF8F0" }}>
+                <div style={{ display: "flex", gap: 10, marginBottom: 12, alignItems: "center" }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(229,115,0,0.1)", color: "#E57300", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Calendar size={15} /></span>
+                  <div><div style={{ fontSize: 13, fontWeight: 600 }}>Session Link</div><div className="meta">Calendly or booking URL</div></div>
+                </div>
+                <input style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}
+                  value={bookingLink} onChange={(e) => setBookingLink(e.target.value)} placeholder="https://calendly.com/…" />
+                {bookingLink && (
+                  <button style={{ border: "1.5px solid #E57300", color: "#E57300", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                    onClick={() => showToast("Opening booking link…")}><Icons.ArrowUpRight size={13} /> Open Link</button>
+                )}
+              </div>
+            </div>
+          ) : isUpload ? (
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel>Uploaded Files</FieldLabel>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {MOCK_UPLOADS.map((f, i) => (
+                  <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", background: "#F4FBF7", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={15} /></span>
+                      <div><div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div><div className="meta">{f.size} · Uploaded {f.date}</div></div>
                     </div>
-                  </div>
-                  <input className="input" value={bookingLink} onChange={(e) => setBookingLink(e.target.value)} placeholder="https://calendly.com/…" style={{ marginBottom: 8 }} />
-                  {bookingLink && (
-                    <button className="btn btn-ghost" style={{ fontSize: 12, color: "#E57300", borderColor: "#E57300" }} onClick={() => showToast("Opening booking link…")}>
-                      <Icons.ArrowUpRight size={13} /> Open Link
+                    <button onClick={() => showToast("Downloading…")}
+                      style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                      <Icons.Download size={13} /> Download
                     </button>
-                  )}
-                </div>
-              </div>
-            ) : isUpload ? (
-              <div>
-                <div className="field-label" style={{ marginBottom: 10 }}>Uploaded Files</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {MOCK_UPLOADS.map((f, i) => (
-                    <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", background: "#F4FBF7" }}>
-                      <div className="row between">
-                        <div className="row" style={{ gap: 8 }}>
-                          <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={14} /></span>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div>
-                            <div className="meta">{f.size} · Uploaded {f.date}</div>
-                          </div>
-                        </div>
-                        <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
-                      </div>
-                    </div>
-                  ))}
-                  {MOCK_UPLOADS.length === 0 && (
-                    <div style={{ border: "1.5px dashed var(--border)", borderRadius: 10, padding: "20px", textAlign: "center" }}>
-                      <div className="meta">No files uploaded yet</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="field-label" style={{ marginBottom: 10 }}>Documents</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", background: "#fff" }}>
-                    <div className="row between" style={{ marginBottom: 8 }}>
-                      <div className="row" style={{ gap: 8 }}>
-                        <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={14} /></span>
-                        <div><div style={{ fontSize: 13, fontWeight: 600 }}>Version to work</div><div className="meta">Working draft</div></div>
-                      </div>
-                      <div className="row" style={{ gap: 8 }}>
-                        <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Google Docs…")}><Icons.ArrowUpRight size={13} /> Open in Google Docs</button>
-                        <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
-                      </div>
-                    </div>
-                    <button style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1px solid #F5C0D2", borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%", textAlign: "center" }} onClick={() => showToast("Published to client.")}>Publish to client</button>
                   </div>
-                  <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", background: "#FAF9F7" }}>
-                    <div className="row between">
-                      <div className="row" style={{ gap: 8 }}>
-                        <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Eye size={14} /></span>
-                        <div><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
-                      </div>
-                      <div className="row" style={{ gap: 8 }}>
-                        <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Google Docs…")}><Icons.ArrowUpRight size={13} /> Open in Google Docs</button>
-                        <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
-                      </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel>Documents</FieldLabel>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#F8F7FF" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                    <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.FileText size={15} /></span>
+                    <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to work</div><div className="meta">Working draft</div></div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => showToast("Opening Google Docs…")}
+                        style={{ border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>Open in Google Docs</button>
+                      <button onClick={() => showToast("Downloading…")}
+                        style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                        <Icons.Download size={13} /> Download
+                      </button>
+                    </div>
+                  </div>
+                  <button onClick={() => showToast("Published to client.")}
+                    style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
+                    Publish to client
+                  </button>
+                </div>
+                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
+                    <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => showToast("Opening Google Docs…")}
+                        style={{ border: "1.5px solid var(--border)", color: "var(--text-secondary)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>Open in Google Docs</button>
+                      <button onClick={() => showToast("Downloading…")}
+                        style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--border)", color: "var(--text-secondary)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                        <Icons.Download size={13} /> Download
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {task.sub && task.sub.length > 0 && (
-              <div>
-                <div className="field-label" style={{ marginBottom: 8 }}>Subtasks</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {task.sub.map((s, i) => (
-                    <div key={i} className="row" style={{ gap: 10, padding: "8px 12px", background: "#FAF9F7", borderRadius: 8, border: "1px solid var(--border)" }}>
-                      <span style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #CCC", display: "flex", flex: "0 0 16px" }} />
-                      <span style={{ fontSize: 13 }}>{s.title || s}</span>
-                    </div>
-                  ))}
-                </div>
+          {/* Subtasks */}
+          {subRows.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel>Subtasks</FieldLabel>
+              <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {subRows.map((r, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 48 }}>
+                    <Avatar initials={r.init} color="var(--purple)" size={28} />
+                    <div style={{ minWidth: 50 }}><span style={{ fontSize: 11, color: "var(--text-muted)" }}>{r.role}</span></div>
+                    <div style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{r.name}</div>
+                    {r.sub.done ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: false } : s))}
+                          style={{ fontSize: 12, color: "#E53935", background: "transparent", border: "none", cursor: "pointer", fontWeight: 500 }}>Reopen</button>
+                        <span className="badge" style={{ background: "rgba(0,160,108,0.12)", color: "#00A06C", fontWeight: 600 }}>Complete</span>
+                        <span style={{ width: 20, height: 20, borderRadius: 99, background: "#00A06C", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icons.Check size={11} style={{ color: "#fff" }} /></span>
+                      </div>
+                    ) : (
+                      <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: true } : s))}
+                        style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0 12px", height: 30, fontSize: 12, color: "var(--text-muted)", background: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.color = "var(--purple)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+                        Mark as Complete
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
-            <div className="field">
-              <label className="field-label">Notes (internal)</label>
-              <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add internal notes…" style={{ minHeight: 72 }} />
             </div>
-            <CommentsSection />
-            <div className="row" style={{ justifyContent: "flex-end", gap: 10, padding: "14px 0 0", borderTop: "0.5px solid var(--border-light)" }}>
-              <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
+          )}
+
+          {/* Notes */}
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Notes (Internal)</FieldLabel>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add internal notes..."
+              style={{ width: "100%", minHeight: 80, border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
+          </div>
+
+          {/* Comments */}
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)" }}>Comments</div>
+              <div style={{ display: "flex", gap: 4 }}>
+                {["All","Client","Team"].map(f => (
+                  <button key={f} onClick={() => setCommentFilter(f)}
+                    style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, border: commentFilter === f ? "none" : "1px solid var(--border)", background: commentFilter === f ? "var(--purple)" : "transparent", color: commentFilter === f ? "#fff" : "var(--text-muted)", cursor: "pointer", fontFamily: "inherit" }}>{f}</button>
+                ))}
+              </div>
             </div>
+            {filteredComments.map((cm) => (
+              <div key={cm.id} style={{ display: "flex", gap: 10, marginBottom: 14, position: "relative" }}
+                onMouseEnter={() => setHoverComment(cm.id)} onMouseLeave={() => setHoverComment(null)}>
+                <Avatar initials={cm.init} color={cm.role === "Client" ? "#C8005A" : "var(--purple)"} size={32} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13 }}><span style={{ fontWeight: 600 }}>{cm.who}</span><span style={{ fontSize: 11, color: "var(--text-muted)" }}> · {cm.when}</span></div>
+                  {editingComment === cm.id ? (
+                    <div style={{ marginTop: 4 }}>
+                      <textarea autoFocus value={editCommentText} onChange={(e) => setEditCommentText(e.target.value)}
+                        style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 6, padding: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box" }} />
+                      <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                        <button className="btn btn-primary" style={{ borderRadius: 6, padding: "0 12px", height: 28, fontSize: 12 }} onClick={() => { setComments(prev => prev.map(c => c.id === cm.id ? { ...c, text: editCommentText } : c)); setEditingComment(null); }}>Save</button>
+                        <button className="btn btn-ghost" style={{ padding: "0 12px", height: 28, fontSize: 12 }} onClick={() => setEditingComment(null)}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, marginTop: 2, lineHeight: 1.5, color: "var(--text-primary)" }}>{cm.text}</div>
+                  )}
+                </div>
+                {hoverComment === cm.id && !editingComment && (
+                  <div style={{ position: "relative" }}>
+                    <div style={{ display: "flex", flexDirection: "column", position: "absolute", right: 0, top: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", minWidth: 80, zIndex: 10 }}>
+                      <button style={{ padding: "6px 14px", fontSize: 12, border: "none", background: "none", cursor: "pointer", textAlign: "left" }} onClick={() => { setEditCommentText(cm.text); setEditingComment(cm.id); }}>Edit</button>
+                      <button style={{ padding: "6px 14px", fontSize: 12, border: "none", background: "none", cursor: "pointer", color: "#E53935", textAlign: "left" }} onClick={() => setComments(prev => prev.filter(c => c.id !== cm.id))}>Delete</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 8 }}>
+              <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..."
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                rows={2}
+                style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "inherit", resize: "none", outline: "none" }} />
+              <button onClick={handleSendComment} disabled={!commentText.trim()}
+                style={{ width: 34, height: 34, borderRadius: 99, background: "var(--purple)", color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: commentText.trim() ? 1 : 0.35, flexShrink: 0 }}>
+                <Icons.Send size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Footer — no Publish to client */}
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <button className="btn btn-ghost" style={{ color: "var(--purple)", fontSize: 13 }} onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" style={{ borderRadius: 8, padding: "0 20px", height: 38, fontSize: 13, fontWeight: 600 }}
+              onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
           </div>
         </div>
       </div>
@@ -797,134 +880,254 @@ Object.assign(window, { AdminTasks, AdminDocuments, AdminSchedule, AdminInbox, A
 window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   const { Icons } = window;
   const { showToast } = useAdmin();
-  const STATUS_STYLE = { "Ready for Review": { bg: "#FBEAF0", fg: "#C8005A" }, "Action Required": { bg: "#FAEEDA", fg: "#854F0B" }, "Upload Needed": { bg: "#E8F5EE", fg: "#0F6E56" }, "Not Started": { bg: "#F1EFE8", fg: "#5F5E5A" }, "Complete": { bg: "#E8F5EE", fg: "#0F9E75" }, "In Progress": { bg: "#E6F1FB", fg: "#185FA5" }, "overdue": { bg: "#FDEAEA", fg: "#E53935" }, "in_progress": { bg: "#E6F1FB", fg: "#185FA5" }, "not_started": { bg: "#F1EFE8", fg: "#5F5E5A" }, "complete": { bg: "#E8F5EE", fg: "#0F9E75" } };
-  const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
   const [status, setStatus] = React.useState(task.status || "not_started");
-  const [notes, setNotes] = React.useState("");
-  const [comment, setComment] = React.useState("");
-  const [commentTab, setCommentTab] = React.useState("All");
+  const [description, setDescription] = React.useState("");
+  const [commentFilter, setCommentFilter] = React.useState("All");
+  const [commentText, setCommentText] = React.useState("");
+  const [comments, setComments] = React.useState([
+    { id: 1, who: "Kate Wade", init: "KW", role: "Team", when: "2h ago", text: "Draft v1 is with the editor. Targeting client delivery by Thursday." },
+    { id: 2, who: "Maya Chen", init: "MC", role: "Client", when: "5h ago", text: "Looks great so far! Can we adjust the executive summary section?" },
+  ]);
+  const [editingComment, setEditingComment] = React.useState(null);
+  const [editCommentText, setEditCommentText] = React.useState("");
+  const [hoverComment, setHoverComment] = React.useState(null);
   const [bookingLink, setBookingLink] = React.useState("");
-  const badge = STATUS_STYLE[status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
-  const label = STATUS_LABEL[status] || status;
+  const [subs, setSubs] = React.useState((task?.sub || []).map((s, i) => ({ ...s, id: i, done: s.done || false })));
+
   const tt = (task.title || "").toLowerCase();
   const isCall = /schedule|call|session|zoom/.test(tt);
   const isUpload = /upload|submit|provide/.test(tt) && !isCall;
+
+  const STATUS_OPTIONS = ["not_started", "in_progress", "overdue", "complete"];
+  const STATUS_LABELS = { not_started: "Not Started", in_progress: "In Progress", overdue: "Overdue", complete: "Complete" };
+
   const MOCK_UPLOADS = [
     { name: "Resume_v1.pdf", size: "142 KB", date: "Apr 3" },
     { name: "LinkedIn_screenshot.png", size: "88 KB", date: "Apr 3" },
   ];
+
+  const subRows = subs.length ? [
+    { init: "KW", role: "Editor", name: "Kate Wade", sub: subs.find(s => (s.assignee || "").includes("Editor") || (s.text || "").includes("Editor")) || subs[0] },
+    { init: "MB", role: "Writer", name: "Mimi Bishop", sub: subs.find(s => (s.assignee || "").includes("Writer") || (s.text || "").includes("Writer")) || subs[1] },
+  ].filter(r => r.sub) : [];
+
+  const filteredComments = commentFilter === "All" ? comments : comments.filter(c => c.role === commentFilter);
+
+  const handleSendComment = () => {
+    if (!commentText.trim()) return;
+    setComments(prev => [{ id: Date.now(), who: "Lourdes H-D", init: "LH", role: "Team", when: "just now", text: commentText.trim() }, ...prev]);
+    setCommentText("");
+  };
+
+  const FieldLabel = ({ children }) => (
+    <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 6 }}>{children}</div>
+  );
+
+  React.useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, []);
+
   return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
-        <div style={{ padding: "20px 24px 16px", borderBottom: "0.5px solid var(--border-light)" }}>
-          <div className="row between" style={{ alignItems: "flex-start" }}>
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{task.title}</div>
-              <div className="row" style={{ gap: 8 }}>
-                <span className="badge" style={{ background: badge.bg, color: badge.fg }}>{label}</span>
-                {task.client && <span className="meta">{task.client}{task.phase ? " · " + task.phase : ""}</span>}
-              </div>
-            </div>
-            <button className="modal-x" onClick={onClose}><Icons.X size={18} /></button>
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20, flex: 1, lineHeight: 1.3 }}>{task.title || "Untitled task"}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            {task.client && <span className="meta">{task.client}{task.phase ? " · " + task.phase : ""}</span>}
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
           </div>
         </div>
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div className="field">
-              <label className="field-label">Status</label>
-              <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                {["not_started", "in_progress", "overdue", "complete"].map((s) => <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label className="field-label">Due Date</label>
-              <input className="input" defaultValue={task.due || ""} />
+
+        {/* Status + Due Date */}
+        <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <div style={{ width: 180 }}>
+            <FieldLabel>Status</FieldLabel>
+            <select value={status} onChange={e => setStatus(e.target.value)}
+              style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Due Date</FieldLabel>
+            <input type="text" defaultValue={task.due || ""} placeholder="e.g. May 3"
+              style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+          </div>
+        </div>
+
+        {/* Type-specific section */}
+        {isCall ? (
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Booking</FieldLabel>
+            <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FFF8F0" }}>
+              <div style={{ display: "flex", gap: 10, marginBottom: 12, alignItems: "center" }}>
+                <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(229,115,0,0.1)", color: "#E57300", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Calendar size={15} /></span>
+                <div><div style={{ fontSize: 13, fontWeight: 600 }}>Session Link</div><div className="meta">Calendly or booking URL</div></div>
+              </div>
+              <input style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}
+                value={bookingLink} onChange={(e) => setBookingLink(e.target.value)} placeholder="https://calendly.com/…" />
+              {bookingLink && (
+                <button style={{ border: "1.5px solid #E57300", color: "#E57300", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => showToast("Opening booking link…")}><Icons.ArrowUpRight size={13} /> Open Link</button>
+              )}
             </div>
           </div>
-          {isCall ? (
-            <div>
-              <div className="field-label" style={{ marginBottom: 10 }}>Booking</div>
-              <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FFF8F0" }}>
-                <div className="row" style={{ gap: 10, marginBottom: 12 }}>
-                  <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(229,115,0,0.1)", color: "#E57300", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Calendar size={15} /></span>
-                  <div><div style={{ fontSize: 13, fontWeight: 600 }}>Session Link</div><div className="meta">Calendly or booking URL</div></div>
-                </div>
-                <input className="input" value={bookingLink} onChange={(e) => setBookingLink(e.target.value)} placeholder="https://calendly.com/…" style={{ marginBottom: 8 }} />
-                {bookingLink && <button className="btn btn-ghost" style={{ fontSize: 12, color: "#E57300", borderColor: "#E57300" }} onClick={() => showToast("Opening booking link…")}><Icons.ArrowUpRight size={13} /> Open Link</button>}
-              </div>
-            </div>
-          ) : isUpload ? (
-            <div>
-              <div className="field-label" style={{ marginBottom: 10 }}>Uploaded Files</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {MOCK_UPLOADS.map((f, i) => (
-                  <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", background: "#F4FBF7" }}>
-                    <div className="row between">
-                      <div className="row" style={{ gap: 8 }}>
-                        <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={14} /></span>
-                        <div><div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div><div className="meta">{f.size} · Uploaded {f.date}</div></div>
-                      </div>
-                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
-                    </div>
+        ) : isUpload ? (
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Uploaded Files</FieldLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {MOCK_UPLOADS.map((f, i) => (
+                <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", background: "#F4FBF7", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={15} /></span>
+                    <div><div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div><div className="meta">{f.size} · Uploaded {f.date}</div></div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="field-label" style={{ marginBottom: 10 }}>Documents</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", background: "#fff" }}>
-                  <div className="row between" style={{ marginBottom: 8 }}>
-                    <div className="row" style={{ gap: 8 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={14} /></span>
-                      <div><div style={{ fontSize: 13, fontWeight: 600 }}>Version to work</div><div className="meta">Working draft</div></div>
-                    </div>
-                    <div className="row" style={{ gap: 8 }}>
-                      <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Google Docs…")}><Icons.ArrowUpRight size={13} /> Open in Google Docs</button>
-                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
-                    </div>
-                  </div>
-                  <button style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1px solid #F5C0D2", borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%", textAlign: "center" }} onClick={() => showToast("Published to client.")}>Publish to client</button>
+                  <button onClick={() => showToast("Downloading…")}
+                    style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                    <Icons.Download size={13} /> Download
+                  </button>
                 </div>
-                <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", background: "#FAF9F7" }}>
-                  <div className="row between">
-                    <div className="row" style={{ gap: 8 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Eye size={14} /></span>
-                      <div><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
-                    </div>
-                    <div className="row" style={{ gap: 8 }}>
-                      <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Google Docs…")}><Icons.ArrowUpRight size={13} /> Open in Google Docs</button>
-                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }} onClick={() => showToast("Downloading…")}><Icons.Download size={13} /></button>
-                    </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Documents</FieldLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#F8F7FF" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.FileText size={15} /></span>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to work</div><div className="meta">Working draft</div></div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => showToast("Opening Google Docs…")}
+                      style={{ border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>Open in Google Docs</button>
+                    <button onClick={() => showToast("Downloading…")}
+                      style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                      <Icons.Download size={13} /> Download
+                    </button>
                   </div>
                 </div>
+                <button onClick={() => showToast("Published to client.")}
+                  style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
+                  Publish to client
+                </button>
+              </div>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => showToast("Opening Google Docs…")}
+                      style={{ border: "1.5px solid var(--border)", color: "var(--text-secondary)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>Open in Google Docs</button>
+                    <button onClick={() => showToast("Downloading…")}
+                      style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--border)", color: "var(--text-secondary)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                      <Icons.Download size={13} /> Download
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-          <div className="field">
-            <label className="field-label">Notes (internal)</label>
-            <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add internal notes…" style={{ minHeight: 72 }} />
           </div>
-          <div>
-            <div className="row between" style={{ marginBottom: 8 }}>
-              <div className="field-label" style={{ marginBottom: 0 }}>Comments</div>
-              <div className="row" style={{ gap: 2 }}>
-                {["All", "Client", "Team"].map((t) => (
-                  <button key={t} onClick={() => setCommentTab(t)}
-                    style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, border: "1px solid", cursor: "pointer", borderColor: commentTab === t ? "var(--purple)" : "var(--border)", background: commentTab === t ? "var(--purple)" : "transparent", color: commentTab === t ? "#fff" : "var(--text-muted)" }}>{t}</button>
-                ))}
+        )}
+
+        {/* Subtasks */}
+        {subRows.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Subtasks</FieldLabel>
+            <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {subRows.map((r, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 48 }}>
+                  <Avatar initials={r.init} color="var(--purple)" size={28} />
+                  <div style={{ minWidth: 50 }}><span style={{ fontSize: 11, color: "var(--text-muted)" }}>{r.role}</span></div>
+                  <div style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{r.name}</div>
+                  {r.sub.done ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: false } : s))}
+                        style={{ fontSize: 12, color: "#E53935", background: "transparent", border: "none", cursor: "pointer", fontWeight: 500 }}>Reopen</button>
+                      <span className="badge" style={{ background: "rgba(0,160,108,0.12)", color: "#00A06C", fontWeight: 600 }}>Complete</span>
+                      <span style={{ width: 20, height: 20, borderRadius: 99, background: "#00A06C", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icons.Check size={11} style={{ color: "#fff" }} /></span>
+                    </div>
+                  ) : (
+                    <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: true } : s))}
+                      style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0 12px", height: 30, fontSize: 12, color: "var(--text-muted)", background: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.color = "var(--purple)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+                      Mark as Complete
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        <div style={{ marginBottom: 20 }}>
+          <FieldLabel>Notes (Internal)</FieldLabel>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add internal notes..."
+            style={{ width: "100%", minHeight: 80, border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
+        </div>
+
+        {/* Comments */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)" }}>Comments</div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["All","Client","Team"].map(f => (
+                <button key={f} onClick={() => setCommentFilter(f)}
+                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, border: commentFilter === f ? "none" : "1px solid var(--border)", background: commentFilter === f ? "var(--purple)" : "transparent", color: commentFilter === f ? "#fff" : "var(--text-muted)", cursor: "pointer", fontFamily: "inherit" }}>{f}</button>
+              ))}
+            </div>
+          </div>
+          {filteredComments.map((cm) => (
+            <div key={cm.id} style={{ display: "flex", gap: 10, marginBottom: 14, position: "relative" }}
+              onMouseEnter={() => setHoverComment(cm.id)} onMouseLeave={() => setHoverComment(null)}>
+              <Avatar initials={cm.init} color={cm.role === "Client" ? "#C8005A" : "var(--purple)"} size={32} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13 }}><span style={{ fontWeight: 600 }}>{cm.who}</span><span style={{ fontSize: 11, color: "var(--text-muted)" }}> · {cm.when}</span></div>
+                {editingComment === cm.id ? (
+                  <div style={{ marginTop: 4 }}>
+                    <textarea autoFocus value={editCommentText} onChange={(e) => setEditCommentText(e.target.value)}
+                      style={{ width: "100%", border: "1px solid var(--border)", borderRadius: 6, padding: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box" }} />
+                    <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                      <button className="btn btn-primary" style={{ borderRadius: 6, padding: "0 12px", height: 28, fontSize: 12 }} onClick={() => { setComments(prev => prev.map(c => c.id === cm.id ? { ...c, text: editCommentText } : c)); setEditingComment(null); }}>Save</button>
+                      <button className="btn btn-ghost" style={{ padding: "0 12px", height: 28, fontSize: 12 }} onClick={() => setEditingComment(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 13, marginTop: 2, lineHeight: 1.5, color: "var(--text-primary)" }}>{cm.text}</div>
+                )}
               </div>
+              {hoverComment === cm.id && !editingComment && (
+                <div style={{ position: "relative" }}>
+                  <div style={{ display: "flex", flexDirection: "column", position: "absolute", right: 0, top: 0, background: "#fff", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", minWidth: 80, zIndex: 10 }}>
+                    <button style={{ padding: "6px 14px", fontSize: 12, border: "none", background: "none", cursor: "pointer", textAlign: "left" }} onClick={() => { setEditCommentText(cm.text); setEditingComment(cm.id); }}>Edit</button>
+                    <button style={{ padding: "6px 14px", fontSize: 12, border: "none", background: "none", cursor: "pointer", color: "#E53935", textAlign: "left" }} onClick={() => setComments(prev => prev.filter(c => c.id !== cm.id))}>Delete</button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="notes-input-row">
-              <textarea placeholder={commentTab === "Client" ? "Visible to client…" : commentTab === "Team" ? "Internal team note…" : "Add a comment…"} value={comment} onChange={(e) => setComment(e.target.value)} rows={1} />
-              <button className="notes-post-btn" disabled={!comment.trim()} onClick={() => { showToast("Comment posted."); setComment(""); }}><Icons.Send size={14} /></button>
-            </div>
+          ))}
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 8 }}>
+            <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..."
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+              rows={2}
+              style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "inherit", resize: "none", outline: "none" }} />
+            <button onClick={handleSendComment} disabled={!commentText.trim()}
+              style={{ width: 34, height: 34, borderRadius: 99, background: "var(--purple)", color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: commentText.trim() ? 1 : 0.35, flexShrink: 0 }}>
+              <Icons.Send size={14} />
+            </button>
           </div>
-          <div className="row" style={{ justifyContent: "flex-end", gap: 10, padding: "14px 0 0", borderTop: "0.5px solid var(--border-light)" }}>
-            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-            <button className="btn btn-primary" onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
-          </div>
+        </div>
+
+        {/* Footer — no Publish to client */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "flex-end", gap: 12 }}>
+          <button className="btn btn-ghost" style={{ color: "var(--purple)", fontSize: 13 }} onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" style={{ borderRadius: 8, padding: "0 20px", height: 38, fontSize: 13, fontWeight: 600 }}
+            onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
         </div>
       </div>
     </div>
