@@ -118,6 +118,62 @@ function AdminTasks() {
     </Card>
   );
 
+  const STATUS_BORDER = {
+    "Ready for Review": "#C8005A",
+    "Action Required":  "#854F0B",
+    "Upload Needed":    "#0F9E75",
+    "Not Started":      "#AAAAAA",
+    "In Progress":      "#185FA5",
+    "Complete":         "#0F9E75",
+    "overdue":          "#E53935",
+    "in_progress":      "#185FA5",
+    "not_started":      "#AAAAAA",
+    "complete":         "#0F9E75",
+  };
+  const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
+  const STATUS_STYLE = {
+    "Ready for Review": { bg: "#FBEAF0", fg: "#C8005A" },
+    "Action Required":  { bg: "#FAEEDA", fg: "#854F0B" },
+    "Upload Needed":    { bg: "#E8F5EE", fg: "#0F6E56" },
+    "Not Started":      { bg: "#F1EFE8", fg: "#5F5E5A" },
+    "Complete":         { bg: "#E8F5EE", fg: "#0F9E75" },
+    "In Progress":      { bg: "#E6F1FB", fg: "#185FA5" },
+    "overdue":          { bg: "#FDEAEA", fg: "#E53935" },
+    "in_progress":      { bg: "#E6F1FB", fg: "#185FA5" },
+    "not_started":      { bg: "#F1EFE8", fg: "#5F5E5A" },
+    "complete":         { bg: "#E8F5EE", fg: "#0F9E75" },
+  };
+  const TASK_ICON = { "complete": { icon: "CircleCheck", bg: "var(--green-bg)", fg: "var(--green)" }, "overdue": { icon: "Clock", bg: "#FDEAEA", fg: "#E53935" }, "in_progress": { icon: "FileText", bg: "#E6F1FB", fg: "#185FA5" }, "not_started": { icon: "FileText", bg: "#F1EFE8", fg: "#888" } };
+
+  const TaskCards = ({ rows }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {rows.map((t, i) => {
+        const border = STATUS_BORDER[t.status] || "#AAAAAA";
+        const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
+        const label = STATUS_LABEL[t.status] || t.status;
+        const iconInfo = TASK_ICON[t.status] || TASK_ICON["not_started"];
+        const IconCmp = Icons[iconInfo.icon] || Icons.FileText;
+        return (
+          <div key={i} className="task-card" style={{ borderLeft: `3px solid ${border}`, cursor: "pointer" }}>
+            <div className="task-icon" style={{ background: iconInfo.bg, color: iconInfo.fg }}><IconCmp size={16} /></div>
+            <div className="task-body">
+              <div className="task-title">
+                {t.title}
+                <span className="badge" style={{ background: badge.bg, color: badge.fg, fontSize: 10 }}>{label}</span>
+              </div>
+              {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
+              {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
+            </div>
+            <div className="task-actions">
+              <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={(e) => e.stopPropagation()}>Open</button>
+            </div>
+          </div>
+        );
+      })}
+      {rows.length === 0 && <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks assigned to you." />}
+    </div>
+  );
+
   const TaskTable = ({ rows }) => (
     <Card style={{ padding: 0, overflow: "hidden" }}>
       <table className="atable">
@@ -158,7 +214,7 @@ function AdminTasks() {
         <FilterPill label="Task Type" options={["Deliverable", "Call", "Client Action", "Internal"]} active="All" onChange={() => {}} />
       </FilterBar>
       <div className="admin-body">
-        {tab === "My Tasks" && <TaskTable rows={flatTasks().filter((t) => t.assignee === "Lourdes H-D")} />}
+        {tab === "My Tasks" && <TaskCards rows={flatTasks().filter((t) => t.assignee === "Lourdes H-D")} />}
         {tab === "By Client" && <ByClient />}
         {tab === "Board" && <Board />}
       </div>
