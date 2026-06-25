@@ -49,7 +49,7 @@ function AdminTasks() {
       return true;
     });
     const isCall = (t) => /schedule|call|session|zoom/.test((t.title || "").toLowerCase());
-    const isUpload = (t) => /upload|submit|provide/.test((t.title || "").toLowerCase()) && !isCall(t);
+    const isUpload = (t) => /upload|submit|provide|create/.test((t.title || "").toLowerCase()) && !isCall(t);
     const isReview = (t) => /review/.test((t.title || "").toLowerCase()) && !isCall(t);
     const calls = deduped.filter(isCall);
     const uploads = deduped.filter(isUpload);
@@ -80,7 +80,7 @@ function AdminTasks() {
   const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
   const ACTION_LABEL = (title) => {
     const tt = (title || "").toLowerCase();
-    return /schedule|call|session/.test(tt) ? "Book Session" : /review/.test(tt) ? "Review Draft" : "Upload Doc";
+    return /schedule|call|session/.test(tt) ? "Book Session" : /review/.test(tt) ? "Review Draft" : "Create";
   };
 
   const TaskCards = ({ rows }) => (
@@ -712,7 +712,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
 
   const tt = (task.title || "").toLowerCase();
   const isCall = /schedule|call|session|zoom/.test(tt);
-  const isUpload = /upload|submit|provide/.test(tt) && !isCall;
+  const isUpload = /upload|submit|provide|create/.test(tt) && !isCall;
 
   const STATUS_OPTIONS = ["not_started", "in_progress", "overdue", "complete"];
   const STATUS_LABELS = { not_started: "Not Started", in_progress: "In Progress", overdue: "Overdue", complete: "Complete" };
@@ -774,6 +774,16 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
           </div>
         </div>
 
+        {/* Go to Zoom — Call tasks only */}
+        {isCall && (
+          <div style={{ marginBottom: 20 }}>
+            <button onClick={() => showToast("Opening Zoom…")}
+              style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--purple)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "100%" }}>
+              <Icons.Video size={15} /> Go to Zoom
+            </button>
+          </div>
+        )}
+
         {/* Type-specific section */}
         {isCall ? (
           <div style={{ marginBottom: 20 }}>
@@ -792,7 +802,43 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
             </div>
           </div>
         ) : isUpload ? (
-          <UploadSection showToast={showToast} Icons={Icons} MOCK_UPLOADS={MOCK_UPLOADS} />
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Documents</FieldLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#F8F7FF" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(130,17,255,0.08)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.FileText size={15} /></span>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to work</div><div className="meta">Working draft</div></div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => showToast("Opening Google Docs…")}
+                      style={{ border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>Open in Google Docs</button>
+                    <button onClick={() => showToast("Downloading…")}
+                      style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                      <Icons.Download size={13} /> Download
+                    </button>
+                  </div>
+                </div>
+                <button onClick={() => showToast("Published to client.")}
+                  style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
+                  Publish to client
+                </button>
+              </div>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => showToast("Opening Google Docs…")}
+                      style={{ border: "1.5px solid var(--border)", color: "var(--text-secondary)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>Open in Google Docs</button>
+                    <button onClick={() => showToast("Downloading…")}
+                      style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--border)", color: "var(--text-secondary)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+                      <Icons.Download size={13} /> Download
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         ) : (
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>Documents</FieldLabel>
@@ -833,8 +879,8 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
           </div>
         )}
 
-        {/* Subtasks */}
-        {subRows.length > 0 && (
+        {/* Subtasks — hidden for Call tasks */}
+        {!isCall && subRows.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>Subtasks</FieldLabel>
             <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>

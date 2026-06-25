@@ -110,8 +110,8 @@ function AdminDashboard() {
     { icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)", title: "Review Cover Letter Template", status: "Ready for Review", client: "Sarah Klein", due: "May 1", action: "Review Draft" },
   ];
   const docsToCreate = [
-    { icon: "Upload", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Upload Resume v2", status: "Not Started", client: "Dana Okafor", due: "May 3", action: "Upload Doc" },
-    { icon: "Upload", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Upload LinkedIn Screenshot", status: "In Progress", client: "Priya Nair", due: "May 5", action: "Upload Doc" },
+    { icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Create Career Strategy Doc", status: "Not Started", client: "Dana Okafor", due: "May 3", action: "Create" },
+    { icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Create LinkedIn Audit", status: "In Progress", client: "Priya Nair", due: "May 5", action: "Create" },
   ];
 
   const recent = ADMIN_COMMENTS.slice(0, 3);
