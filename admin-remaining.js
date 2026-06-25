@@ -24,7 +24,6 @@ function AdminTasks() {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
   const [tab, setTab] = React.useState("By Client");
-  const [hideDone, setHideDone] = React.useState(false);
   const [me, setMe] = React.useState(false);
   const tabs = [["Reviews", 1], ["My Tasks", 3], ["By Client", ADM.PROJECTS.length], ["Board", 24]];
 
@@ -66,16 +65,55 @@ function AdminTasks() {
     );
   };
 
+  const [openClients, setOpenClients] = React.useState({});
+  const toggleClient = (name) => setOpenClients((prev) => ({ ...prev, [name]: !prev[name] }));
+
+  const clientGroups = ADM.CLIENTS.map((c) => ({
+    client: c,
+    projects: ADM.PROJECTS.filter((p) => p.client === c.name),
+  })).filter((g) => g.projects.length > 0);
+
   const ByClient = () => (
     <Card style={{ padding: 0, overflow: "hidden" }}>
-      {ADM.PROJECTS.map((p, i) => {
-        const pr = ADM.phaseProgress(p.phase);
+      {clientGroups.map(({ client, projects }, i) => {
+        const allTasks = projects.reduce((acc, p) => { const pr = ADM.phaseProgress(p.phase); return { done: acc.done + pr.done, total: acc.total + pr.total }; }, { done: 0, total: 0 });
+        const pct = allTasks.total ? (allTasks.done / allTasks.total) * 100 : 0;
+        const isOpen = openClients[client.name];
         return (
-          <div key={p.id} className="row clickable" style={{ gap: 14, padding: "13px 16px", borderTop: i ? "0.5px solid var(--border-light)" : "none", cursor: "pointer" }} onClick={() => useAdmin}>
-            <span style={{ width: 9, height: 9, borderRadius: 99, background: ADM.phaseColor(p.phase), flex: "0 0 9px" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, width: 160 }}>{p.client}</span>
-            <span className="pbar" style={{ flex: 1, height: 8 }}><div style={{ width: (pr.total ? pr.done / pr.total : 0) * 100 + "%", background: "var(--purple)" }} /></span>
-            <span className="meta" style={{ width: 60, textAlign: "right" }}>{pr.done}/{pr.total} tasks</span>
+          <div key={client.id} style={{ borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
+            <div className="row clickable" style={{ gap: 14, padding: "13px 16px", cursor: "pointer" }} onClick={() => toggleClient(client.name)}>
+              <span style={{ width: 9, height: 9, borderRadius: 99, background: "#00A06C", flex: "0 0 9px" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, width: 160 }}>{client.name}</span>
+              <span className="pbar" style={{ flex: 1, height: 8 }}><div style={{ width: pct + "%", background: "var(--purple)" }} /></span>
+              <span className="meta" style={{ width: 80, textAlign: "right" }}>{allTasks.done}/{allTasks.total} tasks</span>
+              <span style={{ color: "#AAA", display: "flex", transition: "transform .2s", transform: isOpen ? "rotate(180deg)" : "rotate(0)" }}><Icons.ChevronDown size={14} /></span>
+            </div>
+            {isOpen && (
+              <div style={{ padding: "0 16px 12px 36px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <div className="label" style={{ marginBottom: 4 }}>PROJECTS</div>
+                {projects.map((p) => {
+                  const pr = ADM.phaseProgress(p.phase);
+                  const ppct = pr.total ? (pr.done / pr.total) * 100 : 0;
+                  return (
+                    <div key={p.id} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", boxShadow: "var(--shadow-card)" }}>
+                      <div className="row between" style={{ marginBottom: 6 }}>
+                        <div className="row" style={{ gap: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>{p.name || p.client + " Project"}</span>
+                          <span className="badge" style={{ background: ADM.phaseColor(p.phase) + "1f", color: ADM.phaseColor(p.phase), fontWeight: 600 }}>{p.phase}</span>
+                          <APill status={p.status} />
+                        </div>
+                        <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => useAdmin}>View Project ↗</button>
+                      </div>
+                      <div className="meta" style={{ marginBottom: 8 }}>Writer: {p.writer} · Producer: {p.producer || "—"} · Started {p.start}</div>
+                      <div className="row" style={{ gap: 12, alignItems: "center" }}>
+                        <span className="pbar" style={{ flex: 1, height: 6 }}><div style={{ width: ppct + "%", background: "var(--purple)", height: "100%", borderRadius: 4 }} /></span>
+                        <span className="meta" style={{ whiteSpace: "nowrap" }}>{pr.done}/{pr.total} tasks</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
@@ -120,7 +158,6 @@ function AdminTasks() {
         <FilterPill label="Client" options={ADM.CLIENTS.map((c) => c.name)} active="All" onChange={() => {}} />
         <FilterPill label="Phase" options={ADM.PHASES} active="All" onChange={() => {}} />
         <FilterPill label="Assignee" options={ADM.TEAM.map((t) => t.name)} active="All" onChange={() => {}} />
-        <ToggleChip on={hideDone} onToggle={() => setHideDone((v) => !v)}>Hide Completed</ToggleChip>
       </FilterBar>
       <div className="admin-body">
         {tab === "Reviews" && <TaskTable rows={reviewTasks} />}
