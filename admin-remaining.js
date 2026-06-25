@@ -28,6 +28,7 @@ function AdminTasks() {
   const [selClient, setSelClient] = React.useState("All");
   const [selProject, setSelProject] = React.useState("All");
   const [activeTask, setActiveTask] = React.useState(null);
+  const [showNewTask, setShowNewTask] = React.useState(false);
   const [showCompleted, setShowCompleted] = React.useState(false);
   const tabs = [["My Tasks", 3], ["Board", 24]];
 
@@ -159,6 +160,7 @@ function AdminTasks() {
   return (
     <div>
       {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
+      {showNewTask && React.createElement(window.NewTaskModal, { onClose: () => setShowNewTask(false) })}
       <AdminHeader icon="ListChecks" title="Tasks" subtitle="Task management across all projects" />
       <div style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "0 32px" }}>
         <div className="tabs" style={{ marginBottom: 0, border: "none" }}>
@@ -173,7 +175,7 @@ function AdminTasks() {
               <Icons.X size={12} /> Clear filters
             </button>
           )}
-          <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New task…")}><Icons.Plus size={13} /> New Task</button>
+          <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setShowNewTask(true)}><Icons.Plus size={13} /> New Task</button>
         </>}>
         <FilterPill label="Client" options={clientNames} active={selClient} onChange={(v) => { setSelClient(v); setSelProject("All"); }} />
         {selClient !== "All" && <FilterPill label="Project" options={projectsForClient.map((p) => p.name)} active={selProject} onChange={setSelProject} />}

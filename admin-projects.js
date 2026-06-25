@@ -923,4 +923,4 @@ function AdminProjectDetail({ id }) {
   );
 }
 
-Object.assign(window, { AdminProjects, AdminProjectDetail });
+Object.assign(window, { AdminProjects, AdminProjectDetail, NewTaskModal });
