@@ -179,21 +179,23 @@ function FocusRightNow({ setActiveTask }) {
           ))}
         </div>
       </div>
-      {filtered.map((t, i) => (
-        <div key={i} onClick={() => setActiveTask(t)}
-          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, paddingLeft: 12, marginLeft: -12, borderRadius: "0 8px 8px 0", transition: "background .12s" }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
-          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-          <div style={{ width: 8, height: 8, borderRadius: 99, background: t.dot, flex: "0 0 8px" }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{t.client} · {t.status} · {t.due}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+        {filtered.map((t, i) => (
+          <div key={i} onClick={() => setActiveTask(t)}
+            style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, borderRadius: 10, background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.07)", border: "1px solid var(--border)", borderLeftColor: t.borderColor, transition: "box-shadow .15s, transform .15s" }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.11)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.07)"; e.currentTarget.style.transform = ""; }}>
+            <div style={{ width: 8, height: 8, borderRadius: 99, background: t.dot, flex: "0 0 8px" }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{t.client} · {t.status} · {t.due}</div>
+            </div>
+            <span style={{ background: t.badgeBg, color: t.badgeFg, fontSize: 11, fontWeight: 600, borderRadius: 99, padding: "3px 10px", whiteSpace: "nowrap" }}>{t.badge}</span>
+            <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "6px 14px", fontSize: 12 }}
+              onClick={(e) => { e.stopPropagation(); setActiveTask(t); }}>{t.action}</button>
           </div>
-          <span style={{ background: t.badgeBg, color: t.badgeFg, fontSize: 11, fontWeight: 600, borderRadius: 99, padding: "3px 10px", whiteSpace: "nowrap" }}>{t.badge}</span>
-          <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "6px 14px", fontSize: 12 }}
-            onClick={(e) => { e.stopPropagation(); setActiveTask(t); }}>{t.action}</button>
-        </div>
-      ))}
+        ))}
+      </div>
     </Card>
   );
 }
