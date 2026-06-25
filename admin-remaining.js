@@ -317,7 +317,7 @@ function AdminTasks() {
         <FilterPill label="Client" options={clientNames} active={selClient} onChange={(v) => { setSelClient(v); setSelProject("All"); }} />
         {selClient !== "All" && <FilterPill label="Project" options={projectsForClient.map((p) => p.name)} active={selProject} onChange={setSelProject} />}
         <FilterPill label="Phase" options={ADM.PHASES} active="All" onChange={() => {}} />
-        <FilterPill label="Task Type" options={["Deliverable", "Call", "Client Action", "Internal"]} active="All" onChange={() => {}} />
+        <FilterPill label="Task Type" options={["Call", "Review", "Upload", "Deliverable", "Other"]} active="All" onChange={() => {}} />
       </FilterBar>
       {projectTasksToShow && (
         <div className="admin-body" style={{ paddingBottom: 0 }}>
