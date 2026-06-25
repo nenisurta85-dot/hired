@@ -331,17 +331,26 @@ function AdminDashboard() {
           <DashboardBanner userName="Kate" />
         </div>
 
-        {/* Row 1: 3 equal columns */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16 }}>
-          <UpcomingCallsCard navigate={navigate} showToast={showToast} />
-          <RecentCommentsCard navigate={navigate} />
-          <WriterCapacityCard navigate={navigate} />
-        </div>
+        {/* Two-column outer grid: left (content) + right (sidebar — Writer + Projects same width) */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 30%", gap: 16 }}>
 
-        {/* Row 2: Focus Right Now (wide) + Projects (narrow) */}
-        <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", gap: 16 }}>
-          <FocusRightNow setActiveTask={setActiveTask} />
-          <ProjectsCard navigate={navigate} />
+          {/* Left column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Upcoming + Comments side by side */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <UpcomingCallsCard navigate={navigate} showToast={showToast} />
+              <RecentCommentsCard navigate={navigate} />
+            </div>
+            {/* Focus Right Now full left-column width */}
+            <FocusRightNow setActiveTask={setActiveTask} />
+          </div>
+
+          {/* Right column — both cards share identical width */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <WriterCapacityCard navigate={navigate} />
+            <ProjectsCard navigate={navigate} />
+          </div>
+
         </div>
 
       </div>
