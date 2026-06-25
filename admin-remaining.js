@@ -80,7 +80,7 @@ function AdminTasks() {
   const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
   const ACTION_LABEL = (title) => {
     const tt = (title || "").toLowerCase();
-    return /schedule|call|session/.test(tt) ? "Book Session" : /review/.test(tt) ? "Review Draft" : "Open Doc";
+    return /schedule|call|session/.test(tt) ? "Book Session" : /review/.test(tt) ? "Review Draft" : "Upload Doc";
   };
 
   const TaskCards = ({ rows }) => (
@@ -619,6 +619,73 @@ function AdminKB() {
 
 Object.assign(window, { AdminTasks, AdminDocuments, AdminSchedule, AdminInbox, AdminTeam, AdminPackages, AdminTemplates, AdminKB });
 
+/* Shared upload area used inside AdminTaskModal for Upload-type tasks */
+function UploadSection({ showToast, Icons, MOCK_UPLOADS }) {
+  const [dragOver, setDragOver] = React.useState(false);
+  const [uploaded, setUploaded] = React.useState(MOCK_UPLOADS || []);
+  const inputRef = React.useRef(null);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (!files.length) return;
+    const newEntries = files.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(0) + " KB", date: "just now" }));
+    setUploaded(prev => [...newEntries, ...prev]);
+    showToast(`${files.length} file${files.length > 1 ? "s" : ""} uploaded.`);
+  };
+
+  const handleBrowse = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const newEntries = files.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(0) + " KB", date: "just now" }));
+    setUploaded(prev => [...newEntries, ...prev]);
+    showToast(`${files.length} file${files.length > 1 ? "s" : ""} uploaded.`);
+    e.target.value = "";
+  };
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 6 }}>Upload Files</div>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => inputRef.current && inputRef.current.click()}
+        style={{ border: `2px dashed ${dragOver ? "#00A06C" : "var(--border)"}`, borderRadius: 10, padding: "24px 16px", background: dragOver ? "rgba(0,160,108,0.05)" : "#F4FBF7", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "border-color 150ms, background 150ms", marginBottom: uploaded.length ? 10 : 0 }}>
+        <span style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(0,160,108,0.1)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Upload size={18} /></span>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#00A06C" }}>Drop files here or browse</div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>PDF, DOCX, PNG, JPG — max 20 MB</div>
+        </div>
+        <input ref={inputRef} type="file" multiple style={{ display: "none" }} onChange={handleBrowse} />
+      </div>
+      {uploaded.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {uploaded.map((f, i) => (
+            <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={14} /></span>
+                <div><div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div><div className="meta">{f.size} · Uploaded {f.date}</div></div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={(e) => { e.stopPropagation(); showToast("Downloading…"); }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, border: "1.5px solid var(--border)", color: "var(--text-muted)", background: "transparent", borderRadius: 20, padding: "5px 12px", fontSize: 12, cursor: "pointer" }}>
+                  <Icons.Download size={12} /> Download
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); setUploaded(prev => prev.filter((_, j) => j !== i)); }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, border: "1.5px solid var(--border)", color: "#E53935", background: "transparent", borderRadius: 99, fontSize: 12, cursor: "pointer" }}>
+                  <Icons.X size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* Expose a standalone AdminTaskModal for use from other admin screens */
 window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   const { Icons } = window;
@@ -725,23 +792,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
             </div>
           </div>
         ) : isUpload ? (
-          <div style={{ marginBottom: 20 }}>
-            <FieldLabel>Uploaded Files</FieldLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {MOCK_UPLOADS.map((f, i) => (
-                <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", background: "#F4FBF7", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.FileText size={15} /></span>
-                    <div><div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div><div className="meta">{f.size} · Uploaded {f.date}</div></div>
-                  </div>
-                  <button onClick={() => showToast("Downloading…")}
-                    style={{ display: "flex", alignItems: "center", gap: 6, border: "1.5px solid var(--purple)", color: "var(--purple)", background: "transparent", borderRadius: 20, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
-                    <Icons.Download size={13} /> Download
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <UploadSection showToast={showToast} Icons={Icons} MOCK_UPLOADS={MOCK_UPLOADS} />
         ) : (
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>Documents</FieldLabel>

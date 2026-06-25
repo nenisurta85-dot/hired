@@ -102,16 +102,16 @@ function AdminDashboard() {
   const onboarding = ADM.CLIENTS.filter((c) => c.phase === "Onboarding").length;
 
   const callsToSchedule = [
-    { icon: "Calendar", iconBg: "rgba(130,17,255,0.1)", iconFg: "var(--purple)", title: "Schedule Working Session #2", status: "Action Required", client: "Maya Chen", due: "Apr 30", action: "Book Session" },
-    { icon: "Calendar", iconBg: "rgba(130,17,255,0.1)", iconFg: "var(--purple)", title: "Schedule Working Session #1", status: "Action Required", client: "Priya Nair", due: "May 2", action: "Book Session" },
+    { icon: "Calendar", iconBg: "rgba(229,115,0,0.1)", iconFg: "#E57300", title: "Schedule Working Session #2", status: "Action Required", client: "Maya Chen", due: "Apr 30", action: "Book Session" },
+    { icon: "Calendar", iconBg: "rgba(229,115,0,0.1)", iconFg: "#E57300", title: "Schedule Working Session #1", status: "Action Required", client: "Priya Nair", due: "May 2", action: "Book Session" },
   ];
   const docsToReview = [
-    { icon: "FileText", iconBg: "rgba(200,0,90,0.1)", iconFg: "#C8005A", title: "Review Résumé — Draft v1", status: "Ready for Review", client: "Maya Chen", due: "Apr 28", action: "Review Draft" },
-    { icon: "FileText", iconBg: "rgba(200,0,90,0.1)", iconFg: "#C8005A", title: "Review Cover Letter Template", status: "Ready for Review", client: "Sarah Klein", due: "May 1", action: "Review Draft" },
+    { icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)", title: "Review Résumé — Draft v1", status: "Ready for Review", client: "Maya Chen", due: "Apr 28", action: "Review Draft" },
+    { icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)", title: "Review Cover Letter Template", status: "Ready for Review", client: "Sarah Klein", due: "May 1", action: "Review Draft" },
   ];
   const docsToCreate = [
-    { icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Career Strategy Doc", status: "Not Started", client: "Dana Okafor", due: "May 3", action: "Open Doc" },
-    { icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "LinkedIn Audit", status: "In Progress", client: "Priya Nair", due: "May 5", action: "Open Doc" },
+    { icon: "Upload", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Upload Resume v2", status: "Not Started", client: "Dana Okafor", due: "May 3", action: "Upload Doc" },
+    { icon: "Upload", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Upload LinkedIn Screenshot", status: "In Progress", client: "Priya Nair", due: "May 5", action: "Upload Doc" },
   ];
 
   const recent = ADMIN_COMMENTS.slice(0, 3);
@@ -178,7 +178,7 @@ function AdminDashboard() {
 
         {/* ROW 2 — four task queue cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          <AdminQueueCard title="Calls to Schedule" icon="Phone" accent="var(--purple)" tasks={callsToSchedule} emptyText="No calls to schedule" onTaskClick={setActiveTask} />
+          <AdminQueueCard title="Calls to Schedule" icon="Phone" accent="#E57300" tasks={callsToSchedule} emptyText="No calls to schedule" onTaskClick={setActiveTask} />
           <AdminQueueCard title="Documents to Review" icon="Eye" accent="#C8005A" tasks={docsToReview} emptyText="All caught up!" onTaskClick={setActiveTask} />
           <AdminQueueCard title="Documents to Create" icon="FilePlus" accent="#00A06C" tasks={docsToCreate} emptyText="No documents in queue" onTaskClick={setActiveTask} />
 
