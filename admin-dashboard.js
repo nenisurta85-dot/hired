@@ -161,7 +161,7 @@ function FocusRightNow({ setActiveTask }) {
     <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 6px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
       <div className="row between" style={{ marginBottom: 14 }}>
         <div className="row" style={{ gap: 8 }}>
-          <span style={{ color: "var(--raspberry)", display: "flex" }}><Icons.Zap size={15} /></span>
+          <span style={{ color: "var(--raspberry)", display: "flex" }}><Icons.Sparkle size={15} /></span>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Focus Right Now</span>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
