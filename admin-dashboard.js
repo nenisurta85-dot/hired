@@ -123,8 +123,8 @@ function WriterCapacityCard({ navigate }) {
   const writers = [
     { name: "Lourdes", fullName: "Lourdes H-D", init: "LH", cur: 3, max: 8 },
     { name: "Jhoneth", fullName: "Jhoneth Briones", init: "JB", cur: 6, max: 8 },
-    { name: "Kate", fullName: "Kate Wade", init: "KW", cur: 8, max: 8, overloaded: true },
     { name: "Mimi", fullName: "Mimi Bishop", init: "MB", cur: 1, max: 8 },
+    { name: "Kate", fullName: "Kate Wade", init: "KW", cur: 8, max: 8, overloaded: true, role: "Editor" },
   ];
 
   const goToWriter = (w) => {
@@ -149,6 +149,7 @@ function WriterCapacityCard({ navigate }) {
               <div className="row" style={{ gap: 9 }}>
                 <div style={{ width: 26, height: 26, borderRadius: 99, background: "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{w.init}</div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{w.name}</span>
+                {w.role && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 7px", background: "rgba(255,107,53,0.12)", color: "#CC4A10" }}>{w.role}</span>}
               </div>
               <div className="row" style={{ gap: 6 }}>
                 {w.overloaded && <span style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={13} /></span>}

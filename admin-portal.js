@@ -4,7 +4,7 @@
 (function () {
   const TEAM = [
     { id: "jb", name: "Jhoneth Briones", email: "jhoneth@getherhired.com", initials: "JB", roles: ["admin", "writer"], cap: "0 / 5", load: 35, status: "Active", color: "#8211FF" },
-    { id: "kw", name: "Kate Wade", email: "kate@getherhired.com", initials: "KW", roles: ["admin", "writer"], cap: "3 / 5", load: 62, status: "Active", color: "#C8005A", flagged: true },
+    { id: "kw", name: "Kate Wade", email: "kate@getherhired.com", initials: "KW", roles: ["admin", "editor"], cap: "3 / 5", load: 62, status: "Active", color: "#C8005A", flagged: true },
     { id: "lh", name: "Lourdes H-D", email: "lourdes@getherhired.com", initials: "LH", roles: ["admin", "writer"], cap: "2 / 5", load: 48, status: "Active", color: "#185FA5" },
     { id: "mb", name: "Mimi Bishop", email: "mimi@getherhired.com", initials: "MB", roles: ["writer"], cap: "4 / 5", load: 80, status: "Active", color: "#0F9E75" },
     { id: "ed", name: "Erin Doyle", email: "erin@getherhired.com", initials: "ED", roles: ["editor"], cap: "1 / 5", load: 22, status: "Inactive", color: "#854F0B" },
@@ -23,12 +23,12 @@
   }[p] || "#888");
 
   const CLIENTS = [
-    { id: "c1", first: "Maya", last: "Chen", name: "Maya Chen", email: "maya.chen@gmail.com", initials: "MC", color: "#8211FF", stage: "Active", pkg: "I'm A Big Freaking Deal", next: "May 1 · 2:00 PM", resume: true, linkedin: false, created: "Apr 1, 2026", writer: "Kate Wade", producer: "Lourdes H-D", phase: "Week 2", status: "On Track", payment: true },
-    { id: "c2", first: "Sarah", last: "Klein", name: "Sarah Klein", email: "sarah@example.com", initials: "SK", color: "#C8005A", stage: "Active", pkg: "The Scroll-Stopper", next: "May 3 · 11:00 AM", resume: true, linkedin: true, created: "Mar 18, 2026", writer: "Kate Wade", producer: "Lourdes H-D", phase: "Week 1", status: "On Track", payment: true },
+    { id: "c1", first: "Maya", last: "Chen", name: "Maya Chen", email: "maya.chen@gmail.com", initials: "MC", color: "#8211FF", stage: "Active", pkg: "I'm A Big Freaking Deal", next: "May 1 · 2:00 PM", resume: true, linkedin: false, created: "Apr 1, 2026", editor: "Kate Wade", producer: "Lourdes H-D", phase: "Week 2", status: "On Track", payment: true },
+    { id: "c2", first: "Sarah", last: "Klein", name: "Sarah Klein", email: "sarah@example.com", initials: "SK", color: "#C8005A", stage: "Active", pkg: "The Scroll-Stopper", next: "May 3 · 11:00 AM", resume: true, linkedin: true, created: "Mar 18, 2026", editor: "Kate Wade", producer: "Lourdes H-D", phase: "Week 1", status: "On Track", payment: true },
     { id: "c3", first: "Priya", last: "Nair", name: "Priya Nair", email: "priya.nair@outlook.com", initials: "PN", color: "#185FA5", stage: "Active", pkg: "Tits Up", next: "—", resume: false, linkedin: false, created: "Apr 8, 2026", writer: "Mimi Bishop", producer: "Jhoneth Briones", phase: "Week 1", status: "Behind", payment: true },
     { id: "c4", first: "Dana", last: "Okafor", name: "Dana Okafor", email: "dana.o@gmail.com", initials: "DO", color: "#0F9E75", stage: "Active", pkg: "I'm A Big Freaking Deal", next: "May 6 · 9:30 AM", resume: true, linkedin: true, created: "Mar 30, 2026", writer: "Lourdes H-D", producer: "Jhoneth Briones", phase: "Week 3", status: "On Track", payment: true },
     { id: "c5", first: "Renee", last: "Alvarez", name: "Renee Alvarez", email: "renee.alvarez@gmail.com", initials: "RA", color: "#854F0B", stage: "Active", pkg: "The Scroll-Stopper", next: "—", resume: true, linkedin: false, created: "Apr 12, 2026", writer: "Mimi Bishop", producer: "Lourdes H-D", phase: "Onboarding", status: "Behind", payment: false },
-    { id: "c6", first: "Tessa", last: "Wright", name: "Tessa Wright", email: "tessa.w@gmail.com", initials: "TW", color: "#8211FF", stage: "Active", pkg: "Tits Up", next: "May 2 · 4:00 PM", resume: true, linkedin: true, created: "Apr 5, 2026", writer: "Kate Wade", producer: "Jhoneth Briones", phase: "Week 2", status: "On Track", payment: true },
+    { id: "c6", first: "Tessa", last: "Wright", name: "Tessa Wright", email: "tessa.w@gmail.com", initials: "TW", color: "#8211FF", stage: "Active", pkg: "Tits Up", next: "May 2 · 4:00 PM", resume: true, linkedin: true, created: "Apr 5, 2026", editor: "Kate Wade", producer: "Jhoneth Briones", phase: "Week 2", status: "On Track", payment: true },
     { id: "c7", first: "Leah", last: "Goldberg", name: "Leah Goldberg", email: "leah.g@gmail.com", initials: "LG", color: "#C8005A", stage: "Lead", pkg: "—", next: "Apr 30 · 1:00 PM", resume: false, linkedin: false, created: "Apr 20, 2026", writer: "Unassigned", producer: "Unassigned", phase: "Onboarding", status: "On Track", payment: false },
     { id: "c8", first: "Nina", last: "Patel", name: "Nina Patel", email: "nina.patel@gmail.com", initials: "NP", color: "#185FA5", stage: "Lead", pkg: "—", next: "—", resume: false, linkedin: false, created: "Apr 22, 2026", writer: "Unassigned", producer: "Unassigned", phase: "Onboarding", status: "On Track", payment: false },
   ];
@@ -148,7 +148,7 @@
   const PROJECTS = CLIENTS.filter((c) => c.stage === "Active").map((c, i) => ({
     id: "p" + (i + 1), clientId: c.id, name: c.name + " Project", client: c.name,
     phase: c.phase, status: c.status, writer: c.writer, producer: c.producer,
-    editor: i % 2 ? "Erin Doyle" : "Unassigned", pkg: c.pkg,
+    editor: c.editor || (i % 2 ? "Erin Doyle" : "Unassigned"), pkg: c.pkg,
     start: c.created, end: "May 22, 2026",
   }));
 
