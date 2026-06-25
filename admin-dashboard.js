@@ -1,19 +1,20 @@
 /* ============================================================
    Admin · Dashboard (Command Center)  →  window.AdminDashboard
-   Row 1: Upcoming Calls · Needs Attention · Recent Comments
-   Row 2: Calls to Schedule · Documents to Review · Documents to Create
-   Row 3: Recent Comments (extended feed)
+   Layout:
+     Banner  — full-width hero with HiREd brand art
+     Row 1   — Upcoming Calls | Recent Comments | Writer Capacity
+     Row 2   — Focus Right Now (wide) | Projects (narrow, dark)
    ============================================================ */
 
 function ACard({ title, icon, link, onLink, children, borderLeft, style }) {
   const { Icons } = window;
   const IconCmp = icon ? Icons[icon] : null;
   return (
-    <Card style={{ borderRadius: 10, ...(borderLeft ? { borderLeft: `3px solid ${borderLeft}` } : {}), ...style }}>
+    <Card style={{ borderRadius: 12, ...(borderLeft ? { borderLeft: `3px solid ${borderLeft}` } : {}), ...style }}>
       <div className="row between" style={{ marginBottom: 14 }}>
         <div className="row" style={{ gap: 8 }}>
           {IconCmp && <span style={{ color: borderLeft || "var(--text-secondary)", display: "flex" }}><IconCmp size={16} /></span>}
-          <span style={{ fontSize: 13, fontWeight: 600, color: borderLeft || "var(--text-primary)" }}>{title}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>{title}</span>
         </div>
         {link && <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={onLink}>{link}</button>}
       </div>
@@ -22,199 +23,311 @@ function ACard({ title, icon, link, onLink, children, borderLeft, style }) {
   );
 }
 
+/* ---------- Comments data ---------- */
 const ADMIN_COMMENTS = [
-  { id: "ac1", who: "Kate Wade", initials: "KW", color: "var(--purple)", on: "Résumé — Draft v1", client: "Maya Chen", when: "2h ago", unread: true, role: "Team", text: "First draft is looking great — please review the executive summary." },
-  { id: "ac2", who: "Mimi Bishop", initials: "MB", color: "var(--purple)", on: "LinkedIn Audit", client: "Priya Nair", when: "5h ago", unread: true, role: "Team", text: "A few questions on headline direction before I finalize." },
-  { id: "ac3", who: "Maya Chen", initials: "MC", color: "#C8005A", on: "Résumé — Draft v1", client: "Maya Chen", when: "2h ago", unread: true, role: "Client", text: "Love the direction! A few small edits on the opening paragraph." },
-  { id: "ac4", who: "Lourdes H-D", initials: "LH", color: "var(--purple)", on: "Cover Letter Template", client: "Sarah Klein", when: "1d ago", unread: false, role: "Team", text: "Template approved — moving to final." },
+  { id: "ac1", who: "Priya Nair", initials: "PR", color: "#C8005A", on: "Résumé — Draft v2", client: "Priya Nair", when: "2h ago", unread: true, role: "Client", text: "Love the summary section but I think we need to re…" },
+  { id: "ac2", who: "Maya Chen", initials: "MC", color: "#C8005A", on: "Cover Letter Template", client: "Maya Chen", when: "4h ago", unread: true, role: "Client", text: "This feels much more like me. Can we adjust the ope…" },
+  { id: "ac3", who: "Dana Okafor", initials: "DO", color: "#888", on: "LinkedIn Profile", client: "Dana Okafor", when: "1d ago", unread: false, role: "Client", text: "The headline is perfect. Happy with everything here…" },
+  { id: "ac4", who: "Kate Wade", initials: "KW", color: "var(--purple)", on: "Résumé — Draft v1", client: "Maya Chen", when: "2h ago", unread: true, role: "Team", text: "First draft is looking great — please review the executive summary." },
 ];
 
+/* ---------- Upcoming Calls card ---------- */
+function UpcomingCallsCard({ navigate, showToast }) {
+  const { Icons } = window;
+  const calls = [
+    { client: "Maya Chen", initials: "MC", color: "#C8005A", time: "2:00 PM", badge: "Review!" },
+    { client: "Tessa Wright", initials: "TW", color: "#555", time: "4:00 PM", badge: null },
+    { client: "Tessa Wright", initials: "TW", color: "#555", time: "4:00 PM", badge: null },
+    { client: "Tessa Wright", initials: "TW", color: "#555", time: "4:00 PM", badge: null },
+  ];
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 6px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Upcoming Calls</span>
+      </div>
+      {calls.map((c, i) => (
+        <div key={i} className="row between" style={{ padding: "9px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "center" }}>
+          <div className="row" style={{ gap: 10, flex: 1, minWidth: 0 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 99, background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flex: "0 0 32px" }}>{c.initials}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>{c.client}</div>
+              <div className="meta" style={{ fontSize: 12 }}>{c.time}</div>
+            </div>
+          </div>
+          {c.badge && (
+            <span style={{ background: "rgba(200,0,90,0.12)", color: "#C8005A", fontSize: 11, fontWeight: 600, borderRadius: 99, padding: "2px 8px", marginRight: 8, whiteSpace: "nowrap" }}>{c.badge}</span>
+          )}
+          {c.badge
+            ? <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--purple)", fontWeight: 600, whiteSpace: "nowrap" }} onClick={() => showToast("Opening Zoom…")}>Join Zoom →</button>
+            : <button className="btn btn-ghost" style={{ fontSize: 12, whiteSpace: "nowrap" }} onClick={() => showToast("Opening Zoom…")}>Join →</button>
+          }
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Recent Comments card ---------- */
 function RecentCommentsCard({ navigate }) {
   const [tab, setTab] = React.useState("All");
   const filtered = tab === "All" ? ADMIN_COMMENTS : ADMIN_COMMENTS.filter(c => c.role === tab);
   const shown = filtered.slice(0, 3);
   return (
-    <ACard title="Recent Comments" icon="MessageCircle" link="View all \u2192" onLink={() => navigate("#/admin/inbox")}>
-      <div style={{ display: "flex", gap: 4, marginBottom: 12, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
-        {["All", "Client", "Team"].map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px", borderRadius: 6, cursor: "pointer", border: "none", background: tab === t ? "var(--purple)" : "transparent", color: tab === t ? "#fff" : "var(--text-muted)" }}>{t}</button>
-        ))}
+    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div className="row between" style={{ marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Recent Comments</span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {["All", "Client", "Team"].map((t) => (
+            <button key={t} onClick={() => setTab(t)}
+              style={{ fontSize: 11, fontWeight: 500, padding: "3px 9px", borderRadius: 99, cursor: "pointer", border: "1px solid", background: tab === t ? "var(--purple)" : "transparent", color: tab === t ? "#fff" : "var(--text-muted)", borderColor: tab === t ? "var(--purple)" : "var(--border)" }}>
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
       {shown.map((c, i) => (
-        <div key={c.id} className="row" style={{ gap: 10, padding: "6px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "flex-start" }}>
+        <div key={c.id} className="row" style={{ gap: 10, padding: "8px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "flex-start" }}>
           <div style={{ position: "relative", flex: "0 0 28px" }}>
-            <Avatar initials={c.initials} color={c.role === "Client" ? "#C8005A" : "var(--purple)"} size={28} />
+            <div style={{ width: 28, height: 28, borderRadius: 99, background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{c.initials}</div>
             {c.unread && <span style={{ position: "absolute", right: -1, bottom: -1, width: 6, height: 6, borderRadius: 99, background: "#C8005A", border: "1.5px solid #fff" }} />}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12 }}><span style={{ fontWeight: 600 }}>{c.who}</span><span className="meta"> · {c.when}</span></div>
-            <div style={{ fontSize: 11, color: "#C8005A", fontWeight: 500 }}>on {c.on}</div>
+            <div style={{ fontSize: 11, color: "var(--purple)", fontWeight: 500, marginBottom: 2 }}>{c.on}</div>
             <div style={{ fontSize: 12, color: "#888", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.text}</div>
           </div>
         </div>
       ))}
       {shown.length === 0 && <div className="meta" style={{ textAlign: "center", padding: "12px 0" }}>No {tab.toLowerCase()} comments</div>}
-    </ACard>
-  );
-}
-/* Client-portal-style task card for admin queues */
-function AdminQueueCard({ title, icon, accent, tasks, emptyText, onTaskClick }) {
-  const { Icons } = window;
-  const HeadIcon = Icons[icon];
-  return (
-    <Card style={{ borderRadius: 10, borderLeft: `3px solid ${accent}`, padding: 0, overflow: "hidden" }}>
-      <div className="row" style={{ gap: 8, padding: "14px 16px 10px" }}>
-        <span style={{ color: accent, display: "flex" }}><HeadIcon size={15} /></span>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".6px", textTransform: "uppercase", color: "var(--text-secondary)" }}>{title}</span>
-      </div>
-      {tasks.length ? tasks.map((t, i) => (
-        <div key={i} className="row" style={{ gap: 12, padding: "12px 16px", borderTop: "0.5px solid var(--border-light)", cursor: "pointer" }} onClick={() => onTaskClick && onTaskClick(t)}>
-          <span style={{ width: 36, height: 36, borderRadius: 99, flex: "0 0 36px", background: t.iconBg, color: t.iconFg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {React.createElement(Icons[t.icon] || Icons.FileText, { size: 16 })}
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{t.title}</div>
-            <div className="row" style={{ gap: 8, marginTop: 5, flexWrap: "wrap" }}>
-              <Badge status={t.status} />
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-              <span>{t.client}</span>
-              {t.due && <><span>·</span><span style={{ color: "var(--text-muted)" }}>{t.due}</span></>}
-            </div>
-          </div>
-          <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "7px 12px" }} onClick={(e) => { e.stopPropagation(); onTaskClick && onTaskClick(t); }}>{t.action}</button>
-        </div>
-      )) : (
-        <div style={{ padding: "20px 16px", textAlign: "center" }}><span className="meta">{emptyText}</span></div>
-      )}
-    </Card>
+    </div>
   );
 }
 
+/* ---------- Writer Capacity card ---------- */
+function WriterCapacityCard({ navigate }) {
+  const { Icons } = window;
+  const writers = [
+    { name: "Lourdes", init: "LH", cur: 3, max: 8 },
+    { name: "Jhoneth", init: "JB", cur: 6, max: 8 },
+    { name: "Kate", init: "KW", cur: 8, max: 8, overloaded: true },
+    { name: "Mimi", init: "MB", cur: 1, max: 8 },
+  ];
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Writer Capacity</span>
+      </div>
+      {writers.map((w, i) => {
+        const pct = Math.round((w.cur / w.max) * 100);
+        const barColor = pct <= 50 ? "#00A06C" : pct <= 80 ? "#E57300" : "#E53935";
+        return (
+          <div key={i} style={{ padding: "10px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
+            <div className="row between" style={{ marginBottom: 6 }}>
+              <div className="row" style={{ gap: 9 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 99, background: "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{w.init}</div>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{w.name}</span>
+              </div>
+              <div className="row" style={{ gap: 6 }}>
+                {w.overloaded && <span style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={13} /></span>}
+                <span style={{ fontSize: 12, color: "#888" }}>{w.cur}/{w.max}</span>
+              </div>
+            </div>
+            <div style={{ height: 5, borderRadius: 3, background: "#F0F0F0", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: pct + "%", background: barColor, borderRadius: 3, transition: "width .3s" }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- Focus Right Now card ---------- */
+function FocusRightNow({ setActiveTask }) {
+  const [tab, setTab] = React.useState("All");
+  const { Icons } = window;
+
+  const allTasks = [
+    { type: "Call", title: "Schedule call", client: "Maya Chen", status: "action required", due: "Apr 28", action: "Book", borderColor: "#E57300", dot: "#E57300", badge: "Call", badgeBg: "rgba(229,115,0,0.12)", badgeFg: "#B85C00", icon: "Calendar", iconBg: "rgba(229,115,0,0.1)", iconFg: "#E57300" },
+    { type: "Call", title: "Schedule call", client: "Maya Chen", status: "action required", due: "Apr 28", action: "Book", borderColor: "#E57300", dot: "#E57300", badge: "Call", badgeBg: "rgba(229,115,0,0.12)", badgeFg: "#B85C00", icon: "Calendar", iconBg: "rgba(229,115,0,0.1)", iconFg: "#E57300" },
+    { type: "Review", title: "Review doc", client: "Maya Chen", status: "ready", due: "Apr 28", action: "Review", borderColor: "#8211FF", dot: "#8211FF", badge: "Review", badgeBg: "rgba(130,17,255,0.1)", badgeFg: "#6009CC", icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)" },
+    { type: "Review", title: "Review doc", client: "Maya Chen", status: "ready", due: "Apr 28", action: "Review", borderColor: "#8211FF", dot: "#8211FF", badge: "Review", badgeBg: "rgba(130,17,255,0.1)", badgeFg: "#6009CC", icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)" },
+    { type: "Create", title: "Create doc", client: "Dana Okafor", status: "not started", due: "Apr 28", action: "Open", borderColor: "#00A06C", dot: "#00A06C", badge: "Create", badgeBg: "rgba(0,160,108,0.1)", badgeFg: "#007A52", icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C" },
+  ];
+
+  const filtered = tab === "All" ? allTasks : allTasks.filter(t => t.type === tab);
+
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: "18px 18px 6px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <div className="row" style={{ gap: 8 }}>
+          <span style={{ color: "var(--raspberry)", display: "flex" }}><Icons.Zap size={15} /></span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Focus Right Now</span>
+        </div>
+        <div style={{ display: "flex", gap: 4 }}>
+          {["All", "Call", "Review", "Create"].map((t) => (
+            <button key={t} onClick={() => setTab(t)}
+              style={{ fontSize: 11, fontWeight: 500, padding: "4px 11px", borderRadius: 99, cursor: "pointer", border: "1px solid", background: tab === t ? "var(--purple)" : "transparent", color: tab === t ? "#fff" : "var(--text-muted)", borderColor: tab === t ? "var(--purple)" : "var(--border)" }}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      {filtered.map((t, i) => (
+        <div key={i} onClick={() => setActiveTask(t)}
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, paddingLeft: 12, marginLeft: -12 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 99, background: t.dot, flex: "0 0 8px" }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{t.client} · {t.status} · {t.due}</div>
+          </div>
+          <span style={{ background: t.badgeBg, color: t.badgeFg, fontSize: 11, fontWeight: 600, borderRadius: 99, padding: "3px 10px", whiteSpace: "nowrap" }}>{t.badge}</span>
+          <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "6px 14px", fontSize: 12 }}
+            onClick={(e) => { e.stopPropagation(); setActiveTask(t); }}>{t.action}</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Projects summary card (dark) ---------- */
+function ProjectsCard({ navigate }) {
+  const { ADM } = window;
+  const behind = ADM.PROJECTS.filter(p => p.status === "Behind").length;
+  const onTrack = ADM.PROJECTS.filter(p => p.status === "On Track").length;
+  const rows = [
+    { label: "Overdue",    count: behind,   dot: "#E53935", key: "behind" },
+    { label: "At Risk",    count: 1,        dot: "#E57300", key: "risk" },
+    { label: "On Track",   count: onTrack,  dot: "#00A06C", key: "on-track" },
+    { label: "90-day",     count: 3,        dot: "#1A8A9A", key: "90day" },
+  ];
+  return (
+    <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 1px 4px rgba(0,0,0,0.18)" }}>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Projects</span>
+      </div>
+      {rows.map((r, i) => (
+        <div key={r.key} className="row between" style={{ padding: "11px 0", borderTop: i ? "0.5px solid rgba(255,255,255,0.08)" : "none", alignItems: "center" }}>
+          <div className="row" style={{ gap: 10 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 99, background: r.dot, flex: "0 0 8px" }} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{r.count}</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>{r.label}</span>
+          </div>
+          <button onClick={() => navigate("#/admin/projects")}
+            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>
+            View →
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- HiREd Hero Banner ---------- */
+function DashboardBanner({ userName }) {
+  const today = new Date();
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const dateStr = `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}`;
+
+  return (
+    <div style={{
+      position: "relative",
+      borderRadius: 14,
+      overflow: "hidden",
+      marginBottom: 20,
+      height: 110,
+      background: "linear-gradient(135deg, #1A0840 0%, #2D1060 40%, #3B1878 70%, #2A0F5C 100%)",
+    }}>
+      {/* Background art — faint illustrated layer */}
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.18 }} viewBox="0 0 900 110" preserveAspectRatio="xMidYMid slice">
+        {/* Guitar silhouette */}
+        <ellipse cx="340" cy="75" rx="28" ry="22" fill="none" stroke="#9B6FD8" strokeWidth="2.5"/>
+        <ellipse cx="340" cy="75" rx="14" ry="11" fill="none" stroke="#9B6FD8" strokeWidth="1.5"/>
+        <rect x="337" y="20" width="6" height="40" rx="3" fill="none" stroke="#9B6FD8" strokeWidth="2"/>
+        <line x1="320" y1="22" x2="360" y2="22" stroke="#9B6FD8" strokeWidth="1.5"/>
+        {[0,1,2,3,4,5].map(n => <line key={n} x1="315" y1={55+n*4} x2="365" y2={55+n*4} stroke="#9B6FD8" strokeWidth="0.8"/>)}
+        {/* Palm tree */}
+        <line x1="610" y1="110" x2="610" y2="45" stroke="#9B6FD8" strokeWidth="3"/>
+        <path d="M610,48 C595,35 575,38 570,50 C585,42 600,48 610,48Z" fill="#9B6FD8"/>
+        <path d="M610,48 C625,35 645,38 650,50 C635,42 620,48 610,48Z" fill="#9B6FD8"/>
+        <path d="M610,48 C605,30 610,18 620,15 C615,28 610,38 610,48Z" fill="#9B6FD8"/>
+        {/* Smiley */}
+        <circle cx="480" cy="62" r="22" fill="none" stroke="#9B6FD8" strokeWidth="2"/>
+        <circle cx="472" cy="56" r="3" fill="#9B6FD8"/>
+        <circle cx="488" cy="56" r="3" fill="#9B6FD8"/>
+        <path d="M472,70 Q480,78 488,70" fill="none" stroke="#9B6FD8" strokeWidth="2" strokeLinecap="round"/>
+        {/* Lightning bolt */}
+        <path d="M200,20 L192,48 L200,48 L192,80 L210,45 L200,45Z" fill="#9B6FD8"/>
+      </svg>
+
+      {/* Stars */}
+      {[
+        { x: 415, y: 18, s: 18, rot: 15 },
+        { x: 445, y: 8, s: 12, rot: -10 },
+        { x: 460, y: 28, s: 22, rot: 5 },
+      ].map((st, i) => (
+        <svg key={i} style={{ position: "absolute", left: st.x, top: st.y, transform: `rotate(${st.rot}deg)` }} width={st.s} height={st.s} viewBox="0 0 24 24">
+          <path d="M12 2 L14.5 9.5 L22 9.5 L16 14.5 L18.5 22 L12 17.5 L5.5 22 L8 14.5 L2 9.5 L9.5 9.5Z" fill="#1A0840" stroke="#9B6FD8" strokeWidth="1.5"/>
+        </svg>
+      ))}
+
+      {/* HiREd text — right side */}
+      <div style={{
+        position: "absolute",
+        right: 24,
+        top: "50%",
+        transform: "translateY(-50%)",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontWeight: 900,
+        fontSize: 52,
+        color: "rgba(130,17,255,0.35)",
+        letterSpacing: "-1px",
+        lineHeight: 1,
+        userSelect: "none",
+        textTransform: "uppercase",
+      }}>HiREd</div>
+
+      {/* Text content */}
+      <div style={{ position: "relative", zIndex: 1, padding: "22px 28px" }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 5 }}>
+          Good morning, <span style={{ color: "#C8005A" }}>{userName || "Kate"}</span>
+        </div>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
+          {dateStr} · 2 calls today · Kate is at capacity
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Main Dashboard ---------- */
 function AdminDashboard() {
   const { navigate, showToast } = useAdmin();
   const { ADM, Icons } = window;
-  const [range, setRange] = React.useState("Today");
   const [activeTask, setActiveTask] = React.useState(null);
-
-  const behind = ADM.PROJECTS.filter((p) => p.status === "Behind");
-  const onTrack = ADM.PROJECTS.filter((p) => p.status === "On Track").length;
-  const onboarding = ADM.CLIENTS.filter((c) => c.phase === "Onboarding").length;
-
-  const callsToSchedule = [
-    { icon: "Calendar", iconBg: "rgba(229,115,0,0.1)", iconFg: "#E57300", title: "Schedule Working Session #2", status: "Action Required", client: "Maya Chen", due: "Apr 30", action: "Book Session" },
-    { icon: "Calendar", iconBg: "rgba(229,115,0,0.1)", iconFg: "#E57300", title: "Schedule Working Session #1", status: "Action Required", client: "Priya Nair", due: "May 2", action: "Book Session" },
-  ];
-  const docsToReview = [
-    { icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)", title: "Review Résumé — Draft v1", status: "Ready for Review", client: "Maya Chen", due: "Apr 28", action: "Review Draft" },
-    { icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)", title: "Review Cover Letter Template", status: "Ready for Review", client: "Sarah Klein", due: "May 1", action: "Review Draft" },
-  ];
-  const docsToCreate = [
-    { icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Create Career Strategy Doc", status: "Not Started", client: "Dana Okafor", due: "May 3", action: "Create" },
-    { icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C", title: "Create LinkedIn Audit", status: "In Progress", client: "Priya Nair", due: "May 5", action: "Create" },
-  ];
-
-  const recent = ADMIN_COMMENTS.slice(0, 3);
 
   return (
     <div>
       {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
-      <AdminHeader icon="Home" title="Command Center" subtitle="Your birds-eye view of all active work" />
-      <div className="admin-body">
+      <div className="admin-body" style={{ maxWidth: 1200 }}>
 
-        {/* ROW 1 — four info cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          <ACard title="Upcoming Calls" icon="Calendar" link="View schedule →" onLink={() => navigate("#/admin/schedule")}>
-            {[{ c: "Maya Chen", t: "2:00 PM", review: true }, { c: "Tessa Wright", t: "4:00 PM", review: false }].map((m, i) => (
-              <div key={i} className="row between" style={{ padding: "9px 0", borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
-                <div className="row" style={{ gap: 10 }}>
-                  <span style={{ width: 32, height: 32, borderRadius: 99, background: "rgba(130,17,255,0.1)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 32px" }}><Icons.Video size={15} /></span>
-                  <div><div style={{ fontSize: 13, fontWeight: 600 }}>{m.c}</div><div className="meta">{m.t}</div></div>
-                  {m.review && <span className="badge" style={{ background: "rgba(255,140,0,0.1)", color: "#B85C00" }}>Needs Review</span>}
-                </div>
-                <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => showToast("Opening Zoom\u2026")}>Join Zoom</button>
-              </div>
-            ))}
-          </ACard>
+        {/* Hero banner */}
+        <DashboardBanner userName="Kate" />
 
-          <ACard title="Needs Attention" icon="Info" borderLeft="#E53935">
-            {behind.length ? behind.map((p) => (
-              <div key={p.id} className="row between clickable" style={{ padding: "9px 0", borderTop: "0.5px solid var(--border-light)", cursor: "pointer" }} onClick={() => navigate("#/admin/projects/" + p.id)}>
-                <div className="row" style={{ gap: 9 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{p.client}</span>
-                  <span className="badge" style={{ background: ADM.phaseColor(p.phase) + "1f", color: ADM.phaseColor(p.phase), fontWeight: 600 }}>{p.phase}</span>
-                </div>
-                <span className="row" style={{ gap: 6, fontSize: 12, color: "#888" }}>{p.writer}<span style={{ width: 7, height: 7, borderRadius: 99, background: "#E53935" }} /></span>
-              </div>
-            )) : <EmptyState icon="CircleCheck" title="All projects on track" />}
-
-          </ACard>
-
-          {/* Project Stats */}
-          <ACard title="Project Stats" icon="BarChart">
-            {[
-              { label: "On Track",       count: onTrack,              dot: "#00A06C" },
-              { label: "Overdue",        count: behind.length,        dot: "#E53935" },
-              { label: "At Risk",        count: 3,                    dot: "#E57300" },
-              { label: "90-day Support", count: 1,                    dot: "#1A8A9A" },
-            ].map((r, i) => (
-              <div key={r.label} className="row between" style={{ height: 36, borderTop: i ? "1px solid var(--border-light)" : "none", paddingTop: i ? 0 : 0 }}>
-                <div className="row" style={{ gap: 10 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 99, background: r.dot, flex: "0 0 8px" }} />
-                  <span style={{ fontSize: 13 }}>{r.label}</span>
-                </div>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>{r.count}</span>
-              </div>
-            ))}
-            <div style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "right", marginTop: 8 }}>{ADM.PROJECTS.length} active projects</div>
-          </ACard>
-
-          {/* Recent Comments — tabbed */}
+        {/* Row 1: 3 equal columns */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16 }}>
+          <UpcomingCallsCard navigate={navigate} showToast={showToast} />
           <RecentCommentsCard navigate={navigate} />
+          <WriterCapacityCard navigate={navigate} />
         </div>
 
-        {/* Section label */}
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)", margin: "20px 0 10px" }}>Today's Action Items</div>
-
-        {/* ROW 2 — four task queue cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          <AdminQueueCard title="Calls to Schedule" icon="Phone" accent="#E57300" tasks={callsToSchedule} emptyText="No calls to schedule" onTaskClick={setActiveTask} />
-          <AdminQueueCard title="Documents to Review" icon="Eye" accent="#C8005A" tasks={docsToReview} emptyText="All caught up!" onTaskClick={setActiveTask} />
-          <AdminQueueCard title="Documents to Create" icon="FilePlus" accent="#00A06C" tasks={docsToCreate} emptyText="No documents in queue" onTaskClick={setActiveTask} />
-
-          {/* Writer Capacity */}
-          <Card style={{ borderRadius: 10, borderLeft: "3px solid #E57300", padding: 0, overflow: "hidden" }}>
-            <div className="row" style={{ gap: 8, padding: "14px 16px 10px" }}>
-              <span style={{ color: "#E57300", display: "flex" }}><Icons.Users size={15} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".6px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Writer Capacity</span>
-            </div>
-            {[{ name: "Lourdes H-D", init: "LH", cur: 3, max: 8 }, { name: "Jhoneth B.", init: "JB", cur: 6, max: 8 }, { name: "Kate Wade", init: "KW", cur: 8, max: 8 }, { name: "Mimi Bishop", init: "MB", cur: 1, max: 8 }].map((w, i) => {
-              const pct = Math.round((w.cur / w.max) * 100);
-              const barColor = pct <= 50 ? "#00A06C" : pct <= 80 ? "#E57300" : "#E53935";
-              const overloaded = pct > 80;
-              return (
-                <div key={i} style={{ padding: "10px 16px", borderTop: "0.5px solid var(--border-light)" }}>
-                  <div className="row between" style={{ marginBottom: 5 }}>
-                    <div className="row" style={{ gap: 8 }}>
-                      <Avatar initials={w.init} color="var(--purple)" size={24} />
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{w.name}</span>
-                    </div>
-                    <div className="row" style={{ gap: 6 }}>
-                      <span style={{ fontSize: 12, color: "#888" }}>{w.cur}/{w.max}</span>
-                      {overloaded && <span title="Overloaded — reassign tasks" style={{ color: "#E53935", display: "flex", cursor: "help" }}><Icons.Flag size={14} /></span>}
-                    </div>
-                  </div>
-                  <div style={{ height: 6, borderRadius: 3, background: "#F0F0F0", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: pct + "%", background: barColor, borderRadius: 3, transition: "width .3s" }} />
-                  </div>
-                </div>
-              );
-            })}
-            <div style={{ padding: "10px 16px" }}>
-              <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => navigate("#/admin/team")}>View all \u2192</button>
-            </div>
-          </Card>
+        {/* Row 2: Focus Right Now (wide) + Projects (narrow) */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+          <FocusRightNow setActiveTask={setActiveTask} />
+          <ProjectsCard navigate={navigate} />
         </div>
+
       </div>
     </div>
   );
