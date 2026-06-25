@@ -28,6 +28,7 @@ function AdminTasks() {
   const [selClient, setSelClient] = React.useState("All");
   const [selProject, setSelProject] = React.useState("All");
   const [activeTask, setActiveTask] = React.useState(null);
+  const [showCompleted, setShowCompleted] = React.useState(false);
   const tabs = [["My Tasks", 3], ["Board", 24]];
 
   const clientNames = ADM.CLIENTS.map((c) => c.name);
@@ -38,6 +39,33 @@ function AdminTasks() {
     if (selClient === "All") return all;
     return all.filter((t) => t.client === selClient && (selProject === "All" || t.project === selProject));
   }, [selClient, selProject]);
+
+  const myTaskRows = React.useMemo(() => {
+    const seen = new Set();
+    const deduped = flatTasks().filter((t) => {
+      if (seen.has(t.title)) return false;
+      seen.add(t.title);
+      if (!showCompleted && t.status === "complete") return false;
+      return true;
+    });
+    const isCall = (t) => /schedule|call|session|zoom/.test((t.title || "").toLowerCase());
+    const isUpload = (t) => /upload|submit|provide/.test((t.title || "").toLowerCase()) && !isCall(t);
+    const isReview = (t) => /review/.test((t.title || "").toLowerCase()) && !isCall(t);
+    const calls = deduped.filter(isCall);
+    const uploads = deduped.filter(isUpload);
+    const reviews = deduped.filter(isReview);
+    const others = deduped.filter((t) => !isCall(t) && !isUpload(t) && !isReview(t));
+    const picked = new Set();
+    const result = [];
+    [calls[0], uploads[0], reviews[0], others[0]].forEach((t) => {
+      if (t) { picked.add(t.title); result.push(t); }
+    });
+    for (const t of deduped) {
+      if (result.length >= 10) break;
+      if (!picked.has(t.title)) { picked.add(t.title); result.push(t); }
+    }
+    return result;
+  }, [showCompleted]);
 
   const TYPE_COLOR = (title) => {
     const tt = (title || "").toLowerCase();
@@ -239,7 +267,8 @@ function AdminTasks() {
         const IconCmp = Icons[iconName] || Icons.FileText;
         const iconBg = border === "#E57300" ? "rgba(229,115,0,0.1)" : border === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)";
         return (
-          <div key={i} className="task-card clickable" style={{ borderLeft: `3px solid ${border}` }} onClick={() => setActiveTask(t)}>
+          <div key={i} className="task-card clickable" style={{ borderLeft: `3px solid ${border}` }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
             <div className="task-icon" style={{ background: iconBg, color: border }}><IconCmp size={16} /></div>
             <div className="task-body">
               <div className="task-title">
@@ -250,7 +279,8 @@ function AdminTasks() {
               {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
             </div>
             <div className="task-actions" onClick={(e) => e.stopPropagation()}>
-              <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => setActiveTask(t)}>{ACTION_LABEL(t.title)}</button>
+              <button className="btn btn-secondary" style={{ fontSize: 12 }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
             </div>
           </div>
         );
@@ -311,6 +341,7 @@ function AdminTasks() {
       </div>
       <FilterBar onSearch={null}
         right={<>
+          <ToggleChip on={showCompleted} onToggle={() => setShowCompleted((v) => !v)} icon="CircleCheck" color="#00A06C">Show Completed</ToggleChip>
           <ToggleChip on={me} onToggle={() => setMe((v) => !v)} icon="User" color="var(--raspberry)">Me</ToggleChip>
           <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New task…")}><Icons.Plus size={13} /> New Task</button>
         </>}>
@@ -326,7 +357,7 @@ function AdminTasks() {
         </div>
       )}
       <div className="admin-body">
-        {tab === "My Tasks" && <TaskCards rows={flatTasks().filter((t) => t.assignee === "Lourdes H-D")} />}
+        {tab === "My Tasks" && <TaskCards rows={myTaskRows} />}
         {tab === "Board" && <Board />}
       </div>
     </div>
