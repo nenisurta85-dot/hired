@@ -23,9 +23,147 @@ function flatTasks() {
 function AdminTasks() {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
-  const [tab, setTab] = React.useState("By Client");
+  const [tab, setTab] = React.useState("My Tasks");
   const [me, setMe] = React.useState(false);
-  const tabs = [["My Tasks", 3], ["By Client", ADM.PROJECTS.length], ["Board", 24]];
+  const [selClient, setSelClient] = React.useState("All");
+  const [selProject, setSelProject] = React.useState("All");
+  const [activeTask, setActiveTask] = React.useState(null);
+  const tabs = [["My Tasks", 3], ["Board", 24]];
+
+  const clientNames = ADM.CLIENTS.map((c) => c.name);
+  const projectsForClient = selClient === "All" ? [] : ADM.PROJECTS.filter((p) => p.client === selClient);
+
+  const filteredTasks = React.useMemo(() => {
+    const all = flatTasks();
+    if (selClient === "All") return all;
+    return all.filter((t) => t.client === selClient && (selProject === "All" || t.project === selProject));
+  }, [selClient, selProject]);
+
+  const TYPE_COLOR = (title) => {
+    const tt = (title || "").toLowerCase();
+    return /schedule|call|session|zoom/.test(tt) ? "#E57300" : /review/.test(tt) ? "var(--purple)" : "#00A06C";
+  };
+  const TYPE_ICON = (title) => {
+    const tt = (title || "").toLowerCase();
+    return /schedule|call|session|zoom/.test(tt) ? "Calendar" : /review/.test(tt) ? "Eye" : "FilePlus";
+  };
+  const STATUS_BORDER = { "Ready for Review": "#C8005A", "Action Required": "#854F0B", "Upload Needed": "#0F9E75", "Not Started": "#AAAAAA", "In Progress": "#185FA5", "Complete": "#0F9E75", "overdue": "#E53935", "in_progress": "#185FA5", "not_started": "#AAAAAA", "complete": "#0F9E75" };
+  const STATUS_STYLE = { "Ready for Review": { bg: "#FBEAF0", fg: "#C8005A" }, "Action Required": { bg: "#FAEEDA", fg: "#854F0B" }, "Upload Needed": { bg: "#E8F5EE", fg: "#0F6E56" }, "Not Started": { bg: "#F1EFE8", fg: "#5F5E5A" }, "Complete": { bg: "#E8F5EE", fg: "#0F9E75" }, "In Progress": { bg: "#E6F1FB", fg: "#185FA5" }, "overdue": { bg: "#FDEAEA", fg: "#E53935" }, "in_progress": { bg: "#E6F1FB", fg: "#185FA5" }, "not_started": { bg: "#F1EFE8", fg: "#5F5E5A" }, "complete": { bg: "#E8F5EE", fg: "#0F9E75" } };
+  const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
+  const ACTION_LABEL = (title) => {
+    const tt = (title || "").toLowerCase();
+    return /schedule|call|session/.test(tt) ? "Book Session" : /review/.test(tt) ? "Review Draft" : "Open Doc";
+  };
+
+  /* ---- Admin Task Modal ---- */
+  const AdminTaskModal = ({ task, onClose }) => {
+    const [status, setStatus] = React.useState(task.status || "not_started");
+    const [notes, setNotes] = React.useState("");
+    const [comment, setComment] = React.useState("");
+    const [published, setPublished] = React.useState(task.visibleToClient || false);
+    const badge = STATUS_STYLE[status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
+    const label = STATUS_LABEL[status] || status;
+    return (
+      <div className="overlay" onClick={onClose}>
+        <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+          <div style={{ padding: "20px 24px 16px", borderBottom: "0.5px solid var(--border-light)" }}>
+            <div className="row between" style={{ alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{task.title}</div>
+                <div className="row" style={{ gap: 8 }}>
+                  <span className="badge" style={{ background: badge.bg, color: badge.fg }}>{label}</span>
+                  <span className="meta">{task.client} · {task.phase}</span>
+                </div>
+              </div>
+              <button className="modal-x" onClick={onClose}><Icons.X size={18} /></button>
+            </div>
+          </div>
+          <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div className="field">
+                <label className="field-label">Status</label>
+                <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  {["not_started", "in_progress", "overdue", "complete"].map((s) => <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label className="field-label">Due Date</label>
+                <input className="input" defaultValue={task.due || ""} />
+              </div>
+            </div>
+            <div className="field">
+              <label className="field-label">Document</label>
+              <input className="input" placeholder="Link or document name…" />
+            </div>
+            {task.sub && task.sub.length > 0 && (
+              <div>
+                <div className="field-label" style={{ marginBottom: 8 }}>Subtasks</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {task.sub.map((s, i) => (
+                    <div key={i} className="row" style={{ gap: 10, padding: "8px 12px", background: "#FAF9F7", borderRadius: 8, border: "1px solid var(--border)" }}>
+                      <span style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #CCC", display: "flex", flex: "0 0 16px" }} />
+                      <span style={{ fontSize: 13 }}>{s.title || s}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="field">
+              <label className="field-label">Notes</label>
+              <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add internal notes…" style={{ minHeight: 72 }} />
+            </div>
+            <div>
+              <div className="field-label" style={{ marginBottom: 8 }}>Comments</div>
+              <div className="notes-input-row">
+                <textarea placeholder="Add a comment…" value={comment} onChange={(e) => setComment(e.target.value)} rows={1} />
+                <button className="notes-post-btn" disabled={!comment.trim()} onClick={() => { showToast("Comment posted."); setComment(""); }}><Icons.Send size={14} /></button>
+              </div>
+            </div>
+            <div className="row between" style={{ padding: "14px 0 0", borderTop: "0.5px solid var(--border-light)" }}>
+              <div className="row" style={{ gap: 10 }}>
+                <input type="checkbox" id="pub-task" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+                <label htmlFor="pub-task" style={{ fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Publish to client</label>
+              </div>
+              <div className="row" style={{ gap: 10 }}>
+                <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+                <button className="btn btn-primary" onClick={() => { showToast("Changes saved."); onClose(); }}>Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const TaskCards = ({ rows }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {rows.map((t, i) => {
+        const border = TYPE_COLOR(t.title);
+        const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
+        const label = STATUS_LABEL[t.status] || t.status;
+        const iconName = TYPE_ICON(t.title);
+        const IconCmp = Icons[iconName] || Icons.FileText;
+        const iconBg = border === "#E57300" ? "rgba(229,115,0,0.1)" : border === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)";
+        return (
+          <div key={i} className="task-card clickable" style={{ borderLeft: `3px solid ${border}` }} onClick={() => setActiveTask(t)}>
+            <div className="task-icon" style={{ background: iconBg, color: border }}><IconCmp size={16} /></div>
+            <div className="task-body">
+              <div className="task-title">
+                {t.title}
+                <span className="badge" style={{ background: badge.bg, color: badge.fg, fontSize: 10 }}>{label}</span>
+              </div>
+              {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
+              {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
+            </div>
+            <div className="task-actions" onClick={(e) => e.stopPropagation()}>
+              <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => setActiveTask(t)}>{ACTION_LABEL(t.title)}</button>
+            </div>
+          </div>
+        );
+      })}
+      {rows.length === 0 && <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks assigned to you." />}
+    </div>
+  );
 
   const Board = () => {
     const cols = ["Not Started", "In Progress", "Overdue", "Complete"];
@@ -43,15 +181,17 @@ function AdminTasks() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {items.map((t, i) => {
-                  const tt = t.title.toLowerCase();
-                  const typeColor = /schedule|call|session|zoom/.test(tt) ? "#E57300" : /review/.test(tt) ? "var(--purple)" : "#00A06C";
+                  const typeColor = TYPE_COLOR(t.title);
                   return (
-                    <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${typeColor}`, borderRadius: 8, padding: 12 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.title}</div>
-                      <div className="row" style={{ gap: 7 }}>
-                        <span className="meta">{t.client}</span>
-                        <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
+                    <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${typeColor}`, borderRadius: 8, padding: 12, cursor: "pointer" }} onClick={() => setActiveTask(t)}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t.title}</div>
+                      <div className="row between" style={{ marginTop: 4 }}>
+                        <div className="row" style={{ gap: 7 }}>
+                          <span className="meta">{t.client}</span>
+                          <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
+                        </div>
                       </div>
+                      {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 6 }}>Due {t.due}</div>}
                     </div>
                   );
                 })}
@@ -64,141 +204,11 @@ function AdminTasks() {
     );
   };
 
-  const [openClients, setOpenClients] = React.useState({});
-  const toggleClient = (name) => setOpenClients((prev) => ({ ...prev, [name]: !prev[name] }));
-
-  const clientGroups = ADM.CLIENTS.map((c) => ({
-    client: c,
-    projects: ADM.PROJECTS.filter((p) => p.client === c.name),
-  })).filter((g) => g.projects.length > 0);
-
-  const ByClient = () => (
-    <Card style={{ padding: 0, overflow: "hidden" }}>
-      {clientGroups.map(({ client, projects }, i) => {
-        const allTasks = projects.reduce((acc, p) => { const pr = ADM.phaseProgress(p.phase); return { done: acc.done + pr.done, total: acc.total + pr.total }; }, { done: 0, total: 0 });
-        const pct = allTasks.total ? (allTasks.done / allTasks.total) * 100 : 0;
-        const isOpen = openClients[client.name];
-        return (
-          <div key={client.id} style={{ borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
-            <div className="row clickable" style={{ gap: 14, padding: "13px 16px", cursor: "pointer" }} onClick={() => toggleClient(client.name)}>
-              <span style={{ width: 9, height: 9, borderRadius: 99, background: "#00A06C", flex: "0 0 9px" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, width: 160 }}>{client.name}</span>
-              <span className="pbar" style={{ flex: 1, height: 8 }}><div style={{ width: pct + "%", background: "var(--purple)" }} /></span>
-              <span className="meta" style={{ width: 80, textAlign: "right" }}>{allTasks.done}/{allTasks.total} tasks</span>
-              <span style={{ color: "#AAA", display: "flex", transition: "transform .2s", transform: isOpen ? "rotate(180deg)" : "rotate(0)" }}><Icons.ChevronDown size={14} /></span>
-            </div>
-            {isOpen && (
-              <div style={{ padding: "0 16px 12px 36px", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div className="label" style={{ marginBottom: 4 }}>PROJECTS</div>
-                {projects.map((p) => {
-                  const pr = ADM.phaseProgress(p.phase);
-                  const ppct = pr.total ? (pr.done / pr.total) * 100 : 0;
-                  return (
-                    <div key={p.id} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", boxShadow: "var(--shadow-card)" }}>
-                      <div className="row between" style={{ marginBottom: 6 }}>
-                        <div className="row" style={{ gap: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600 }}>{p.name || p.client + " Project"}</span>
-                          <span className="badge" style={{ background: ADM.phaseColor(p.phase) + "1f", color: ADM.phaseColor(p.phase), fontWeight: 600 }}>{p.phase}</span>
-                          <APill status={p.status} />
-                        </div>
-                        <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => useAdmin}>View Project ↗</button>
-                      </div>
-                      <div className="meta" style={{ marginBottom: 8 }}>Writer: {p.writer} · Producer: {p.producer || "—"} · Started {p.start}</div>
-                      <div className="row" style={{ gap: 12, alignItems: "center" }}>
-                        <span className="pbar" style={{ flex: 1, height: 6 }}><div style={{ width: ppct + "%", background: "var(--purple)", height: "100%", borderRadius: 4 }} /></span>
-                        <span className="meta" style={{ whiteSpace: "nowrap" }}>{pr.done}/{pr.total} tasks</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </Card>
-  );
-
-  const STATUS_BORDER = {
-    "Ready for Review": "#C8005A",
-    "Action Required":  "#854F0B",
-    "Upload Needed":    "#0F9E75",
-    "Not Started":      "#AAAAAA",
-    "In Progress":      "#185FA5",
-    "Complete":         "#0F9E75",
-    "overdue":          "#E53935",
-    "in_progress":      "#185FA5",
-    "not_started":      "#AAAAAA",
-    "complete":         "#0F9E75",
-  };
-  const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
-  const STATUS_STYLE = {
-    "Ready for Review": { bg: "#FBEAF0", fg: "#C8005A" },
-    "Action Required":  { bg: "#FAEEDA", fg: "#854F0B" },
-    "Upload Needed":    { bg: "#E8F5EE", fg: "#0F6E56" },
-    "Not Started":      { bg: "#F1EFE8", fg: "#5F5E5A" },
-    "Complete":         { bg: "#E8F5EE", fg: "#0F9E75" },
-    "In Progress":      { bg: "#E6F1FB", fg: "#185FA5" },
-    "overdue":          { bg: "#FDEAEA", fg: "#E53935" },
-    "in_progress":      { bg: "#E6F1FB", fg: "#185FA5" },
-    "not_started":      { bg: "#F1EFE8", fg: "#5F5E5A" },
-    "complete":         { bg: "#E8F5EE", fg: "#0F9E75" },
-  };
-  const TASK_ICON = { "complete": { icon: "CircleCheck", bg: "var(--green-bg)", fg: "var(--green)" }, "overdue": { icon: "Clock", bg: "#FDEAEA", fg: "#E53935" }, "in_progress": { icon: "FileText", bg: "#E6F1FB", fg: "#185FA5" }, "not_started": { icon: "FileText", bg: "#F1EFE8", fg: "#888" } };
-
-  const TaskCards = ({ rows }) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {rows.map((t, i) => {
-        const border = STATUS_BORDER[t.status] || "#AAAAAA";
-        const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
-        const label = STATUS_LABEL[t.status] || t.status;
-        const iconInfo = TASK_ICON[t.status] || TASK_ICON["not_started"];
-        const IconCmp = Icons[iconInfo.icon] || Icons.FileText;
-        return (
-          <div key={i} className="task-card" style={{ borderLeft: `3px solid ${border}`, cursor: "pointer" }}>
-            <div className="task-icon" style={{ background: iconInfo.bg, color: iconInfo.fg }}><IconCmp size={16} /></div>
-            <div className="task-body">
-              <div className="task-title">
-                {t.title}
-                <span className="badge" style={{ background: badge.bg, color: badge.fg, fontSize: 10 }}>{label}</span>
-              </div>
-              {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
-              {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
-            </div>
-            <div className="task-actions">
-              <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={(e) => e.stopPropagation()}>Open</button>
-            </div>
-          </div>
-        );
-      })}
-      {rows.length === 0 && <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks assigned to you." />}
-    </div>
-  );
-
-  const TaskTable = ({ rows }) => (
-    <Card style={{ padding: 0, overflow: "hidden" }}>
-      <table className="atable">
-        <thead><tr>{["", "Title", "Client", "Assignee", "Due", "Status", "Phase"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-        <tbody>
-          {rows.map((t, i) => (
-            <tr key={i} className="clickable">
-              <td style={{ width: 30 }}><span style={{ width: 18, height: 18, borderRadius: 99, border: "1.5px solid #CFC9DD", display: "inline-block" }} /></td>
-              <td style={{ fontWeight: 500 }}>{t.title}</td>
-              <td style={{ color: "#888" }}>{t.client}</td>
-              <td><div className="row" style={{ gap: 7, color: "#888", fontSize: 12 }}><Avatar initials={initials2(t.assignee)} color="#B9B4C7" size={20} /> {t.assignee}</div></td>
-              <td style={{ color: "#888", fontSize: 12 }}>{t.due}</td>
-              <td><APill status={t.status} /></td>
-              <td><span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600 }}>{t.phase}</span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {rows.length === 0 && <EmptyState icon="CircleCheck" title="All caught up!" desc="No deliverables pending review." />}
-    </Card>
-  );
+  const projectTasksToShow = selClient !== "All" && selProject !== "All" ? filteredTasks : null;
 
   return (
     <div>
+      {activeTask && <AdminTaskModal task={activeTask} onClose={() => setActiveTask(null)} />}
       <AdminHeader icon="ListChecks" title="Tasks" subtitle="Task management across all projects" />
       <div style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "0 32px" }}>
         <div className="tabs" style={{ marginBottom: 0, border: "none" }}>
@@ -210,13 +220,19 @@ function AdminTasks() {
           <ToggleChip on={me} onToggle={() => setMe((v) => !v)} icon="User" color="var(--raspberry)">Me</ToggleChip>
           <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New task…")}><Icons.Plus size={13} /> New Task</button>
         </>}>
-        <FilterPill label="Client" options={ADM.CLIENTS.map((c) => c.name)} active="All" onChange={() => {}} />
+        <FilterPill label="Client" options={clientNames} active={selClient} onChange={(v) => { setSelClient(v); setSelProject("All"); }} />
+        {selClient !== "All" && <FilterPill label="Project" options={projectsForClient.map((p) => p.name)} active={selProject} onChange={setSelProject} />}
         <FilterPill label="Phase" options={ADM.PHASES} active="All" onChange={() => {}} />
         <FilterPill label="Task Type" options={["Deliverable", "Call", "Client Action", "Internal"]} active="All" onChange={() => {}} />
       </FilterBar>
+      {projectTasksToShow && (
+        <div className="admin-body" style={{ paddingBottom: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text-muted)", marginBottom: 10 }}>{selProject} — Tasks</div>
+          <TaskCards rows={projectTasksToShow} />
+        </div>
+      )}
       <div className="admin-body">
         {tab === "My Tasks" && <TaskCards rows={flatTasks().filter((t) => t.assignee === "Lourdes H-D")} />}
-        {tab === "By Client" && <ByClient />}
         {tab === "Board" && <Board />}
       </div>
     </div>
