@@ -112,10 +112,15 @@ function AdminTasks() {
       { name: "LinkedIn_screenshot.png", size: "88 KB", date: "Apr 3" },
     ];
 
-    const subRows = subs.length ? [
-      { init: "KW", role: "Editor", name: "Kate Wade", sub: subs.find(s => (s.assignee || "").includes("Editor") || (s.text || "").includes("Editor")) || subs[0] },
-      { init: "MB", role: "Writer", name: "Mimi Bishop", sub: subs.find(s => (s.assignee || "").includes("Writer") || (s.text || "").includes("Writer")) || subs[1] },
-    ].filter(r => r.sub) : [];
+    const DEFAULT_SUBS = [
+      { id: "d0", done: false, assignee: "Editor" },
+      { id: "d1", done: false, assignee: "Writer" },
+    ];
+    const activeSubs = subs.length ? subs : DEFAULT_SUBS;
+    const subRows = [
+      { init: "KW", role: "Editor", name: "Kate Wade", sub: activeSubs.find(s => (s.assignee || "").includes("Editor")) || activeSubs[0] },
+      { init: "MB", role: "Writer", name: "Mimi Bishop", sub: activeSubs.find(s => (s.assignee || "").includes("Writer")) || activeSubs[1] },
+    ].filter(r => r.sub);
 
     const filteredComments = commentFilter === "All" ? comments : comments.filter(c => c.role === commentFilter);
 
@@ -240,35 +245,37 @@ function AdminTasks() {
           )}
 
           {/* Subtasks */}
-          {subRows.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <FieldLabel>Subtasks</FieldLabel>
-              <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                {subRows.map((r, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 48 }}>
-                    <Avatar initials={r.init} color="var(--purple)" size={28} />
-                    <div style={{ minWidth: 50 }}><span style={{ fontSize: 11, color: "var(--text-muted)" }}>{r.role}</span></div>
-                    <div style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{r.name}</div>
-                    {r.sub.done ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: false } : s))}
-                          style={{ fontSize: 12, color: "#E53935", background: "transparent", border: "none", cursor: "pointer", fontWeight: 500 }}>Reopen</button>
-                        <span className="badge" style={{ background: "rgba(0,160,108,0.12)", color: "#00A06C", fontWeight: 600 }}>Complete</span>
-                        <span style={{ width: 20, height: 20, borderRadius: 99, background: "#00A06C", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icons.Check size={11} style={{ color: "#fff" }} /></span>
-                      </div>
-                    ) : (
-                      <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: true } : s))}
-                        style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0 12px", height: 30, fontSize: 12, color: "var(--text-muted)", background: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.color = "var(--purple)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
-                        Mark as Complete
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Subtasks</FieldLabel>
+            <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {subRows.map((r, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 48 }}>
+                  <Avatar initials={r.init} color="var(--purple)" size={28} />
+                  <div style={{ minWidth: 50 }}><span style={{ fontSize: 11, color: "var(--text-muted)" }}>{r.role}</span></div>
+                  <div style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{r.name}</div>
+                  {r.sub.done ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: false } : s))}
+                        style={{ fontSize: 12, color: "#E53935", background: "transparent", border: "none", cursor: "pointer", fontWeight: 500 }}>Reopen</button>
+                      <span className="badge" style={{ background: "rgba(0,160,108,0.12)", color: "#00A06C", fontWeight: 600 }}>Complete</span>
+                      <span style={{ width: 20, height: 20, borderRadius: 99, background: "#00A06C", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Icons.Check size={11} style={{ color: "#fff" }} /></span>
+                    </div>
+                  ) : (
+                    <button onClick={() => setSubs(prev => prev.map(s => s === r.sub ? { ...s, done: true } : s))}
+                      style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0 12px", height: 30, fontSize: 12, color: "var(--text-muted)", background: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.color = "var(--purple)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+                      Mark as Complete
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+            <button onClick={() => showToast("Round of changes added.")}
+              style={{ marginTop: 8, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#C8005A", padding: "4px 0", display: "flex", alignItems: "center", gap: 5 }}>
+              <Icons.Plus size={13} /> Add round of changes
+            </button>
+          </div>
 
           {/* Notes */}
           <div style={{ marginBottom: 20 }}>
