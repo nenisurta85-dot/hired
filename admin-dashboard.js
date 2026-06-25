@@ -70,10 +70,19 @@ function UpcomingCallsCard({ navigate, showToast }) {
 }
 
 /* ---------- Recent Comments card ---------- */
-function RecentCommentsCard({ navigate }) {
+function RecentCommentsCard({ navigate, setActiveTask }) {
   const [tab, setTab] = React.useState("All");
   const filtered = tab === "All" ? ADMIN_COMMENTS : ADMIN_COMMENTS.filter(c => c.role === tab);
   const shown = filtered.slice(0, 3);
+
+  const openCommentTask = (c) => {
+    const allT = Object.values((window.ADM.TASKS_BY_PHASE) || {}).flat();
+    const words = c.on.toLowerCase().split(/[\s—\-]+/).filter(w => w.length > 3);
+    const found = allT.find(t => words.some(w => t.title.toLowerCase().includes(w)));
+    const task = found || { id: "c-" + c.id, title: c.on, client: c.client, status: "in_progress" };
+    setActiveTask(task);
+  };
+
   return (
     <Card style={{ padding: "18px 18px 10px" }}>
       <div className="row between" style={{ marginBottom: 10 }}>
@@ -89,6 +98,7 @@ function RecentCommentsCard({ navigate }) {
       </div>
       {shown.map((c, i) => (
         <div key={c.id} className="row" style={{ gap: 10, padding: "8px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", alignItems: "flex-start", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+          onClick={() => openCommentTask(c)}
           onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <div style={{ position: "relative", flex: "0 0 28px" }}>
@@ -220,6 +230,7 @@ function ProjectsCard({ navigate }) {
       </div>
       {rows.map((r, i) => (
         <div key={r.key} className="row between" style={{ padding: "11px 6px", borderTop: i ? "0.5px solid rgba(255,255,255,0.08)" : "none", alignItems: "center", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+          onClick={() => { window._projectFilter = r.label; navigate("#/admin/projects"); }}
           onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <div className="row" style={{ gap: 10 }}>
@@ -227,7 +238,7 @@ function ProjectsCard({ navigate }) {
             <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{r.count}</span>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>{r.label}</span>
           </div>
-          <button onClick={() => navigate("#/admin/projects")}
+          <button onClick={(e) => { e.stopPropagation(); window._projectFilter = r.label; navigate("#/admin/projects"); }}
             style={{ background: "none", border: "none", color: "rgba(255,255,255,0.55)", fontSize: 12, cursor: "pointer", fontWeight: 600, transition: "color .12s" }}
             onMouseEnter={e => e.currentTarget.style.color = "#fff"}
             onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}>
@@ -339,7 +350,7 @@ function AdminDashboard() {
             {/* Upcoming + Comments side by side */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <UpcomingCallsCard navigate={navigate} showToast={showToast} />
-              <RecentCommentsCard navigate={navigate} />
+              <RecentCommentsCard navigate={navigate} setActiveTask={setActiveTask} />
             </div>
             {/* Focus Right Now full left-column width */}
             <FocusRightNow setActiveTask={setActiveTask} />

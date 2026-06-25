@@ -23,7 +23,7 @@ function NewProjectModal({ onClose }) {
             <div className="field"><label className="field-label">Writer</label><select className="select"><option>Unassigned</option>{ADM.TEAM.map((t) => <option key={t.id}>{t.name}</option>)}</select></div>
             <div className="field"><label className="field-label">Producer</label><select className="select"><option>Unassigned</option>{ADM.TEAM.map((t) => <option key={t.id}>{t.name}</option>)}</select></div>
             <div className="field"><label className="field-label">Start Date</label><input className="input" type="date" /></div>
-            <div className="field"><label className="field-label">Status</label><select className="select"><option>On Track</option><option>Behind</option></select></div>
+            <div className="field"><label className="field-label">Status</label><select className="select"><option>On Track</option><option>Behind</option><option>At Risk</option><option>Overdue</option><option>90-day</option></select></div>
           </div>
         </div>
         <div className="row between" style={{ padding: "14px 20px", borderTop: "0.5px solid var(--border-light)" }}>
@@ -44,6 +44,13 @@ function AdminProjects() {
   const [pkg, setPkg] = React.useState("All");
   const [modal, setModal] = React.useState(false);
 
+  React.useEffect(() => {
+    if (window._projectFilter) {
+      setStatus(window._projectFilter);
+      window._projectFilter = null;
+    }
+  }, []);
+
   const rows = ADM.PROJECTS.filter((p) =>
     (phase === "All" || p.phase === phase) &&
     (status === "All" || p.status === status) &&
@@ -59,7 +66,7 @@ function AdminProjects() {
       <FilterBar search={search} onSearch={setSearch}
         right={<button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setModal(true)}><Icons.Plus size={13} /> New Project</button>}>
         <FilterPill label="Phase" options={ADM.PHASES} active={phase} onChange={setPhase} />
-        <FilterPill label="Status" options={["On Track", "Behind"]} active={status} onChange={setStatus} />
+        <FilterPill label="Status" options={["On Track", "Behind", "At Risk", "Overdue", "90-day"]} active={status} onChange={setStatus} />
         <FilterPill label="Package" options={ADM.PACKAGES.map((p) => p.name)} active={pkg} onChange={setPkg} />
         <button className="fpill"><Icons.ListChecks size={13} /> Columns</button>
       </FilterBar>
