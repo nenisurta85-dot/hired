@@ -219,7 +219,7 @@ function FocusRightNow({ setActiveTask }) {
 }
 
 /* ---------- Projects summary card (dark) ---------- */
-function ProjectsCard({ navigate }) {
+function ProjectsCard({ navigate, style }) {
   const { ADM } = window;
   const behind = ADM.PROJECTS.filter(p => p.status === "Behind").length;
   const onTrack = ADM.PROJECTS.filter(p => p.status === "On Track").length;
@@ -230,7 +230,7 @@ function ProjectsCard({ navigate }) {
     { label: "90-day",     count: 3,        dot: "#1A8A9A", key: "90day" },
   ];
   return (
-    <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)", transition: "box-shadow .15s ease, transform .15s ease" }}
+    <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)", transition: "box-shadow .15s ease, transform .15s ease", ...style }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.35)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.25)"; e.currentTarget.style.transform = ""; }}>
       <div className="row between" style={{ marginBottom: 14 }}>
@@ -365,9 +365,9 @@ function AdminDashboard() {
           </div>
 
           {/* Right column — both cards share identical width */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "stretch" }}>
             <WriterCapacityCard navigate={navigate} />
-            <ProjectsCard navigate={navigate} />
+            <ProjectsCard navigate={navigate} style={{ flex: 1 }} />
           </div>
 
         </div>
