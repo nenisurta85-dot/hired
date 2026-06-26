@@ -6111,8 +6111,8 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
             style={{ width: "100%", minHeight: 80, border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
         </div>
 
-        {/* Comments */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
+        {/* Comments — hidden for Call tasks */}
+        {!isCall && <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)" }}>Comments</div>
             <div style={{ display: "flex", gap: 4 }}>
@@ -6161,7 +6161,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
               <Icons.Send size={14} />
             </button>
           </div>
-        </div>
+        </div>}
 
         {/* Footer — no Publish to client */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "flex-end", gap: 12 }}>
