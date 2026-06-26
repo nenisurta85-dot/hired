@@ -141,13 +141,12 @@ function AdminTasks() {
      When a status filter pill is active, show a flat list instead of groups */
   const statusGroups = React.useMemo(() => {
     const overdueItems = visibleTasks.filter(t => isDateOverdue(t));
-    const nonOverdue = visibleTasks.filter(t => !isDateOverdue(t));
     const defs = [
       { key: "overdue",     label: "Overdue",     headerBg: "rgba(229,57,53,0.08)", headerFg: "#C0241F", icon: "⚠️",  tasks: overdueItems, isOverdueGroup: true },
-      { key: "in_progress", label: "In Progress",  headerBg: "rgba(24,95,165,0.06)",  headerFg: "#185FA5", icon: null, tasks: nonOverdue.filter(t => t.status === "in_progress") },
-      { key: "not_started", label: "Not Started",  headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null, tasks: nonOverdue.filter(t => t.status === "not_started") },
+      { key: "in_progress", label: "In Progress",  headerBg: "rgba(24,95,165,0.06)",  headerFg: "#185FA5", icon: null, tasks: visibleTasks.filter(t => t.status === "in_progress") },
+      { key: "not_started", label: "Not Started",  headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null, tasks: visibleTasks.filter(t => t.status === "not_started") },
     ];
-    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null, tasks: nonOverdue.filter(t => t.status === "complete") });
+    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null, tasks: visibleTasks.filter(t => t.status === "complete") });
     return defs.filter(g => g.tasks.length > 0);
   }, [visibleTasks, showCompleted]);
 
