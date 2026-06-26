@@ -4709,12 +4709,14 @@ function AdminTasks() {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
   const [tab, setTab] = React.useState("My Tasks");
-  const [me, setMe] = React.useState(false);
   const [selClient, setSelClient] = React.useState("All");
   const [selProject, setSelProject] = React.useState("All");
+  const [selPhase, setSelPhase] = React.useState("All");
+  const [selTaskType, setSelTaskType] = React.useState("All");
   const [activeTask, setActiveTask] = React.useState(null);
   const [showNewTask, setShowNewTask] = React.useState(false);
   const [showCompleted, setShowCompleted] = React.useState(false);
+  const [period, setPeriod] = React.useState("This Week");
   const tabs = [["My Tasks", 3], ["Board", 24]];
 
   const clientNames = ADM.CLIENTS.map((c) => c.name);
@@ -4726,33 +4728,6 @@ function AdminTasks() {
     return all.filter((t) => t.client === selClient && (selProject === "All" || t.project === selProject));
   }, [selClient, selProject]);
 
-  const myTaskRows = React.useMemo(() => {
-    const seen = new Set();
-    const deduped = flatTasks().filter((t) => {
-      if (seen.has(t.title)) return false;
-      seen.add(t.title);
-      if (!showCompleted && t.status === "complete") return false;
-      return true;
-    });
-    const isCall = (t) => /schedule|call|session|zoom/.test((t.title || "").toLowerCase());
-    const isUpload = (t) => /upload|submit|provide|create/.test((t.title || "").toLowerCase()) && !isCall(t);
-    const isReview = (t) => /review/.test((t.title || "").toLowerCase()) && !isCall(t);
-    const calls = deduped.filter(isCall);
-    const uploads = deduped.filter(isUpload);
-    const reviews = deduped.filter(isReview);
-    const others = deduped.filter((t) => !isCall(t) && !isUpload(t) && !isReview(t));
-    const picked = new Set();
-    const result = [];
-    [calls[0], uploads[0], reviews[0], others[0]].forEach((t) => {
-      if (t) { picked.add(t.title); result.push(t); }
-    });
-    for (const t of deduped) {
-      if (result.length >= 10) break;
-      if (!picked.has(t.title)) { picked.add(t.title); result.push(t); }
-    }
-    return result;
-  }, [showCompleted]);
-
   const TYPE_COLOR = (title) => {
     const tt = (title || "").toLowerCase();
     return /schedule|call|session|zoom/.test(tt) ? "#E57300" : /review/.test(tt) ? "var(--purple)" : "#00A06C";
@@ -4761,7 +4736,6 @@ function AdminTasks() {
     const tt = (title || "").toLowerCase();
     return /schedule|call|session|zoom/.test(tt) ? "Calendar" : /review/.test(tt) ? "Eye" : "FilePlus";
   };
-  const STATUS_BORDER = { "Ready for Review": "#C8005A", "Action Required": "#854F0B", "Upload Needed": "#0F9E75", "Not Started": "#AAAAAA", "In Progress": "#185FA5", "Complete": "#0F9E75", "overdue": "#E53935", "in_progress": "#185FA5", "not_started": "#AAAAAA", "complete": "#0F9E75" };
   const STATUS_STYLE = { "Ready for Review": { bg: "#FBEAF0", fg: "#C8005A" }, "Action Required": { bg: "#FAEEDA", fg: "#854F0B" }, "Upload Needed": { bg: "#E8F5EE", fg: "#0F6E56" }, "Not Started": { bg: "#F1EFE8", fg: "#5F5E5A" }, "Complete": { bg: "#E8F5EE", fg: "#0F9E75" }, "In Progress": { bg: "#E6F1FB", fg: "#185FA5" }, "overdue": { bg: "#FDEAEA", fg: "#E53935" }, "in_progress": { bg: "#E6F1FB", fg: "#185FA5" }, "not_started": { bg: "#F1EFE8", fg: "#5F5E5A" }, "complete": { bg: "#E8F5EE", fg: "#0F9E75" } };
   const STATUS_LABEL = { "overdue": "Overdue", "in_progress": "In Progress", "not_started": "Not Started", "complete": "Complete" };
   const ACTION_LABEL = (title) => {
@@ -4769,35 +4743,127 @@ function AdminTasks() {
     return /schedule|call|session/.test(tt) ? "Book Session" : /review/.test(tt) ? "Review Draft" : "Create";
   };
 
-  const TaskCards = ({ rows }) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {rows.map((t, i) => {
-        const border = TYPE_COLOR(t.title);
-        const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
-        const label = STATUS_LABEL[t.status] || t.status;
-        const iconName = TYPE_ICON(t.title);
-        const IconCmp = Icons[iconName] || Icons.FileText;
-        const iconBg = border === "#E57300" ? "rgba(229,115,0,0.1)" : border === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)";
-        return (
-          <div key={i} className="task-card clickable" style={{ borderLeft: `3px solid ${border}` }}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
-            <div className="task-icon" style={{ background: iconBg, color: border }}><IconCmp size={16} /></div>
-            <div className="task-body">
-              <div className="task-title">
-                {t.title}
-                <span className="badge" style={{ background: badge.bg, color: badge.fg, fontSize: 10 }}>{label}</span>
-              </div>
-              {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
-              {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
+  /* ---- date helpers ---- */
+  const parseTaskDate = (due) => {
+    if (!due) return null;
+    const now = new Date();
+    const d = new Date(due + " " + now.getFullYear());
+    if (isNaN(d)) return null;
+    // if result is more than 6 months in the past, try next year
+    if (now - d > 1000 * 60 * 60 * 24 * 180) return new Date(due + " " + (now.getFullYear() + 1));
+    return d;
+  };
+  const isTaskInPeriod = (t) => {
+    // overdue tasks always included regardless of period
+    if (t.status === "overdue") return true;
+    const d = parseTaskDate(t.due);
+    if (!d) return true; // no due date → always show
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (d < today) return true; // past-due → always show
+    if (period === "Today") {
+      const todayEnd = new Date(today); todayEnd.setDate(today.getDate() + 1);
+      return d >= today && d < todayEnd;
+    }
+    if (period === "This Week") {
+      const weekEnd = new Date(today);
+      weekEnd.setDate(today.getDate() + (7 - today.getDay()));
+      return d <= weekEnd;
+    }
+    if (period === "This Month") {
+      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    }
+    return true;
+  };
+  const matchesTaskType = (t) => {
+    if (selTaskType === "All") return true;
+    const tt = (t.title || "").toLowerCase();
+    if (selTaskType === "Call") return /schedule|call|session|zoom/.test(tt);
+    if (selTaskType === "Review") return /review/.test(tt) && !/schedule|call|session|zoom/.test(tt);
+    if (selTaskType === "Upload") return /upload|submit|provide/.test(tt);
+    if (selTaskType === "Deliverable") return /create|write|draft|build/.test(tt);
+    return true;
+  };
+
+  /* ---- grouped My Tasks ---- */
+  const groupedTasks = React.useMemo(() => {
+    const seen = new Set();
+    const tasks = flatTasks().filter((t) => {
+      if (seen.has(t.title)) return false;
+      seen.add(t.title);
+      if (selClient !== "All" && t.client !== selClient) return false;
+      if (selProject !== "All" && t.project !== selProject) return false;
+      if (selPhase !== "All" && t.phase !== selPhase) return false;
+      if (!matchesTaskType(t)) return false;
+      if (!isTaskInPeriod(t)) return false;
+      if (!showCompleted && t.status === "complete") return false;
+      return true;
+    });
+    const groups = [
+      { key: "overdue",     label: "Overdue",     headerBg: "#FDEAEA", headerFg: "#C0241F", tasks: tasks.filter(t => t.status === "overdue") },
+      { key: "in_progress", label: "In Progress",  headerBg: "#E6F1FB", headerFg: "#185FA5", tasks: tasks.filter(t => t.status === "in_progress") },
+      { key: "not_started", label: "Not Started",  headerBg: "#F1EFE8", headerFg: "#5F5E5A", tasks: tasks.filter(t => t.status === "not_started") },
+    ];
+    if (showCompleted) groups.push({ key: "complete", label: "Complete", headerBg: "#E8F5EE", headerFg: "#0F9E75", tasks: tasks.filter(t => t.status === "complete") });
+    return groups.filter(g => g.tasks.length > 0);
+  }, [selClient, selProject, selPhase, selTaskType, period, showCompleted]);
+
+  const TaskCard = ({ t }) => {
+    const border = TYPE_COLOR(t.title);
+    const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
+    const label = STATUS_LABEL[t.status] || t.status;
+    const iconName = TYPE_ICON(t.title);
+    const IconCmp = Icons[iconName] || Icons.FileText;
+    const iconBg = border === "#E57300" ? "rgba(229,115,0,0.1)" : border === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)";
+    return (
+      <div className="task-card clickable" style={{ borderLeft: `3px solid ${border}` }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
+        <div className="task-icon" style={{ background: iconBg, color: border }}><IconCmp size={16} /></div>
+        <div className="task-body">
+          <div className="task-title">
+            {t.title}
+            <span className="badge" style={{ background: badge.bg, color: badge.fg, fontSize: 10 }}>{label}</span>
+          </div>
+          {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
+          {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
+        </div>
+        <div className="task-actions" onClick={(e) => e.stopPropagation()}>
+          <button className="btn btn-secondary" style={{ fontSize: 12 }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
+        </div>
+      </div>
+    );
+  };
+
+  const MyTasksView = () => (
+    <div>
+      {/* Period toggle */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+        {["Today", "This Week", "This Month"].map(p => (
+          <button key={p} onClick={() => setPeriod(p)}
+            style={{ fontSize: 12, fontWeight: 600, padding: "5px 14px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
+              background: period === p ? "var(--purple)" : "#fff",
+              color: period === p ? "#fff" : "var(--text-secondary)",
+              borderColor: period === p ? "var(--purple)" : "var(--border)" }}>
+            {p}
+          </button>
+        ))}
+      </div>
+      {/* Grouped task list */}
+      {groupedTasks.length === 0
+        ? <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks for this period." />
+        : groupedTasks.map(g => (
+          <div key={g.key} style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99, background: g.headerBg, color: g.headerFg }}>{g.label}</span>
+              <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>· {g.tasks.length}</span>
             </div>
-            <div className="task-actions" onClick={(e) => e.stopPropagation()}>
-              <button className="btn btn-secondary" style={{ fontSize: 12 }}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {g.tasks.map((t, i) => <TaskCard key={i} t={t} />)}
             </div>
           </div>
-        );
-      })}
-      {rows.length === 0 && <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks assigned to you." />}
+        ))
+      }
     </div>
   );
 
@@ -4840,7 +4906,7 @@ function AdminTasks() {
     );
   };
 
-  const projectTasksToShow = selClient !== "All" && selProject !== "All" ? filteredTasks : null;
+  const hasFilters = selClient !== "All" || selProject !== "All" || selPhase !== "All" || selTaskType !== "All";
 
   return (
     <div>
@@ -4855,8 +4921,8 @@ function AdminTasks() {
       <FilterBar onSearch={null}
         right={<>
           <ToggleChip on={showCompleted} onToggle={() => setShowCompleted((v) => !v)} icon="CircleCheck" color="#00A06C">Show Completed</ToggleChip>
-          {(selClient !== "All" || selProject !== "All") && (
-            <button className="fpill" style={{ color: "#888", gap: 4 }} onClick={() => { setSelClient("All"); setSelProject("All"); }}>
+          {hasFilters && (
+            <button className="fpill" style={{ color: "#888", gap: 4 }} onClick={() => { setSelClient("All"); setSelProject("All"); setSelPhase("All"); setSelTaskType("All"); }}>
               <Icons.X size={12} /> Clear filters
             </button>
           )}
@@ -4864,17 +4930,11 @@ function AdminTasks() {
         </>}>
         <FilterPill label="Client" options={clientNames} active={selClient} onChange={(v) => { setSelClient(v); setSelProject("All"); }} />
         {selClient !== "All" && <FilterPill label="Project" options={projectsForClient.map((p) => p.name)} active={selProject} onChange={setSelProject} />}
-        <FilterPill label="Phase" options={ADM.PHASES} active="All" onChange={() => {}} />
-        <FilterPill label="Task Type" options={["Call", "Review", "Upload", "Deliverable", "Other"]} active="All" onChange={() => {}} />
+        <FilterPill label="Phase" options={ADM.PHASES} active={selPhase} onChange={setSelPhase} />
+        <FilterPill label="Task Type" options={["Call", "Review", "Upload", "Deliverable", "Other"]} active={selTaskType} onChange={setSelTaskType} />
       </FilterBar>
-      {projectTasksToShow && (
-        <div className="admin-body" style={{ paddingBottom: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text-muted)", marginBottom: 10 }}>{selProject} — Tasks</div>
-          <TaskCards rows={projectTasksToShow} />
-        </div>
-      )}
       <div className="admin-body">
-        {tab === "My Tasks" && <TaskCards rows={myTaskRows} />}
+        {tab === "My Tasks" && <MyTasksView />}
         {tab === "Board" && <Board />}
       </div>
     </div>
