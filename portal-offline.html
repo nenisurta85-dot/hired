@@ -2699,7 +2699,7 @@ Object.assign(window, { MyFiles, MySessions, Comments, Toolkit, MyTasks, Help, S
   ];
 
   const MEETINGS_REVIEW = [
-    { id: "m1", title: "Résumé Review Call", client: "Maya Chen", when: "Apr 24 · 2:00 PM", status: "needs review" },
+    { id: "m1", title: "Résumé Review Call", client: "Maya Chen", when: "Apr 24 · 2:00 PM", status: "needs review", cancelled: true, cancelReason: "Client cancelled: scheduling conflict, requested to reschedule to next week." },
   ];
   const MEETINGS_WEEKS = [
     { week: "Apr 27 – May 3", items: [
@@ -5158,6 +5158,38 @@ function AdminSchedule() {
 
   const MeetingCard = ({ m }) => {
     const cancelling = cancelConfirm === m.id;
+    const [showReason, setShowReason] = React.useState(false);
+
+    if (m.cancelled) {
+      return (
+        <Card style={{ marginBottom: 8, opacity: 0.72, background: "#FAFAFA", border: "1px solid rgba(229,57,53,0.25)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ width: 36, height: 36, borderRadius: 99, background: "rgba(229,57,53,0.08)", color: "#C0241F", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icons.Video size={16} />
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", textDecoration: "line-through" }}>{m.title}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(229,57,53,0.1)", color: "#C0241F", borderRadius: 20, padding: "2px 9px", letterSpacing: "0.03em" }}>Cancelled by client</span>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{m.client}{m.when ? " · " + m.when : ""}</div>
+              {showReason && (
+                <div style={{ marginTop: 8, background: "rgba(229,57,53,0.06)", border: "1px solid rgba(229,57,53,0.2)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#7A2020", lineHeight: 1.5 }}>
+                  {m.cancelReason}
+                </div>
+              )}
+            </div>
+            <div style={{ flexShrink: 0 }}>
+              <button onClick={() => setShowReason(r => !r)}
+                style={{ border: "1px solid rgba(229,57,53,0.4)", borderRadius: 8, padding: "0 14px", height: 34, fontSize: 12, fontWeight: 600, cursor: "pointer", background: showReason ? "rgba(229,57,53,0.08)" : "transparent", color: "#C0241F", fontFamily: "inherit" }}>
+                {showReason ? "Hide reason" : "View reason"}
+              </button>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
     return (
       <Card style={{ marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>

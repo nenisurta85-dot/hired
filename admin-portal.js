@@ -162,7 +162,7 @@
   ];
 
   const MEETINGS_REVIEW = [
-    { id: "m1", title: "Résumé Review Call", client: "Maya Chen", when: "Apr 24 · 2:00 PM", status: "needs review" },
+    { id: "m1", title: "Résumé Review Call", client: "Maya Chen", when: "Apr 24 · 2:00 PM", status: "needs review", cancelled: true, cancelReason: "Client cancelled: scheduling conflict, requested to reschedule to next week." },
   ];
   const MEETINGS_WEEKS = [
     { week: "Apr 27 – May 3", items: [
