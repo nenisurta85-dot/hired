@@ -64,18 +64,23 @@ function AdminTasks() {
     const now = new Date();
     const d = new Date(due + " " + now.getFullYear());
     if (isNaN(d)) return null;
-    // if result is more than 6 months in the past, try next year
+    // if result is more than 6 months in the past, assume it's a near-future date next year
     if (now - d > 1000 * 60 * 60 * 24 * 180) return new Date(due + " " + (now.getFullYear() + 1));
     return d;
   };
-  const isTaskInPeriod = (t) => {
-    // overdue tasks always included regardless of period
-    if (t.status === "overdue") return true;
+  const getToday = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+  /* overdue by actual date: due date is before today AND task is not complete */
+  const isDateOverdue = (t) => {
+    if (t.status === "complete") return false;
     const d = parseTaskDate(t.due);
-    if (!d) return true; // no due date → always show
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (d < today) return true; // past-due → always show
+    if (!d) return false;
+    return d < getToday();
+  };
+  const isTaskInPeriod = (t) => {
+    if (isDateOverdue(t)) return true; // overdue always shown regardless of period
+    const d = parseTaskDate(t.due);
+    if (!d) return true;
+    const today = getToday();
     if (period === "Today") {
       const todayEnd = new Date(today); todayEnd.setDate(today.getDate() + 1);
       return d >= today && d < todayEnd;
@@ -83,10 +88,10 @@ function AdminTasks() {
     if (period === "This Week") {
       const weekEnd = new Date(today);
       weekEnd.setDate(today.getDate() + (7 - today.getDay()));
-      return d <= weekEnd;
+      return d >= today && d <= weekEnd;
     }
     if (period === "This Month") {
-      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear() && d >= today;
     }
     return true;
   };
@@ -121,22 +126,25 @@ function AdminTasks() {
   /* tasks visible in this period (overdue always included) */
   const periodTasks = React.useMemo(() => baseTasks.filter(isTaskInPeriod), [baseTasks, period]);
 
-  /* apply status filter pill */
+  /* apply status filter pill — "Overdue" means date-overdue */
   const visibleTasks = React.useMemo(() => {
     if (selStatus === "All") return periodTasks;
-    const map = { "Overdue": "overdue", "In Progress": "in_progress", "Not Started": "not_started", "Complete": "complete" };
-    return periodTasks.filter(t => t.status === (map[selStatus] || selStatus));
+    if (selStatus === "Overdue") return periodTasks.filter(t => isDateOverdue(t));
+    const map = { "In Progress": "in_progress", "Not Started": "not_started", "Complete": "complete" };
+    return periodTasks.filter(t => !isDateOverdue(t) && t.status === (map[selStatus] || selStatus));
   }, [periodTasks, selStatus]);
 
-  /* status groups for Today / This Week views */
+  /* status groups for Today / This Week views — overdue by date, not status field */
   const statusGroups = React.useMemo(() => {
+    const overdueItems = visibleTasks.filter(t => isDateOverdue(t));
+    const nonOverdue = visibleTasks.filter(t => !isDateOverdue(t));
     const defs = [
-      { key: "overdue",     label: "Overdue",    headerBg: "rgba(229,57,53,0.07)", headerFg: "#C0241F", icon: "⚠️" },
-      { key: "in_progress", label: "In Progress", headerBg: "rgba(24,95,165,0.06)", headerFg: "#185FA5", icon: null },
-      { key: "not_started", label: "Not Started", headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null },
+      { key: "overdue",     label: "Overdue",    headerBg: "rgba(229,57,53,0.08)", headerFg: "#C0241F", icon: "⚠️", tasks: overdueItems },
+      { key: "in_progress", label: "In Progress", headerBg: "rgba(24,95,165,0.06)", headerFg: "#185FA5", icon: null, tasks: nonOverdue.filter(t => t.status === "in_progress") },
+      { key: "not_started", label: "Not Started", headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null, tasks: nonOverdue.filter(t => t.status === "not_started") },
     ];
-    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null });
-    return defs.map(d => ({ ...d, tasks: visibleTasks.filter(t => t.status === d.key) })).filter(g => g.tasks.length > 0);
+    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null, tasks: nonOverdue.filter(t => t.status === "complete") });
+    return defs.filter(g => g.tasks.length > 0);
   }, [visibleTasks, showCompleted]);
 
   /* week buckets for This Month accordion */
@@ -148,9 +156,8 @@ function AdminTasks() {
       const end = new Date(start); end.setDate(start.getDate() + 7);
       return { label: "Week " + (w + 1), start, end, tasks: [] };
     });
-    // overdue: put in week 1
     visibleTasks.forEach(t => {
-      if (t.status === "overdue") { buckets[0].tasks.push(t); return; }
+      if (isDateOverdue(t)) { buckets[0].tasks.push(t); return; }
       const d = parseTaskDate(t.due);
       if (!d) { buckets[0].tasks.push(t); return; }
       const wi = buckets.findIndex(b => d >= b.start && d < b.end);
@@ -163,36 +170,46 @@ function AdminTasks() {
 
   /* ---- Task card components ---- */
   const TaskCard = ({ t, compact }) => {
-    const border = TYPE_COLOR(t.title);
-    const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
-    const label = STATUS_LABEL[t.status] || t.status;
+    const overdue = isDateOverdue(t);
+    const cardBorder = overdue ? "#E53935" : TYPE_COLOR(t.title);
+    const badge = overdue ? { bg: "#FDEAEA", fg: "#C0241F" } : (STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" });
+    const label = overdue ? "Overdue" : (STATUS_LABEL[t.status] || t.status);
     const iconName = TYPE_ICON(t.title);
     const IconCmp = Icons[iconName] || Icons.FileText;
-    const iconBg = border === "#E57300" ? "rgba(229,115,0,0.1)" : border === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)";
-    const isOverdue = t.status === "overdue";
+    const typeColor = TYPE_COLOR(t.title);
+    const iconBg = overdue ? "rgba(229,57,53,0.1)" : (typeColor === "#E57300" ? "rgba(229,115,0,0.1)" : typeColor === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)");
+    const iconColor = overdue ? "#E53935" : typeColor;
+    const cardBg = overdue ? "rgba(229,57,53,0.03)" : "#fff";
     if (compact) return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: isOverdue ? "rgba(229,57,53,0.03)" : "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${border}`, cursor: "pointer", transition: "background .1s" }}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: cardBg, border: "0.5px solid " + (overdue ? "rgba(229,57,53,0.2)" : "var(--border)"), borderLeft: `3px solid ${cardBorder}`, cursor: "pointer", transition: "background .1s" }}
         onClick={() => setActiveTask(t)}
-        onMouseEnter={e => e.currentTarget.style.background = isOverdue ? "rgba(229,57,53,0.06)" : "var(--bg)"}
-        onMouseLeave={e => e.currentTarget.style.background = isOverdue ? "rgba(229,57,53,0.03)" : "#fff"}>
+        onMouseEnter={e => e.currentTarget.style.background = overdue ? "rgba(229,57,53,0.06)" : "var(--bg)"}
+        onMouseLeave={e => e.currentTarget.style.background = cardBg}>
+        {overdue && <span style={{ fontSize: 12, flexShrink: 0 }}>⚠️</span>}
         <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
         <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: badge.bg, color: badge.fg, whiteSpace: "nowrap", flexShrink: 0 }}>{label}</span>
-        {t.due && <span style={{ fontSize: 11, color: "#AAAAAA", whiteSpace: "nowrap", flexShrink: 0 }}>Due {t.due}</span>}
+        {t.due && <span style={{ fontSize: 11, color: overdue ? "#E53935" : "#AAAAAA", whiteSpace: "nowrap", flexShrink: 0, fontWeight: overdue ? 600 : 400 }}>Due {t.due}</span>}
         <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px", flexShrink: 0 }}
           onClick={e => { e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
       </div>
     );
     return (
-      <div className="task-card clickable" style={{ borderLeft: `3px solid ${border}`, background: isOverdue ? "rgba(229,57,53,0.025)" : "#fff" }}
+      <div className="task-card clickable" style={{ borderLeft: `3px solid ${cardBorder}`, background: cardBg, border: overdue ? "0.5px solid rgba(229,57,53,0.18)" : undefined }}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
-        <div className="task-icon" style={{ background: iconBg, color: border }}><IconCmp size={16} /></div>
+        <div className="task-icon" style={{ background: iconBg, color: iconColor }}><IconCmp size={16} /></div>
         <div className="task-body">
-          <div className="task-title">
-            {t.title}
+          <div className="task-title" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            {overdue && <span style={{ fontSize: 13, lineHeight: 1 }}>⚠️</span>}
+            <span>{t.title}</span>
             <span className="badge" style={{ background: badge.bg, color: badge.fg, fontSize: 10 }}>{label}</span>
+            {overdue && t.status !== "overdue" && (
+              <span className="badge" style={{ background: STATUS_STYLE[t.status]?.bg || "#F1EFE8", color: STATUS_STYLE[t.status]?.fg || "#5F5E5A", fontSize: 10 }}>
+                {STATUS_LABEL[t.status] || t.status}
+              </span>
+            )}
           </div>
           {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
-          {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>Due {t.due}</div>}
+          {t.due && <div style={{ fontSize: 11, color: overdue ? "#E53935" : "#AAAAAA", marginTop: 2, fontWeight: overdue ? 600 : 400 }}>Due {t.due}</div>}
         </div>
         <div className="task-actions" onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-secondary" style={{ fontSize: 12 }}
@@ -206,8 +223,8 @@ function AdminTasks() {
   const WeekRow = ({ bucket, idx }) => {
     const open = !!expandedWeeks[idx];
     const toggle = () => setExpandedWeeks(prev => ({ ...prev, [idx]: !prev[idx] }));
-    const overdueCount = bucket.tasks.filter(t => t.status === "overdue").length;
-    const inProgressCount = bucket.tasks.filter(t => t.status === "in_progress").length;
+    const overdueCount = bucket.tasks.filter(t => isDateOverdue(t)).length;
+    const inProgressCount = bucket.tasks.filter(t => !isDateOverdue(t) && t.status === "in_progress").length;
     const summary = [
       overdueCount ? overdueCount + " overdue" : null,
       inProgressCount ? inProgressCount + " in progress" : null,
@@ -257,7 +274,7 @@ function AdminTasks() {
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 20, paddingBottom: 16, borderBottom: "0.5px solid var(--border-light)" }}>
         {STATUS_PILLS.map(s => {
           const active = selStatus === s;
-          const countMap = { "Overdue": periodTasks.filter(t=>t.status==="overdue").length, "In Progress": periodTasks.filter(t=>t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
+          const countMap = { "Overdue": periodTasks.filter(t=>isDateOverdue(t)).length, "In Progress": periodTasks.filter(t=>!isDateOverdue(t)&&t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>!isDateOverdue(t)&&t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
           const count = s === "All" ? periodTasks.length : countMap[s] || 0;
           if (s !== "All" && count === 0) return null;
           return (
