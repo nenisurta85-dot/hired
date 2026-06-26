@@ -4785,38 +4785,90 @@ function AdminTasks() {
     return true;
   };
 
-  /* ---- grouped My Tasks ---- */
-  const groupedTasks = React.useMemo(() => {
+  const [selStatus, setSelStatus] = React.useState("All");
+  const [expandedWeeks, setExpandedWeeks] = React.useState({ 0: true, 1: true, 2: true, 3: true });
+
+  /* ---- base filtered tasks (period + client/phase/type filters) ---- */
+  const baseTasks = React.useMemo(() => {
     const seen = new Set();
-    const tasks = flatTasks().filter((t) => {
+    return flatTasks().filter((t) => {
       if (seen.has(t.title)) return false;
       seen.add(t.title);
       if (selClient !== "All" && t.client !== selClient) return false;
       if (selProject !== "All" && t.project !== selProject) return false;
       if (selPhase !== "All" && t.phase !== selPhase) return false;
       if (!matchesTaskType(t)) return false;
-      if (!isTaskInPeriod(t)) return false;
       if (!showCompleted && t.status === "complete") return false;
       return true;
     });
-    const groups = [
-      { key: "overdue",     label: "Overdue",     headerBg: "#FDEAEA", headerFg: "#C0241F", tasks: tasks.filter(t => t.status === "overdue") },
-      { key: "in_progress", label: "In Progress",  headerBg: "#E6F1FB", headerFg: "#185FA5", tasks: tasks.filter(t => t.status === "in_progress") },
-      { key: "not_started", label: "Not Started",  headerBg: "#F1EFE8", headerFg: "#5F5E5A", tasks: tasks.filter(t => t.status === "not_started") },
-    ];
-    if (showCompleted) groups.push({ key: "complete", label: "Complete", headerBg: "#E8F5EE", headerFg: "#0F9E75", tasks: tasks.filter(t => t.status === "complete") });
-    return groups.filter(g => g.tasks.length > 0);
-  }, [selClient, selProject, selPhase, selTaskType, period, showCompleted]);
+  }, [selClient, selProject, selPhase, selTaskType, showCompleted]);
 
-  const TaskCard = ({ t }) => {
+  /* tasks visible in this period (overdue always included) */
+  const periodTasks = React.useMemo(() => baseTasks.filter(isTaskInPeriod), [baseTasks, period]);
+
+  /* apply status filter pill */
+  const visibleTasks = React.useMemo(() => {
+    if (selStatus === "All") return periodTasks;
+    const map = { "Overdue": "overdue", "In Progress": "in_progress", "Not Started": "not_started", "Complete": "complete" };
+    return periodTasks.filter(t => t.status === (map[selStatus] || selStatus));
+  }, [periodTasks, selStatus]);
+
+  /* status groups for Today / This Week views */
+  const statusGroups = React.useMemo(() => {
+    const defs = [
+      { key: "overdue",     label: "Overdue",    headerBg: "rgba(229,57,53,0.07)", headerFg: "#C0241F", icon: "⚠️" },
+      { key: "in_progress", label: "In Progress", headerBg: "rgba(24,95,165,0.06)", headerFg: "#185FA5", icon: null },
+      { key: "not_started", label: "Not Started", headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null },
+    ];
+    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null });
+    return defs.map(d => ({ ...d, tasks: visibleTasks.filter(t => t.status === d.key) })).filter(g => g.tasks.length > 0);
+  }, [visibleTasks, showCompleted]);
+
+  /* week buckets for This Month accordion */
+  const weekBuckets = React.useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const buckets = [0, 1, 2, 3].map(w => {
+      const start = new Date(monthStart); start.setDate(1 + w * 7);
+      const end = new Date(start); end.setDate(start.getDate() + 7);
+      return { label: "Week " + (w + 1), start, end, tasks: [] };
+    });
+    // overdue: put in week 1
+    visibleTasks.forEach(t => {
+      if (t.status === "overdue") { buckets[0].tasks.push(t); return; }
+      const d = parseTaskDate(t.due);
+      if (!d) { buckets[0].tasks.push(t); return; }
+      const wi = buckets.findIndex(b => d >= b.start && d < b.end);
+      if (wi >= 0) buckets[wi].tasks.push(t);
+      else if (d < buckets[0].start) buckets[0].tasks.push(t);
+      else buckets[3].tasks.push(t);
+    });
+    return buckets.filter(b => b.tasks.length > 0);
+  }, [visibleTasks]);
+
+  /* ---- Task card components ---- */
+  const TaskCard = ({ t, compact }) => {
     const border = TYPE_COLOR(t.title);
     const badge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
     const label = STATUS_LABEL[t.status] || t.status;
     const iconName = TYPE_ICON(t.title);
     const IconCmp = Icons[iconName] || Icons.FileText;
     const iconBg = border === "#E57300" ? "rgba(229,115,0,0.1)" : border === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)";
+    const isOverdue = t.status === "overdue";
+    if (compact) return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: isOverdue ? "rgba(229,57,53,0.03)" : "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${border}`, cursor: "pointer", transition: "background .1s" }}
+        onClick={() => setActiveTask(t)}
+        onMouseEnter={e => e.currentTarget.style.background = isOverdue ? "rgba(229,57,53,0.06)" : "var(--bg)"}
+        onMouseLeave={e => e.currentTarget.style.background = isOverdue ? "rgba(229,57,53,0.03)" : "#fff"}>
+        <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: badge.bg, color: badge.fg, whiteSpace: "nowrap", flexShrink: 0 }}>{label}</span>
+        {t.due && <span style={{ fontSize: 11, color: "#AAAAAA", whiteSpace: "nowrap", flexShrink: 0 }}>Due {t.due}</span>}
+        <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px", flexShrink: 0 }}
+          onClick={e => { e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
+      </div>
+    );
     return (
-      <div className="task-card clickable" style={{ borderLeft: `3px solid ${border}` }}
+      <div className="task-card clickable" style={{ borderLeft: `3px solid ${border}`, background: isOverdue ? "rgba(229,57,53,0.025)" : "#fff" }}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
         <div className="task-icon" style={{ background: iconBg, color: border }}><IconCmp size={16} /></div>
         <div className="task-body">
@@ -4835,34 +4887,93 @@ function AdminTasks() {
     );
   };
 
+  /* week accordion row */
+  const WeekRow = ({ bucket, idx }) => {
+    const open = !!expandedWeeks[idx];
+    const toggle = () => setExpandedWeeks(prev => ({ ...prev, [idx]: !prev[idx] }));
+    const overdueCount = bucket.tasks.filter(t => t.status === "overdue").length;
+    const inProgressCount = bucket.tasks.filter(t => t.status === "in_progress").length;
+    const summary = [
+      overdueCount ? overdueCount + " overdue" : null,
+      inProgressCount ? inProgressCount + " in progress" : null,
+      (!overdueCount && !inProgressCount) ? bucket.tasks.length + " tasks" : null,
+    ].filter(Boolean).join(" · ");
+    return (
+      <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", background: open ? "var(--bg)" : "#fff", cursor: "pointer", userSelect: "none", transition: "background .12s" }}
+          onClick={toggle}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--bg)"}
+          onMouseLeave={e => e.currentTarget.style.background = open ? "var(--bg)" : "#fff"}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", minWidth: 70 }}>{bucket.label}</span>
+          <span style={{ fontSize: 11, color: "var(--text-muted)", flex: 1 }}>{summary}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99, background: overdueCount ? "rgba(229,57,53,0.1)" : "var(--purple-light)", color: overdueCount ? "#C0241F" : "var(--purple)" }}>{bucket.tasks.length}</span>
+          <span style={{ display: "flex", color: "var(--text-muted)", transition: "transform .2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>{React.createElement(Icons.ChevronDown, { size: 14 })}</span>
+        </div>
+        {open && (
+          <div style={{ padding: "8px 12px 12px", display: "flex", flexDirection: "column", gap: 6, borderTop: "0.5px solid var(--border)" }}>
+            {bucket.tasks.map((t, i) => <TaskCard key={i} t={t} compact />)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const STATUS_PILLS = ["All", "Overdue", "In Progress", "Not Started", "Complete"];
+
   const MyTasksView = () => (
     <div>
       {/* Period toggle */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-        {["Today", "This Week", "This Month"].map(p => (
-          <button key={p} onClick={() => setPeriod(p)}
-            style={{ fontSize: 12, fontWeight: 600, padding: "5px 14px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
-              background: period === p ? "var(--purple)" : "#fff",
-              color: period === p ? "#fff" : "var(--text-secondary)",
-              borderColor: period === p ? "var(--purple)" : "var(--border)" }}>
-            {p}
-          </button>
-        ))}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 5 }}>
+          {["Today", "This Week", "This Month"].map(p => (
+            <button key={p} onClick={() => setPeriod(p)}
+              style={{ fontSize: 12, fontWeight: 600, padding: "5px 16px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
+                background: period === p ? "var(--purple)" : "#fff",
+                color: period === p ? "#fff" : "var(--text-secondary)",
+                borderColor: period === p ? "var(--purple)" : "var(--border)" }}>
+              {p}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{visibleTasks.length} task{visibleTasks.length !== 1 ? "s" : ""}</span>
       </div>
-      {/* Grouped task list */}
-      {groupedTasks.length === 0
+
+      {/* Status filter pills */}
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 20, paddingBottom: 16, borderBottom: "0.5px solid var(--border-light)" }}>
+        {STATUS_PILLS.map(s => {
+          const active = selStatus === s;
+          const countMap = { "Overdue": periodTasks.filter(t=>t.status==="overdue").length, "In Progress": periodTasks.filter(t=>t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
+          const count = s === "All" ? periodTasks.length : countMap[s] || 0;
+          if (s !== "All" && count === 0) return null;
+          return (
+            <button key={s} onClick={() => setSelStatus(s)}
+              style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
+                background: active ? "var(--purple)" : "#fff",
+                color: active ? "#fff" : "var(--text-secondary)",
+                borderColor: active ? "var(--purple)" : "var(--border)" }}>
+              {s}{s !== "All" ? " · " + count : ""}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      {visibleTasks.length === 0
         ? <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks for this period." />
-        : groupedTasks.map(g => (
-          <div key={g.key} style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99, background: g.headerBg, color: g.headerFg }}>{g.label}</span>
-              <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>· {g.tasks.length}</span>
+        : period === "This Month"
+          ? weekBuckets.map((b, i) => <WeekRow key={i} bucket={b} idx={i} />)
+          : statusGroups.map(g => (
+            <div key={g.key} style={{ marginBottom: 22 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, background: g.headerBg, marginBottom: 10 }}>
+                {g.icon && <span style={{ fontSize: 13 }}>{g.icon}</span>}
+                <span style={{ fontSize: 12, fontWeight: 700, color: g.headerFg }}>{g.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: g.headerFg, opacity: 0.7 }}>· {g.tasks.length}</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {g.tasks.map((t, i) => <TaskCard key={i} t={t} />)}
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {g.tasks.map((t, i) => <TaskCard key={i} t={t} />)}
-            </div>
-          </div>
-        ))
+          ))
       }
     </div>
   );
