@@ -126,7 +126,7 @@ function AdminTasks() {
   /* tasks visible in this period (overdue always included) */
   const periodTasks = React.useMemo(() => baseTasks.filter(isTaskInPeriod), [baseTasks, period]);
 
-  /* apply status filter pill — groups by status field; "Overdue" pill shows all date-overdue tasks */
+  /* apply status filter pill */
   const visibleTasks = React.useMemo(() => {
     if (selStatus === "All") return periodTasks;
     if (selStatus === "Overdue") return periodTasks.filter(t => isDateOverdue(t));
@@ -134,17 +134,21 @@ function AdminTasks() {
     return periodTasks.filter(t => t.status === (map[selStatus] || selStatus));
   }, [periodTasks, selStatus]);
 
-  /* status groups — grouped by status field; cards with past due dates get red styling regardless of group */
+  /* status groups:
+     - Overdue group  = tasks where due date is past (date-overdue), shown with red styling, max 3 + "view all"
+     - In Progress    = tasks with status=in_progress that are NOT date-overdue, clean style
+     - Not Started    = tasks with status=not_started that are NOT date-overdue, clean style
+     When a status filter pill is active, show a flat list instead of groups */
   const statusGroups = React.useMemo(() => {
+    const overdueItems = visibleTasks.filter(t => isDateOverdue(t));
+    const nonOverdue = visibleTasks.filter(t => !isDateOverdue(t));
     const defs = [
-      { key: "overdue",     label: "Overdue",     headerBg: "rgba(229,57,53,0.08)", headerFg: "#C0241F", icon: "⚠️" },
-      { key: "in_progress", label: "In Progress",  headerBg: "rgba(24,95,165,0.06)",  headerFg: "#185FA5", icon: null },
-      { key: "not_started", label: "Not Started",  headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null },
+      { key: "overdue",     label: "Overdue",     headerBg: "rgba(229,57,53,0.08)", headerFg: "#C0241F", icon: "⚠️",  tasks: overdueItems, isOverdueGroup: true },
+      { key: "in_progress", label: "In Progress",  headerBg: "rgba(24,95,165,0.06)",  headerFg: "#185FA5", icon: null, tasks: nonOverdue.filter(t => t.status === "in_progress") },
+      { key: "not_started", label: "Not Started",  headerBg: "rgba(170,170,170,0.08)", headerFg: "#5F5E5A", icon: null, tasks: nonOverdue.filter(t => t.status === "not_started") },
     ];
-    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null });
-    return defs
-      .map(d => ({ ...d, tasks: visibleTasks.filter(t => t.status === d.key) }))
-      .filter(g => g.tasks.length > 0);
+    if (showCompleted) defs.push({ key: "complete", label: "Complete", headerBg: "rgba(15,158,117,0.07)", headerFg: "#0F7A5C", icon: null, tasks: nonOverdue.filter(t => t.status === "complete") });
+    return defs.filter(g => g.tasks.length > 0);
   }, [visibleTasks, showCompleted]);
 
   /* week buckets for This Month accordion */
@@ -168,47 +172,46 @@ function AdminTasks() {
     return buckets.filter(b => b.tasks.length > 0);
   }, [visibleTasks]);
 
-  /* ---- Task card components ---- */
-  const TaskCard = ({ t, compact }) => {
-    const overdue = isDateOverdue(t);
-    const cardBorder = overdue ? "#E53935" : TYPE_COLOR(t.title);
-    const badge = overdue ? { bg: "#FDEAEA", fg: "#C0241F" } : (STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" });
-    const label = overdue ? "Overdue" : (STATUS_LABEL[t.status] || t.status);
+  /* ---- Task card components ----
+     showOverdue=true  → red border, pink bg, ⚠️ icon, "Overdue" badge + status badge
+     showOverdue=false → clean card with only the status badge (In Progress / Not Started / etc.) */
+  const TaskCard = ({ t, compact, showOverdue }) => {
+    const cardBorder = showOverdue ? "#E53935" : TYPE_COLOR(t.title);
+    const statusBadge = STATUS_STYLE[t.status] || { bg: "#F1EFE8", fg: "#5F5E5A" };
+    const statusLabel = STATUS_LABEL[t.status] || t.status;
     const iconName = TYPE_ICON(t.title);
     const IconCmp = Icons[iconName] || Icons.FileText;
     const typeColor = TYPE_COLOR(t.title);
-    const iconBg = overdue ? "rgba(229,57,53,0.1)" : (typeColor === "#E57300" ? "rgba(229,115,0,0.1)" : typeColor === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)");
-    const iconColor = overdue ? "#E53935" : typeColor;
-    const cardBg = overdue ? "rgba(229,57,53,0.03)" : "#fff";
+    const iconBg = showOverdue ? "rgba(229,57,53,0.1)" : (typeColor === "#E57300" ? "rgba(229,115,0,0.1)" : typeColor === "var(--purple)" ? "rgba(130,17,255,0.08)" : "rgba(0,160,108,0.1)");
+    const iconColor = showOverdue ? "#E53935" : typeColor;
+    const cardBg = showOverdue ? "rgba(229,57,53,0.03)" : "#fff";
     if (compact) return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: cardBg, border: "0.5px solid " + (overdue ? "rgba(229,57,53,0.2)" : "var(--border)"), borderLeft: `3px solid ${cardBorder}`, cursor: "pointer", transition: "background .1s" }}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: cardBg, border: "0.5px solid " + (showOverdue ? "rgba(229,57,53,0.2)" : "var(--border)"), borderLeft: `3px solid ${cardBorder}`, cursor: "pointer", transition: "background .1s" }}
         onClick={() => setActiveTask(t)}
-        onMouseEnter={e => e.currentTarget.style.background = overdue ? "rgba(229,57,53,0.06)" : "var(--bg)"}
+        onMouseEnter={e => e.currentTarget.style.background = showOverdue ? "rgba(229,57,53,0.06)" : "var(--bg)"}
         onMouseLeave={e => e.currentTarget.style.background = cardBg}>
-        {overdue && <span style={{ fontSize: 12, flexShrink: 0 }}>⚠️</span>}
+        {showOverdue && <span style={{ fontSize: 12, flexShrink: 0 }}>⚠️</span>}
         <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
-        {overdue && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: "#FDEAEA", color: "#C0241F", whiteSpace: "nowrap", flexShrink: 0 }}>Overdue</span>}
-        <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: STATUS_STYLE[t.status]?.bg || "#F1EFE8", color: STATUS_STYLE[t.status]?.fg || "#5F5E5A", whiteSpace: "nowrap", flexShrink: 0 }}>{STATUS_LABEL[t.status] || t.status}</span>
-        {t.due && <span style={{ fontSize: 11, color: overdue ? "#E53935" : "#AAAAAA", whiteSpace: "nowrap", flexShrink: 0, fontWeight: overdue ? 600 : 400 }}>Due {t.due}</span>}
+        {showOverdue && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: "#FDEAEA", color: "#C0241F", whiteSpace: "nowrap", flexShrink: 0 }}>Overdue</span>}
+        <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: statusBadge.bg, color: statusBadge.fg, whiteSpace: "nowrap", flexShrink: 0 }}>{statusLabel}</span>
+        {t.due && <span style={{ fontSize: 11, color: showOverdue ? "#E53935" : "#AAAAAA", whiteSpace: "nowrap", flexShrink: 0, fontWeight: showOverdue ? 600 : 400 }}>Due {t.due}</span>}
         <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px", flexShrink: 0 }}
           onClick={e => { e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
       </div>
     );
     return (
-      <div className="task-card clickable" style={{ borderLeft: `3px solid ${cardBorder}`, background: cardBg, border: overdue ? "0.5px solid rgba(229,57,53,0.18)" : undefined }}
+      <div className="task-card clickable" style={{ borderLeft: `3px solid ${cardBorder}`, background: cardBg, border: showOverdue ? "0.5px solid rgba(229,57,53,0.18)" : undefined }}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
         <div className="task-icon" style={{ background: iconBg, color: iconColor }}><IconCmp size={16} /></div>
         <div className="task-body">
           <div className="task-title" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            {overdue && <span style={{ fontSize: 13, lineHeight: 1 }}>⚠️</span>}
+            {showOverdue && <span style={{ fontSize: 13, lineHeight: 1 }}>⚠️</span>}
             <span>{t.title}</span>
-            {overdue && <span className="badge" style={{ background: "#FDEAEA", color: "#C0241F", fontSize: 10 }}>Overdue</span>}
-            <span className="badge" style={{ background: STATUS_STYLE[t.status]?.bg || "#F1EFE8", color: STATUS_STYLE[t.status]?.fg || "#5F5E5A", fontSize: 10 }}>
-              {STATUS_LABEL[t.status] || t.status}
-            </span>
+            {showOverdue && <span className="badge" style={{ background: "#FDEAEA", color: "#C0241F", fontSize: 10 }}>Overdue</span>}
+            <span className="badge" style={{ background: statusBadge.bg, color: statusBadge.fg, fontSize: 10 }}>{statusLabel}</span>
           </div>
           {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
-          {t.due && <div style={{ fontSize: 11, color: overdue ? "#E53935" : "#AAAAAA", marginTop: 2, fontWeight: overdue ? 600 : 400 }}>Due {t.due}</div>}
+          {t.due && <div style={{ fontSize: 11, color: showOverdue ? "#E53935" : "#AAAAAA", marginTop: 2, fontWeight: showOverdue ? 600 : 400 }}>Due {t.due}</div>}
         </div>
         <div className="task-actions" onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-secondary" style={{ fontSize: 12 }}
@@ -242,7 +245,7 @@ function AdminTasks() {
         </div>
         {open && (
           <div style={{ padding: "8px 12px 12px", display: "flex", flexDirection: "column", gap: 6, borderTop: "0.5px solid var(--border)" }}>
-            {bucket.tasks.map((t, i) => <TaskCard key={i} t={t} compact />)}
+            {bucket.tasks.map((t, i) => <TaskCard key={i} t={t} compact showOverdue={isDateOverdue(t)} />)}
           </div>
         )}
       </div>
@@ -293,18 +296,29 @@ function AdminTasks() {
         ? <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks for this period." />
         : period === "This Month"
           ? weekBuckets.map((b, i) => <WeekRow key={i} bucket={b} idx={i} />)
-          : statusGroups.map(g => (
-            <div key={g.key} style={{ marginBottom: 22 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, background: g.headerBg, marginBottom: 10 }}>
-                {g.icon && <span style={{ fontSize: 13 }}>{g.icon}</span>}
-                <span style={{ fontSize: 12, fontWeight: 700, color: g.headerFg }}>{g.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: g.headerFg, opacity: 0.7 }}>· {g.tasks.length}</span>
+          : statusGroups.map(g => {
+            const OVERDUE_MAX = 3;
+            const shown = g.isOverdueGroup ? g.tasks.slice(0, OVERDUE_MAX) : g.tasks;
+            const hiddenCount = g.isOverdueGroup ? g.tasks.length - OVERDUE_MAX : 0;
+            return (
+              <div key={g.key} style={{ marginBottom: 22 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, background: g.headerBg, marginBottom: 10 }}>
+                  {g.icon && <span style={{ fontSize: 13 }}>{g.icon}</span>}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: g.headerFg }}>{g.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: g.headerFg, opacity: 0.7 }}>· {g.tasks.length}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {shown.map((t, i) => <TaskCard key={i} t={t} showOverdue={!!g.isOverdueGroup} />)}
+                </div>
+                {hiddenCount > 0 && (
+                  <button onClick={() => setSelStatus("Overdue")}
+                    style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: "#C0241F", background: "none", border: "none", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: 4 }}>
+                    View all {g.tasks.length} overdue →
+                  </button>
+                )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {g.tasks.map((t, i) => <TaskCard key={i} t={t} />)}
-              </div>
-            </div>
-          ))
+            );
+          })
       }
     </div>
   );
