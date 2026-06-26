@@ -4980,29 +4980,35 @@ function AdminTasks() {
         ? <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks for this period." />
         : period === "This Month"
           ? weekBuckets.map((b, i) => <WeekRow key={i} bucket={b} idx={i} />)
-          : statusGroups.map(g => {
-            const OVERDUE_MAX = 3;
-            const shown = g.isOverdueGroup ? g.tasks.slice(0, OVERDUE_MAX) : g.tasks;
-            const hiddenCount = g.isOverdueGroup ? g.tasks.length - OVERDUE_MAX : 0;
-            return (
-              <div key={g.key} style={{ marginBottom: 22 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, background: g.headerBg, marginBottom: 10 }}>
-                  {g.icon && <span style={{ fontSize: 13 }}>{g.icon}</span>}
-                  <span style={{ fontSize: 12, fontWeight: 700, color: g.headerFg }}>{g.label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: g.headerFg, opacity: 0.7 }}>· {g.tasks.length}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {shown.map((t, i) => <TaskCard key={i} t={t} showOverdue={!!g.isOverdueGroup} />)}
-                </div>
-                {hiddenCount > 0 && (
-                  <button onClick={() => setSelStatus("Overdue")}
-                    style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: "#C0241F", background: "none", border: "none", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: 4 }}>
-                    View all {g.tasks.length} overdue →
-                  </button>
-                )}
+          : selStatus !== "All"
+            /* Specific pill selected — flat list, no grouping, no overdue treatment */
+            ? <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {visibleTasks.map((t, i) => <TaskCard key={i} t={t} showOverdue={selStatus === "Overdue"} />)}
               </div>
-            );
-          })
+            /* "All" pill — grouped view */
+            : statusGroups.map(g => {
+                const OVERDUE_MAX = 3;
+                const shown = g.isOverdueGroup ? g.tasks.slice(0, OVERDUE_MAX) : g.tasks;
+                const hiddenCount = g.isOverdueGroup ? g.tasks.length - OVERDUE_MAX : 0;
+                return (
+                  <div key={g.key} style={{ marginBottom: 22 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, background: g.headerBg, marginBottom: 10 }}>
+                      {g.icon && <span style={{ fontSize: 13 }}>{g.icon}</span>}
+                      <span style={{ fontSize: 12, fontWeight: 700, color: g.headerFg }}>{g.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: g.headerFg, opacity: 0.7 }}>· {g.tasks.length}</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {shown.map((t, i) => <TaskCard key={i} t={t} showOverdue={!!g.isOverdueGroup} />)}
+                    </div>
+                    {hiddenCount > 0 && (
+                      <button onClick={() => setSelStatus("Overdue")}
+                        style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: "#C0241F", background: "none", border: "none", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: 4 }}>
+                        View all {g.tasks.length} overdue →
+                      </button>
+                    )}
+                  </div>
+                );
+              })
       }
     </div>
   );
