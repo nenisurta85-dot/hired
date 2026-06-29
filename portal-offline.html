@@ -2803,10 +2803,30 @@ Object.assign(window, { MyFiles, MySessions, Comments, Toolkit, MyTasks, Help, S
     ],
   };
 
+  const ONBOARDING = {
+    "p1": {
+      status: "submitted",
+      date: "Apr 1, 2026",
+      resume: { name: "maya-chen-resume.pdf", url: "#" },
+      linkedin: "maya-chen",
+      currentMaterials: "okay but not getting response",
+      jobSearchStatus: "Earnestly looking",
+      jobSearchOther: "",
+      searchEffort: ["Networking", "LinkedIn networking", "Recruiters · staffing agencies"],
+      timeCommitment: 12,
+      careerGoals: ["move into leadership", "more money", "Other"],
+      targetTitles: "VP Operations, COO",
+      targetFunctions: "Operations, Strategy",
+      targetIndustries: "Tech, Healthcare",
+      howHeard: "Referral (friend/colleague)",
+      referredBy: "Jane Doe",
+    },
+  };
+
   window.ADM = {
     TEAM, CLIENTS, PROJECTS, PHASES, phaseColor, TASKS_BY_PHASE, phaseProgress,
     DOCS, MEETINGS_REVIEW, MEETINGS_WEEKS, PACKAGES, ALACARTE, TEMPLATES, KB,
-    ACTIVITY, MY_TASKS, REVIEW_QUEUE, ROLES, NAV,
+    ACTIVITY, MY_TASKS, REVIEW_QUEUE, ROLES, NAV, ONBOARDING,
     STATUS_BADGE: {
       "On Track": { bg: "rgba(0,160,108,0.12)", fg: "#00A06C" },
       "Behind": { bg: "rgba(229,57,53,0.12)", fg: "#E53935" },
@@ -4318,6 +4338,315 @@ function ProjectInfo() {
 }
 
 /* ---------------- Project detail ---------------- */
+/* -------- Onboarding Tab -------- */
+function ProjectOnboarding({ projectId }) {
+  const { ADM, Icons } = window;
+  const { showToast } = useAdmin();
+  const raw = (ADM.ONBOARDING || {})[projectId] || { status: "skipped" };
+  const [editMode, setEditMode] = React.useState(false);
+  const [data, setData] = React.useState({ ...raw });
+  const [draft, setDraft] = React.useState({ ...raw });
+  const [subLine, setSubLine] = React.useState(null);
+
+  const subLineText = subLine || (
+    data.status === "submitted" ? "Submitted via intake form · " + data.date :
+    data.status === "partial" ? "Partially completed · " + data.date :
+    "Skipped by client"
+  );
+
+  const startEdit = () => { setDraft({ ...data }); setEditMode(true); };
+  const cancelEdit = () => { setDraft({ ...data }); setEditMode(false); };
+  const saveEdit = () => {
+    setData({ ...draft });
+    const now = new Date();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const ds = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+    setSubLine("Last edited by Admin · " + ds);
+    setEditMode(false);
+    showToast("Onboarding saved.");
+  };
+
+  const set = (k, v) => setDraft(d => ({ ...d, [k]: v }));
+  const toggleArr = (k, v) => setDraft(d => {
+    const arr = d[k] || [];
+    return { ...d, [k]: arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v] };
+  });
+
+  const CURRENT_MATERIALS_OPTS = [
+    "They're working well", "They're okay, but not getting the response I want.",
+    "They're holding me back", "I'm embarrassed by them", "I don't have either in good shape"
+  ];
+  const JOB_SEARCH_STATUS_OPTS = [
+    "Earnestly looking", "Casually looking",
+    "Not looking but want to be prepared", "I have an opportunity and need materials", "Other"
+  ];
+  const SEARCH_EFFORT_OPTS = [
+    "Networking", "LinkedIn networking", "LinkedIn applications", "Job boards",
+    "Company career sites", "Recruiters · staffing agencies", "Other", "Not actively searching"
+  ];
+  const CAREER_GOALS_OPTS = [
+    "promotion & company pretending not to see it", "get out of current company",
+    "changing industries without starting from zero", "switching roles because done doing this",
+    "bigger title, done playing small", "more money",
+    "burned out, need a job that doesn't eat my life", "got laid off, need a plan",
+    "coming back after a break, feel rusty", "move into leadership",
+    "job that aligns with my values", "résumé giving \"undercover genius\"", "Other"
+  ];
+  const HOW_HEARD_OPTS = [
+    "LinkedIn", "Google", "Referral (friend/colleague)",
+    "Referral (partner/coach/recruiter/community)", "Webinar · event",
+    "Newsletter · email", "Instagram · TikTok", "Other", "I don't remember"
+  ];
+
+  const isReferral = (v) => v && v.startsWith("Referral");
+
+  const LBL = { fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 };
+  const VAL = { fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5 };
+  const MUTED = { fontSize: 14, color: "var(--text-muted)", fontStyle: "italic" };
+
+  const cardStyle = { background: "#fff", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 24px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", marginBottom: 16 };
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 10, padding: "8px 12px", fontSize: 14, fontFamily: "inherit", color: "var(--text-primary)", outline: "none", boxSizing: "border-box" };
+  const fieldGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 24px" };
+
+  const Field = ({ label, children }) => (
+    <div>
+      <div style={LBL}>{label}</div>
+      {children}
+    </div>
+  );
+
+  const RadioGroup = ({ opts, value, onChange }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 2 }}>
+      {opts.map(o => (
+        <label key={o} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, cursor: "pointer" }}>
+          <input type="radio" name={o} checked={value === o} onChange={() => onChange(o)}
+            style={{ accentColor: "var(--purple)", width: 15, height: 15, cursor: "pointer" }} />
+          {o}
+        </label>
+      ))}
+    </div>
+  );
+
+  const CheckGroup = ({ opts, value, onChange }) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 2 }}>
+      {opts.map(o => (
+        <label key={o} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, cursor: "pointer" }}>
+          <input type="checkbox" checked={(value || []).includes(o)} onChange={() => onChange(o)}
+            style={{ accentColor: "var(--purple)", width: 15, height: 15, cursor: "pointer" }} />
+          {o}
+        </label>
+      ))}
+    </div>
+  );
+
+  if (editMode) {
+    return (
+      <div style={{ padding: "24px 32px 120px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Onboarding</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{subLineText}</div>
+          </div>
+          <span style={{ fontSize: 12, color: "var(--purple)", fontWeight: 600 }}>Editing</span>
+        </div>
+
+        {/* Card 1 — Materials */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Materials</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Field label="Résumé">
+              {draft.resume
+                ? <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+                    <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{draft.resume.name}</span>
+                    <button style={{ fontSize: 12, color: "#E53935", background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => set("resume", null)}>Remove</button>
+                  </div>
+                : <div style={{ border: "2px dashed var(--border)", borderRadius: 10, padding: "18px 16px", textAlign: "center", marginTop: 4, cursor: "pointer", background: "#FAFAFA" }}
+                    onClick={() => showToast("File picker not wired in demo")}>
+                    <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Drop file here or <span style={{ color: "var(--purple)" }}>browse</span></div>
+                  </div>
+              }
+            </Field>
+            <Field label="LinkedIn">
+              <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", marginTop: 4 }}>
+                <span style={{ padding: "8px 10px", background: "#F5F4F0", fontSize: 13, color: "var(--text-muted)", borderRight: "1px solid var(--border)", whiteSpace: "nowrap" }}>linkedin.com/in/</span>
+                <input style={{ ...inputStyle, border: "none", borderRadius: 0 }} value={draft.linkedin || ""} onChange={e => set("linkedin", e.target.value)} placeholder="username" />
+              </div>
+            </Field>
+          </div>
+        </div>
+
+        {/* Card 2 — Current Situation */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Current Situation</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <Field label="Current Materials">
+              <RadioGroup opts={CURRENT_MATERIALS_OPTS} value={draft.currentMaterials} onChange={v => set("currentMaterials", v)} />
+            </Field>
+            <Field label="Job Search Status">
+              <RadioGroup opts={JOB_SEARCH_STATUS_OPTS} value={draft.jobSearchStatus} onChange={v => set("jobSearchStatus", v)} />
+              {draft.jobSearchStatus === "Other" && (
+                <input style={{ ...inputStyle, marginTop: 8 }} value={draft.jobSearchOther || ""} onChange={e => set("jobSearchOther", e.target.value)} placeholder="Brief description…" />
+              )}
+            </Field>
+            <Field label="Search Effort">
+              <CheckGroup opts={SEARCH_EFFORT_OPTS} value={draft.searchEffort} onChange={v => toggleArr("searchEffort", v)} />
+            </Field>
+            <Field label={"Time Commitment — " + (draft.timeCommitment || 0) + " hrs / week"}>
+              <input type="range" min="0" max="40" value={draft.timeCommitment || 0}
+                onChange={e => set("timeCommitment", parseInt(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--purple)", marginTop: 6 }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                <span>0 hrs</span><span>40 hrs</span>
+              </div>
+            </Field>
+          </div>
+        </div>
+
+        {/* Card 3 — Goals & Targeting */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Goals &amp; Targeting</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <Field label="Career Goals">
+              <CheckGroup opts={CAREER_GOALS_OPTS} value={draft.careerGoals} onChange={v => toggleArr("careerGoals", v)} />
+            </Field>
+            <div style={fieldGrid}>
+              <Field label="Target Titles">
+                <input style={{ ...inputStyle, marginTop: 4 }} value={draft.targetTitles || ""} onChange={e => set("targetTitles", e.target.value)} placeholder="e.g. VP Operations, COO" />
+              </Field>
+              <Field label="Target Functions">
+                <input style={{ ...inputStyle, marginTop: 4 }} value={draft.targetFunctions || ""} onChange={e => set("targetFunctions", e.target.value)} placeholder="e.g. Operations, Strategy" />
+              </Field>
+              <Field label="Target Industries">
+                <input style={{ ...inputStyle, marginTop: 4 }} value={draft.targetIndustries || ""} onChange={e => set("targetIndustries", e.target.value)} placeholder="e.g. Tech, Healthcare" />
+              </Field>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4 — Source */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Source</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <Field label="How did you hear about us">
+              <RadioGroup opts={HOW_HEARD_OPTS} value={draft.howHeard} onChange={v => set("howHeard", v)} />
+            </Field>
+            {isReferral(draft.howHeard) && (
+              <Field label="Referred by">
+                <input style={{ ...inputStyle, marginTop: 4 }} value={draft.referredBy || ""} onChange={e => set("referredBy", e.target.value)} placeholder="Name of referrer" />
+              </Field>
+            )}
+          </div>
+        </div>
+
+        {/* Sticky footer */}
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid var(--border)", padding: "14px 32px", display: "flex", justifyContent: "flex-end", gap: 10, zIndex: 50 }}>
+          <button onClick={cancelEdit}
+            style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0 20px", height: 38, fontSize: 13, background: "transparent", cursor: "pointer", fontFamily: "inherit", color: "var(--text-secondary)" }}>
+            Cancel
+          </button>
+          <button onClick={saveEdit}
+            style={{ background: "linear-gradient(135deg, #C8005A, #8211FF)", color: "#fff", border: "none", borderRadius: 8, padding: "0 22px", height: 38, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            Save changes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- VIEW MODE ---- */
+  const v = data;
+  const fmt = (val) => (!val || (Array.isArray(val) && val.length === 0)) ? <span style={MUTED}>—</span> : val;
+  const fmtArr = (arr) => (!arr || arr.length === 0) ? <span style={MUTED}>—</span> : arr.join(" · ");
+
+  return (
+    <div style={{ padding: "24px 32px" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Onboarding</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{subLineText}</div>
+        </div>
+        <button onClick={startEdit}
+          style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0 14px", height: 32, fontSize: 12, fontWeight: 600, cursor: "pointer", background: "transparent", color: "var(--purple)", fontFamily: "inherit" }}>
+          Edit
+        </button>
+      </div>
+
+      {/* Card 1 — Materials */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Materials</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={fieldGrid}>
+            <Field label="Résumé">
+              {v.resume
+                ? <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                    <span style={VAL}>{v.resume.name}</span>
+                    <a href={v.resume.url} style={{ fontSize: 12, color: "var(--purple)", textDecoration: "none", fontWeight: 600 }} onClick={e => { e.preventDefault(); showToast("Viewing file…"); }}>View</a>
+                    <a href={v.resume.url} download style={{ fontSize: 12, color: "var(--purple)", textDecoration: "none", fontWeight: 600 }} onClick={e => { e.preventDefault(); showToast("Downloading…"); }}>Download</a>
+                  </div>
+                : <span style={MUTED}>Not uploaded</span>
+              }
+            </Field>
+            <Field label="LinkedIn">
+              {v.linkedin
+                ? <a href={"https://linkedin.com/in/" + v.linkedin} target="_blank" rel="noreferrer"
+                    style={{ ...VAL, color: "var(--purple)", textDecoration: "none", display: "block", marginTop: 4 }}
+                    onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                    onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}>
+                    linkedin.com/in/{v.linkedin}
+                  </a>
+                : <span style={MUTED}>—</span>
+              }
+            </Field>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 2 — Current Situation */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Current Situation</div>
+        <div style={fieldGrid}>
+          <Field label="Current Materials"><div style={{ ...VAL, marginTop: 4 }}>{fmt(v.currentMaterials)}</div></Field>
+          <Field label="Job Search Status">
+            <div style={{ ...VAL, marginTop: 4 }}>
+              {v.jobSearchStatus === "Other" && v.jobSearchOther
+                ? "Other — "" + v.jobSearchOther + """
+                : fmt(v.jobSearchStatus)
+              }
+            </div>
+          </Field>
+          <Field label="Search Effort"><div style={{ ...VAL, marginTop: 4 }}>{fmtArr(v.searchEffort)}</div></Field>
+          <Field label="Time Commitment"><div style={{ ...VAL, marginTop: 4 }}>{v.timeCommitment != null ? v.timeCommitment + " hrs / week" : <span style={MUTED}>—</span>}</div></Field>
+        </div>
+      </div>
+
+      {/* Card 3 — Goals & Targeting */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Goals &amp; Targeting</div>
+        <div style={fieldGrid}>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <Field label="Career Goals"><div style={{ ...VAL, marginTop: 4 }}>{fmtArr(v.careerGoals)}</div></Field>
+          </div>
+          <Field label="Target Titles"><div style={{ ...VAL, marginTop: 4 }}>{fmt(v.targetTitles)}</div></Field>
+          <Field label="Target Functions"><div style={{ ...VAL, marginTop: 4 }}>{fmt(v.targetFunctions)}</div></Field>
+          <Field label="Target Industries"><div style={{ ...VAL, marginTop: 4 }}>{fmt(v.targetIndustries)}</div></Field>
+        </div>
+      </div>
+
+      {/* Card 4 — Source */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, fontFamily: "'Syne',sans-serif" }}>Source</div>
+        <div style={fieldGrid}>
+          <Field label="How did you hear about us"><div style={{ ...VAL, marginTop: 4 }}>{fmt(v.howHeard)}</div></Field>
+          {isReferral(v.howHeard) && (
+            <Field label="Referred by"><div style={{ ...VAL, marginTop: 4 }}>{fmt(v.referredBy)}</div></Field>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminProjectDetail({ id }) {
   const { navigate } = useAdmin();
   const { ADM, Icons } = window;
@@ -4325,7 +4654,7 @@ function AdminProjectDetail({ id }) {
   const client = ADM.CLIENTS.find((c) => c.id === project.clientId);
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
-  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Project Info"];
+  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Project Info", "Onboarding"];
 
   return (
     <div>
@@ -4369,6 +4698,7 @@ function AdminProjectDetail({ id }) {
       {tab === "Comments" && <ProjectComments setTab={setTab} />}
       {tab === "Notes" && <ProjectNotes setTab={setTab} />}
       {tab === "Project Info" && <ProjectInfo />}
+      {tab === "Onboarding" && <ProjectOnboarding projectId={project.id} />}
     </div>
   );
 }

@@ -266,10 +266,30 @@
     ],
   };
 
+  const ONBOARDING = {
+    "p1": {
+      status: "submitted",
+      date: "Apr 1, 2026",
+      resume: { name: "maya-chen-resume.pdf", url: "#" },
+      linkedin: "maya-chen",
+      currentMaterials: "okay but not getting response",
+      jobSearchStatus: "Earnestly looking",
+      jobSearchOther: "",
+      searchEffort: ["Networking", "LinkedIn networking", "Recruiters · staffing agencies"],
+      timeCommitment: 12,
+      careerGoals: ["move into leadership", "more money", "Other"],
+      targetTitles: "VP Operations, COO",
+      targetFunctions: "Operations, Strategy",
+      targetIndustries: "Tech, Healthcare",
+      howHeard: "Referral (friend/colleague)",
+      referredBy: "Jane Doe",
+    },
+  };
+
   window.ADM = {
     TEAM, CLIENTS, PROJECTS, PHASES, phaseColor, TASKS_BY_PHASE, phaseProgress,
     DOCS, MEETINGS_REVIEW, MEETINGS_WEEKS, PACKAGES, ALACARTE, TEMPLATES, KB,
-    ACTIVITY, MY_TASKS, REVIEW_QUEUE, ROLES, NAV,
+    ACTIVITY, MY_TASKS, REVIEW_QUEUE, ROLES, NAV, ONBOARDING,
     STATUS_BADGE: {
       "On Track": { bg: "rgba(0,160,108,0.12)", fg: "#00A06C" },
       "Behind": { bg: "rgba(229,57,53,0.12)", fg: "#E53935" },
