@@ -981,7 +981,7 @@ function ProjectOnboarding({ projectId }) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Onboarding</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Intake</div>
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{subLineText}</div>
           </div>
           <span style={{ fontSize: 12, color: "var(--purple)", fontWeight: 600 }}>Editing</span>
@@ -1099,7 +1099,7 @@ function ProjectOnboarding({ projectId }) {
     <div style={{ padding: "24px 32px" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Onboarding</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Intake</div>
           <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{subLineText}</div>
         </div>
         <button onClick={startEdit}
@@ -1179,6 +1179,26 @@ function ProjectOnboarding({ projectId }) {
           )}
         </div>
       </div>
+
+      {/* Notes */}
+      <IntakeNotes />
+    </div>
+  );
+}
+
+function IntakeNotes() {
+  const [notes, setNotes] = React.useState("");
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Notes</div>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Add notes..."
+        style={{ width: "100%", minHeight: 100, border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--text-primary)", fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+      />
     </div>
   );
 }
@@ -1190,7 +1210,7 @@ function AdminProjectDetail({ id }) {
   const client = ADM.CLIENTS.find((c) => c.id === project.clientId);
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
-  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Project Info", "Onboarding"];
+  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Project Info", "Intake"];
 
   return (
     <div>
@@ -1234,7 +1254,7 @@ function AdminProjectDetail({ id }) {
       {tab === "Comments" && <ProjectComments setTab={setTab} />}
       {tab === "Notes" && <ProjectNotes setTab={setTab} />}
       {tab === "Project Info" && <ProjectInfo />}
-      {tab === "Onboarding" && <ProjectOnboarding projectId={project.id} />}
+      {tab === "Intake" && <ProjectOnboarding projectId={project.id} />}
     </div>
   );
 }
