@@ -21,7 +21,7 @@ function Avatar({ initials, color = "#8211FF", size = 28 }) {
 
 /* ---------- Sidebar ---------- */
 function AdminSidebar({ route }) {
-  const { navigate, viewAs, setViewAs } = useAdmin();
+  const { navigate, viewAs, setViewAs, role, setRole } = useAdmin();
   const { Icons, ADM } = window;
   const activeKey = (route.split("/")[2] || "dashboard");
 
@@ -58,11 +58,11 @@ function AdminSidebar({ route }) {
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Admin Portal</div>
           </div>
         </div>
-        <span className="badge" style={{ marginTop: 10, background: "rgba(130,17,255,0.25)", color: "#AFA9EC", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".5px" }}>Super Admin</span>
+        <span className="badge" style={{ marginTop: 10, background: "rgba(130,17,255,0.25)", color: "#AFA9EC", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".5px" }}>{role}</span>
       </div>
 
       {/* View As */}
-      <div style={{ padding: "4px 18px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ padding: "4px 18px 10px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 7 }}>View As</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {["Admin", "Client"].map((r) => (
@@ -74,10 +74,23 @@ function AdminSidebar({ route }) {
         </div>
       </div>
 
+      {/* Role Switcher */}
+      <div style={{ padding: "10px 18px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 7 }}>Role</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {["Super Admin", "Writer", "Admin Assistant"].map((r) => (
+            <button key={r} onClick={() => setRole(r)}
+              style={{ borderRadius: 6, padding: "4px 10px", fontSize: 10, fontWeight: 500, cursor: "pointer", color: "#fff", textAlign: "left",
+                background: role === r ? "var(--raspberry)" : "transparent",
+                border: role === r ? "1px solid var(--raspberry)" : "1px solid rgba(255,255,255,0.25)" }}>{r}</button>
+          ))}
+        </div>
+      </div>
+
       {/* Nav */}
       <nav style={{ marginTop: 14, flex: 1 }}>
         <NavGroup title="Overview" items={ADM.NAV.overview} />
-        <NavGroup title="Management" items={ADM.NAV.management} />
+        <NavGroup title="Management" items={ADM.NAV.management.filter(item => !(role === "Writer" && item.key === "team"))} />
         <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0", paddingTop: 8 }}>
           <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>
           <button onClick={() => navigate("#/")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.LogOut size={16} /> Log Out</button>

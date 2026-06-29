@@ -1055,7 +1055,8 @@ function AdminTeam() {
 /* ---------------- PACKAGES ---------------- */
 function AdminPackages() {
   const { ADM } = window;
-  const { showToast } = useAdmin();
+  const { showToast, role } = useAdmin();
+  const isWriter = role === "Writer";
   const PkgCard = ({ p }) => (
     <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16, transition: "border-color .15s" }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--purple)")} onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}>
@@ -1075,14 +1076,14 @@ function AdminPackages() {
   );
   return (
     <div>
-      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={{ label: "+ New Package", onClick: () => showToast("New package…") }} />
+      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => showToast("New package…") }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.PACKAGES.map((p) => <PkgCard key={p.id} p={p} />)}
         </div>
         <div className="row between" style={{ margin: "26px 0 14px" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>À La Carte</span>
-          <button className="btn btn-secondary" onClick={() => showToast("New à la carte item…")}>+ New À La Carte Item</button>
+          {!isWriter && <button className="btn btn-secondary" onClick={() => showToast("New à la carte item…")}>+ New À La Carte Item</button>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.ALACARTE.map((a) => (
@@ -1142,33 +1143,46 @@ function AdminTemplates() {
 /* ---------------- KNOWLEDGE BASE ---------------- */
 function AdminKB() {
   const { ADM, Icons } = window;
-  const { showToast } = useAdmin();
+  const { showToast, role } = useAdmin();
+  const isWriter = role === "Writer";
   const tabs = Object.keys(ADM.KB);
   const [tab, setTab] = React.useState(tabs[0]);
-  const items = ADM.KB[tab] || [];
+  const allItems = ADM.KB[tab] || [];
+  const items = isWriter ? allItems.filter(r => r.writerLinked) : allItems;
   return (
     <div>
-      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={{ label: "+ Upload Resource", onClick: () => showToast("Upload resource…") }} />
+      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={isWriter ? null : { label: "+ Upload Resource", onClick: () => showToast("Upload resource…") }} />
+      {isWriter && (
+        <div style={{ background: "rgba(130,17,255,0.05)", borderBottom: "1px solid var(--purple-border)", padding: "8px 32px", fontSize: 12, color: "var(--purple)", display: "flex", alignItems: "center", gap: 6 }}>
+          <Icons.Info size={13} /> Showing articles linked to your assigned projects and clients only.
+        </div>
+      )}
       <div style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "0 32px" }}>
-        <div className="tabs" style={{ marginBottom: 0, border: "none" }}>{tabs.map((t) => <button key={t} className={"tab" + (t === tab ? " active" : "")} onClick={() => setTab(t)}>{t} <span style={{ color: "#BBB" }}>[{ADM.KB[t].length}]</span></button>)}</div>
+        <div className="tabs" style={{ marginBottom: 0, border: "none" }}>{tabs.map((t) => {
+          const count = isWriter ? ADM.KB[t].filter(r => r.writerLinked).length : ADM.KB[t].length;
+          return <button key={t} className={"tab" + (t === tab ? " active" : "")} onClick={() => setTab(t)}>{t} <span style={{ color: "#BBB" }}>[{count}]</span></button>;
+        })}</div>
       </div>
       <div className="admin-body">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
-          {items.map((r, i) => (
-            <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}><Icons.FileText size={16} /></div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{r.title}</div>
-              <div className="row between">
-                <span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)", fontSize: 10 }}>{r.type}</span>
-                <span className="small">{r.date}</span>
-              </div>
-              <div className="row" style={{ gap: 6, marginTop: 12 }}>
-                <button className="icon-btn" onClick={() => showToast("Edit")}><Icons.Settings size={14} /></button>
-                <button className="icon-btn" onClick={() => showToast("Download")}><Icons.Download size={14} /></button>
-              </div>
+        {items.length === 0
+          ? <EmptyState icon="Lightbulb" title="No articles found." desc="No knowledge base articles are linked to your assigned clients or projects." />
+          : <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
+              {items.map((r, i) => (
+                <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}><Icons.FileText size={16} /></div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{r.title}</div>
+                  <div className="row between">
+                    <span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)", fontSize: 10 }}>{r.type}</span>
+                    <span className="small">{r.date}</span>
+                  </div>
+                  <div className="row" style={{ gap: 6, marginTop: 12 }}>
+                    {!isWriter && <button className="icon-btn" onClick={() => showToast("Edit")}><Icons.Settings size={14} /></button>}
+                    <button className="icon-btn" onClick={() => showToast("Download")}><Icons.Download size={14} /></button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+        }
       </div>
     </div>
   );

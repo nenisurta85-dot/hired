@@ -5,6 +5,7 @@
 
 function AdminApp({ route }) {
   const [viewAs, setViewAs] = React.useState("Admin");
+  const [role, setRole] = React.useState("Super Admin");
   const [toast, setToast] = React.useState(null);
   const toastTimer = React.useRef(null);
 
@@ -19,7 +20,7 @@ function AdminApp({ route }) {
     toastTimer.current = setTimeout(() => setToast(null), 2500);
   };
 
-  const ctx = { navigate, showToast, viewAs, setViewAs, ADM: window.ADM, Icons: window.Icons };
+  const ctx = { navigate, showToast, viewAs, setViewAs, role, setRole, ADM: window.ADM, Icons: window.Icons };
 
   // route like #/admin/projects/p1
   const parts = route.replace(/^#\/admin\/?/, "").split("/").filter(Boolean);

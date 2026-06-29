@@ -2748,22 +2748,22 @@ Object.assign(window, { MyFiles, MySessions, Comments, Toolkit, MyTasks, Help, S
 
   const KB = {
     "General": [
-      { title: "GHH Brand Voice Guide", type: "Training", date: "Jan 8", ext: "PDF" },
-      { title: "Client Communication Standards", type: "Training", date: "Jan 8", ext: "Doc" },
-      { title: "Resume Formatting Rules", type: "Resume", date: "Feb 2", ext: "Doc" },
+      { title: "GHH Brand Voice Guide", type: "Training", date: "Jan 8", ext: "PDF", writerLinked: true },
+      { title: "Client Communication Standards", type: "Training", date: "Jan 8", ext: "Doc", writerLinked: false },
+      { title: "Resume Formatting Rules", type: "Resume", date: "Feb 2", ext: "Doc", writerLinked: true },
     ],
     "Writer Resources": [
-      { title: "The Q Formula — Internal", type: "Resume", date: "Feb 12", ext: "Doc" },
-      { title: "LinkedIn Audit Checklist", type: "LinkedIn Audit", date: "Mar 1", ext: "Sheet" },
-      { title: "Cover Letter Template Library", type: "Cover Letter Template", date: "Mar 3", ext: "Doc" },
+      { title: "The Q Formula — Internal", type: "Resume", date: "Feb 12", ext: "Doc", writerLinked: true },
+      { title: "LinkedIn Audit Checklist", type: "LinkedIn Audit", date: "Mar 1", ext: "Sheet", writerLinked: true },
+      { title: "Cover Letter Template Library", type: "Cover Letter Template", date: "Mar 3", ext: "Doc", writerLinked: false },
     ],
     "Templates": [
-      { title: "Résumé Master Template", type: "Resume", date: "Jan 20", ext: "Doc" },
-      { title: "Client Brief Template", type: "Training", date: "Jan 20", ext: "Doc" },
+      { title: "Résumé Master Template", type: "Resume", date: "Jan 20", ext: "Doc", writerLinked: true },
+      { title: "Client Brief Template", type: "Training", date: "Jan 20", ext: "Doc", writerLinked: false },
     ],
     "Training": [
-      { title: "Onboarding Playbook", type: "Training", date: "Jan 5", ext: "PDF" },
-      { title: "Editor SOP", type: "Training", date: "Jan 6", ext: "Doc" },
+      { title: "Onboarding Playbook", type: "Training", date: "Jan 5", ext: "PDF", writerLinked: true },
+      { title: "Editor SOP", type: "Training", date: "Jan 6", ext: "Doc", writerLinked: false },
     ],
   };
 
@@ -2880,7 +2880,7 @@ function Avatar({ initials, color = "#8211FF", size = 28 }) {
 
 /* ---------- Sidebar ---------- */
 function AdminSidebar({ route }) {
-  const { navigate, viewAs, setViewAs } = useAdmin();
+  const { navigate, viewAs, setViewAs, role, setRole } = useAdmin();
   const { Icons, ADM } = window;
   const activeKey = (route.split("/")[2] || "dashboard");
 
@@ -2917,11 +2917,11 @@ function AdminSidebar({ route }) {
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Admin Portal</div>
           </div>
         </div>
-        <span className="badge" style={{ marginTop: 10, background: "rgba(130,17,255,0.25)", color: "#AFA9EC", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".5px" }}>Super Admin</span>
+        <span className="badge" style={{ marginTop: 10, background: "rgba(130,17,255,0.25)", color: "#AFA9EC", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".5px" }}>{role}</span>
       </div>
 
       {/* View As */}
-      <div style={{ padding: "4px 18px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ padding: "4px 18px 10px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 7 }}>View As</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {["Admin", "Client"].map((r) => (
@@ -2933,10 +2933,23 @@ function AdminSidebar({ route }) {
         </div>
       </div>
 
+      {/* Role Switcher */}
+      <div style={{ padding: "10px 18px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 7 }}>Role</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {["Super Admin", "Writer", "Admin Assistant"].map((r) => (
+            <button key={r} onClick={() => setRole(r)}
+              style={{ borderRadius: 6, padding: "4px 10px", fontSize: 10, fontWeight: 500, cursor: "pointer", color: "#fff", textAlign: "left",
+                background: role === r ? "var(--raspberry)" : "transparent",
+                border: role === r ? "1px solid var(--raspberry)" : "1px solid rgba(255,255,255,0.25)" }}>{r}</button>
+          ))}
+        </div>
+      </div>
+
       {/* Nav */}
       <nav style={{ marginTop: 14, flex: 1 }}>
         <NavGroup title="Overview" items={ADM.NAV.overview} />
-        <NavGroup title="Management" items={ADM.NAV.management} />
+        <NavGroup title="Management" items={ADM.NAV.management.filter(item => !(role === "Writer" && item.key === "team"))} />
         <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0", paddingTop: 8 }}>
           <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>
           <button onClick={() => navigate("#/")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.LogOut size={16} /> Log Out</button>
@@ -3417,7 +3430,7 @@ function DashboardBanner({ userName }) {
 
 /* ---------- Main Dashboard ---------- */
 function AdminDashboard() {
-  const { navigate, showToast } = useAdmin();
+  const { navigate, showToast, role } = useAdmin();
   const { ADM, Icons } = window;
   const [activeTask, setActiveTask] = React.useState(null);
 
@@ -3447,7 +3460,7 @@ function AdminDashboard() {
 
           {/* Right column — both cards share identical width */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "stretch" }}>
-            <WriterCapacityCard navigate={navigate} />
+            {role !== "Writer" && <WriterCapacityCard navigate={navigate} />}
             <ProjectsCard navigate={navigate} style={{ flex: 1 }} />
           </div>
 
@@ -6070,7 +6083,8 @@ function AdminTeam() {
 /* ---------------- PACKAGES ---------------- */
 function AdminPackages() {
   const { ADM } = window;
-  const { showToast } = useAdmin();
+  const { showToast, role } = useAdmin();
+  const isWriter = role === "Writer";
   const PkgCard = ({ p }) => (
     <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16, transition: "border-color .15s" }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--purple)")} onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}>
@@ -6090,14 +6104,14 @@ function AdminPackages() {
   );
   return (
     <div>
-      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={{ label: "+ New Package", onClick: () => showToast("New package…") }} />
+      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => showToast("New package…") }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.PACKAGES.map((p) => <PkgCard key={p.id} p={p} />)}
         </div>
         <div className="row between" style={{ margin: "26px 0 14px" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>À La Carte</span>
-          <button className="btn btn-secondary" onClick={() => showToast("New à la carte item…")}>+ New À La Carte Item</button>
+          {!isWriter && <button className="btn btn-secondary" onClick={() => showToast("New à la carte item…")}>+ New À La Carte Item</button>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.ALACARTE.map((a) => (
@@ -6157,33 +6171,46 @@ function AdminTemplates() {
 /* ---------------- KNOWLEDGE BASE ---------------- */
 function AdminKB() {
   const { ADM, Icons } = window;
-  const { showToast } = useAdmin();
+  const { showToast, role } = useAdmin();
+  const isWriter = role === "Writer";
   const tabs = Object.keys(ADM.KB);
   const [tab, setTab] = React.useState(tabs[0]);
-  const items = ADM.KB[tab] || [];
+  const allItems = ADM.KB[tab] || [];
+  const items = isWriter ? allItems.filter(r => r.writerLinked) : allItems;
   return (
     <div>
-      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={{ label: "+ Upload Resource", onClick: () => showToast("Upload resource…") }} />
+      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={isWriter ? null : { label: "+ Upload Resource", onClick: () => showToast("Upload resource…") }} />
+      {isWriter && (
+        <div style={{ background: "rgba(130,17,255,0.05)", borderBottom: "1px solid var(--purple-border)", padding: "8px 32px", fontSize: 12, color: "var(--purple)", display: "flex", alignItems: "center", gap: 6 }}>
+          <Icons.Info size={13} /> Showing articles linked to your assigned projects and clients only.
+        </div>
+      )}
       <div style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "0 32px" }}>
-        <div className="tabs" style={{ marginBottom: 0, border: "none" }}>{tabs.map((t) => <button key={t} className={"tab" + (t === tab ? " active" : "")} onClick={() => setTab(t)}>{t} <span style={{ color: "#BBB" }}>[{ADM.KB[t].length}]</span></button>)}</div>
+        <div className="tabs" style={{ marginBottom: 0, border: "none" }}>{tabs.map((t) => {
+          const count = isWriter ? ADM.KB[t].filter(r => r.writerLinked).length : ADM.KB[t].length;
+          return <button key={t} className={"tab" + (t === tab ? " active" : "")} onClick={() => setTab(t)}>{t} <span style={{ color: "#BBB" }}>[{count}]</span></button>;
+        })}</div>
       </div>
       <div className="admin-body">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
-          {items.map((r, i) => (
-            <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}><Icons.FileText size={16} /></div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{r.title}</div>
-              <div className="row between">
-                <span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)", fontSize: 10 }}>{r.type}</span>
-                <span className="small">{r.date}</span>
-              </div>
-              <div className="row" style={{ gap: 6, marginTop: 12 }}>
-                <button className="icon-btn" onClick={() => showToast("Edit")}><Icons.Settings size={14} /></button>
-                <button className="icon-btn" onClick={() => showToast("Download")}><Icons.Download size={14} /></button>
-              </div>
+        {items.length === 0
+          ? <EmptyState icon="Lightbulb" title="No articles found." desc="No knowledge base articles are linked to your assigned clients or projects." />
+          : <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
+              {items.map((r, i) => (
+                <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}><Icons.FileText size={16} /></div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{r.title}</div>
+                  <div className="row between">
+                    <span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)", fontSize: 10 }}>{r.type}</span>
+                    <span className="small">{r.date}</span>
+                  </div>
+                  <div className="row" style={{ gap: 6, marginTop: 12 }}>
+                    {!isWriter && <button className="icon-btn" onClick={() => showToast("Edit")}><Icons.Settings size={14} /></button>}
+                    <button className="icon-btn" onClick={() => showToast("Download")}><Icons.Download size={14} /></button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+        }
       </div>
     </div>
   );
@@ -6544,6 +6571,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
 
 function AdminApp({ route }) {
   const [viewAs, setViewAs] = React.useState("Admin");
+  const [role, setRole] = React.useState("Super Admin");
   const [toast, setToast] = React.useState(null);
   const toastTimer = React.useRef(null);
 
@@ -6558,7 +6586,7 @@ function AdminApp({ route }) {
     toastTimer.current = setTimeout(() => setToast(null), 2500);
   };
 
-  const ctx = { navigate, showToast, viewAs, setViewAs, ADM: window.ADM, Icons: window.Icons };
+  const ctx = { navigate, showToast, viewAs, setViewAs, role, setRole, ADM: window.ADM, Icons: window.Icons };
 
   // route like #/admin/projects/p1
   const parts = route.replace(/^#\/admin\/?/, "").split("/").filter(Boolean);

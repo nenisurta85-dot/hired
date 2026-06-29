@@ -336,7 +336,7 @@ function DashboardBanner({ userName }) {
 
 /* ---------- Main Dashboard ---------- */
 function AdminDashboard() {
-  const { navigate, showToast } = useAdmin();
+  const { navigate, showToast, role } = useAdmin();
   const { ADM, Icons } = window;
   const [activeTask, setActiveTask] = React.useState(null);
 
@@ -366,7 +366,7 @@ function AdminDashboard() {
 
           {/* Right column — both cards share identical width */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "stretch" }}>
-            <WriterCapacityCard navigate={navigate} />
+            {role !== "Writer" && <WriterCapacityCard navigate={navigate} />}
             <ProjectsCard navigate={navigate} style={{ flex: 1 }} />
           </div>
 

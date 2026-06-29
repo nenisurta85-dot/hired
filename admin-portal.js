@@ -211,22 +211,22 @@
 
   const KB = {
     "General": [
-      { title: "GHH Brand Voice Guide", type: "Training", date: "Jan 8", ext: "PDF" },
-      { title: "Client Communication Standards", type: "Training", date: "Jan 8", ext: "Doc" },
-      { title: "Resume Formatting Rules", type: "Resume", date: "Feb 2", ext: "Doc" },
+      { title: "GHH Brand Voice Guide", type: "Training", date: "Jan 8", ext: "PDF", writerLinked: true },
+      { title: "Client Communication Standards", type: "Training", date: "Jan 8", ext: "Doc", writerLinked: false },
+      { title: "Resume Formatting Rules", type: "Resume", date: "Feb 2", ext: "Doc", writerLinked: true },
     ],
     "Writer Resources": [
-      { title: "The Q Formula — Internal", type: "Resume", date: "Feb 12", ext: "Doc" },
-      { title: "LinkedIn Audit Checklist", type: "LinkedIn Audit", date: "Mar 1", ext: "Sheet" },
-      { title: "Cover Letter Template Library", type: "Cover Letter Template", date: "Mar 3", ext: "Doc" },
+      { title: "The Q Formula — Internal", type: "Resume", date: "Feb 12", ext: "Doc", writerLinked: true },
+      { title: "LinkedIn Audit Checklist", type: "LinkedIn Audit", date: "Mar 1", ext: "Sheet", writerLinked: true },
+      { title: "Cover Letter Template Library", type: "Cover Letter Template", date: "Mar 3", ext: "Doc", writerLinked: false },
     ],
     "Templates": [
-      { title: "Résumé Master Template", type: "Resume", date: "Jan 20", ext: "Doc" },
-      { title: "Client Brief Template", type: "Training", date: "Jan 20", ext: "Doc" },
+      { title: "Résumé Master Template", type: "Resume", date: "Jan 20", ext: "Doc", writerLinked: true },
+      { title: "Client Brief Template", type: "Training", date: "Jan 20", ext: "Doc", writerLinked: false },
     ],
     "Training": [
-      { title: "Onboarding Playbook", type: "Training", date: "Jan 5", ext: "PDF" },
-      { title: "Editor SOP", type: "Training", date: "Jan 6", ext: "Doc" },
+      { title: "Onboarding Playbook", type: "Training", date: "Jan 5", ext: "PDF", writerLinked: true },
+      { title: "Editor SOP", type: "Training", date: "Jan 6", ext: "Doc", writerLinked: false },
     ],
   };
 
