@@ -300,11 +300,19 @@ function AdminTasks() {
   const Board = () => {
     const cols = ["Not Started", "In Progress", "Overdue", "Complete"];
     const map = { "Not Started": "not_started", "In Progress": "in_progress", "Overdue": "overdue", "Complete": "complete" };
-    const all = flatTasks();
+    // Apply same filters as My Tasks (period + status + attribute filters)
+    let boardTasks = periodTasks;
+    if (selStatus !== "All") {
+      if (selStatus === "Overdue") boardTasks = boardTasks.filter(t => isDateOverdue(t));
+      else if (selStatus === "In Progress") boardTasks = boardTasks.filter(t => t.status === "in_progress");
+      else if (selStatus === "Not Started") boardTasks = boardTasks.filter(t => t.status === "not_started");
+      else if (selStatus === "Complete") boardTasks = boardTasks.filter(t => t.status === "complete");
+    }
     return (
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start", overflowX: "auto" }} className="scrollbar-thin">
         {cols.map((col) => {
-          const items = all.filter((t) => t.status === map[col]).slice(0, 6);
+          const colStatus = map[col];
+          const items = boardTasks.filter((t) => t.status === colStatus);
           return (
             <div key={col} style={{ flex: 1, minWidth: 240, background: "#F8F7FF", borderRadius: 10, padding: 12 }}>
               <div className="row between" style={{ marginBottom: 12 }}>
@@ -314,16 +322,24 @@ function AdminTasks() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {items.map((t, i) => {
                   const typeColor = TYPE_COLOR(t.title);
+                  const isOverdue = isDateOverdue(t);
+                  const cardBorder = isOverdue ? "1px solid rgba(229,57,53,0.35)" : "0.5px solid var(--border)";
+                  const cardBorderLeft = isOverdue ? "3px solid #E53935" : `3px solid ${typeColor}`;
+                  const cardBg = isOverdue ? "rgba(229,57,53,0.03)" : "#fff";
                   return (
-                    <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${typeColor}`, borderRadius: 8, padding: 12, cursor: "pointer" }} onClick={() => setActiveTask(t)}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t.title}</div>
+                    <div key={i} style={{ background: cardBg, border: cardBorder, borderLeft: cardBorderLeft, borderRadius: 8, padding: 12, cursor: "pointer" }} onClick={() => setActiveTask(t)}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 5, marginBottom: 6 }}>
+                        {isOverdue && <span style={{ color: "#E53935", flexShrink: 0, fontSize: 13 }}>⚠️</span>}
+                        <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{t.title}</div>
+                      </div>
                       <div className="row between" style={{ marginTop: 4 }}>
-                        <div className="row" style={{ gap: 7 }}>
+                        <div className="row" style={{ gap: 7, flexWrap: "wrap" }}>
                           <span className="meta">{t.client}</span>
                           <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
+                          {isOverdue && <span style={{ fontSize: 10, fontWeight: 700, background: "#FDEAEA", color: "#C0241F", borderRadius: 20, padding: "2px 8px" }}>Overdue</span>}
                         </div>
                       </div>
-                      {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 6 }}>Due {t.due}</div>}
+                      {t.due && <div style={{ fontSize: 11, color: isOverdue ? "#E53935" : "#AAAAAA", fontWeight: isOverdue ? 600 : 400, marginTop: 6 }}>Due {t.due}</div>}
                     </div>
                   );
                 })}
@@ -369,8 +385,8 @@ function AdminTasks() {
         </div>
       </div>
 
-      {/* Tier 3 — Time range (left) · Status pills + count (right) — My Tasks only */}
-      {tab === "My Tasks" && (() => {
+      {/* Tier 3 — Time range (left) · Status pills + count (right) */}
+      {(tab === "My Tasks" || tab === "Board") && (() => {
         const countMap = { "Overdue": periodTasks.filter(t=>isDateOverdue(t)).length, "In Progress": periodTasks.filter(t=>t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
         const PERIODS = ["Today", "This Week", "This Month"];
         return (
