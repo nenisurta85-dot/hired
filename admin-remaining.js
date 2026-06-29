@@ -185,28 +185,14 @@ function AdminTasks() {
     const iconColor = showOverdue ? "#E53935" : typeColor;
     const cardBg = showOverdue ? "rgba(229,57,53,0.03)" : "#fff";
 
-    /* Due date pill styling */
-    const duePill = (() => {
-      if (!t.due) return null;
-      const d = parseTaskDate(t.due);
-      const today = getToday();
-      if (!d) return { bg: "#F1EFE8", fg: "#888", label: t.due };
-      if (d < today) return { bg: "#E53935", fg: "#fff", label: t.due, icon: "Clock" };
-      const daysAway = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-      if (daysAway <= 3) return { bg: "#FFF3E0", fg: "#E57300", border: "1px solid rgba(229,115,0,0.3)", label: t.due, icon: "Clock" };
-      return { bg: "#F1EFE8", fg: "#5F5E5A", label: t.due };
-    })();
+    const dueFg = showOverdue ? "#E53935" : "var(--text-primary)";
+    const dueFw = showOverdue ? 600 : 400;
 
-    const DuePill = ({ style = {} }) => {
-      if (!duePill) return null;
-      const PillIcon = duePill.icon ? Icons[duePill.icon] : null;
-      return (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 99, whiteSpace: "nowrap", flexShrink: 0, background: duePill.bg, color: duePill.fg, border: duePill.border || "none", ...style }}>
-          {PillIcon && <PillIcon size={10} />}
-          {duePill.label}
-        </span>
-      );
-    };
+    const DueLabel = () => t.due ? (
+      <span style={{ fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", flexShrink: 0, minWidth: 110, textAlign: "center" }}>
+        Due date: {t.due}
+      </span>
+    ) : null;
 
     if (compact) return (
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: cardBg, border: "0.5px solid " + (showOverdue ? "rgba(229,57,53,0.2)" : "var(--border)"), borderLeft: `3px solid ${cardBorder}`, cursor: "pointer", transition: "background .1s" }}
@@ -217,7 +203,7 @@ function AdminTasks() {
         <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
         {showOverdue && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: "#FDEAEA", color: "#C0241F", whiteSpace: "nowrap", flexShrink: 0 }}>Overdue</span>}
         <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: statusBadge.bg, color: statusBadge.fg, whiteSpace: "nowrap", flexShrink: 0 }}>{statusLabel}</span>
-        <DuePill />
+        <DueLabel />
         <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px", flexShrink: 0 }}
           onClick={e => { e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
       </div>
@@ -235,8 +221,8 @@ function AdminTasks() {
           </div>
           {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-          <DuePill />
+        <DueLabel />
+        <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-secondary" style={{ fontSize: 12 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
         </div>
