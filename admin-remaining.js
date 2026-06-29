@@ -188,28 +188,22 @@ function AdminTasks() {
     const dueFg = showOverdue ? "#E53935" : "var(--text-primary)";
     const dueFw = showOverdue ? 600 : 400;
 
-    const DueLabel = () => t.due ? (
-      <span style={{ fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", flexShrink: 0, minWidth: 110, textAlign: "center" }}>
-        Due date: {t.due}
-      </span>
-    ) : null;
-
     if (compact) return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: cardBg, border: "0.5px solid " + (showOverdue ? "rgba(229,57,53,0.2)" : "var(--border)"), borderLeft: `3px solid ${cardBorder}`, cursor: "pointer", transition: "background .1s" }}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 8, background: cardBg, border: "0.5px solid " + (showOverdue ? "rgba(229,57,53,0.2)" : "var(--border)"), borderLeft: `3px solid ${cardBorder}`, cursor: "pointer", transition: "background .1s" }}
         onClick={() => setActiveTask(t)}
         onMouseEnter={e => e.currentTarget.style.background = showOverdue ? "rgba(229,57,53,0.06)" : "var(--bg)"}
         onMouseLeave={e => e.currentTarget.style.background = cardBg}>
         {showOverdue && <span style={{ fontSize: 12, flexShrink: 0 }}>⚠️</span>}
         <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
+        {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: {t.due}</span>}
         {showOverdue && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: "#FDEAEA", color: "#C0241F", whiteSpace: "nowrap", flexShrink: 0 }}>Overdue</span>}
         <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: statusBadge.bg, color: statusBadge.fg, whiteSpace: "nowrap", flexShrink: 0 }}>{statusLabel}</span>
-        <DueLabel />
         <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px", flexShrink: 0 }}
           onClick={e => { e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
       </div>
     );
     return (
-      <div className="task-card clickable" style={{ borderLeft: `3px solid ${cardBorder}`, background: cardBg, border: showOverdue ? "0.5px solid rgba(229,57,53,0.18)" : undefined }}
+      <div className="task-card clickable" style={{ position: "relative", borderLeft: `3px solid ${cardBorder}`, background: cardBg, border: showOverdue ? "0.5px solid rgba(229,57,53,0.18)" : undefined }}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>
         <div className="task-icon" style={{ background: iconBg, color: iconColor }}><IconCmp size={16} /></div>
         <div className="task-body">
@@ -221,7 +215,7 @@ function AdminTasks() {
           </div>
           {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
         </div>
-        <DueLabel />
+        {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: {t.due}</span>}
         <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-secondary" style={{ fontSize: 12 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
