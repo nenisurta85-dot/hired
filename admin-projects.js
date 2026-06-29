@@ -1210,7 +1210,7 @@ function AdminProjectDetail({ id }) {
   const client = ADM.CLIENTS.find((c) => c.id === project.clientId);
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
-  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Project Info", "Intake"];
+  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Intake"];
 
   return (
     <div>
