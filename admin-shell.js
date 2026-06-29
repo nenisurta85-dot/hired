@@ -78,7 +78,7 @@ function AdminSidebar({ route }) {
       <div style={{ padding: "10px 18px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 7 }}>Role</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {["Super Admin", "Writer", "Admin Assistant"].map((r) => (
+          {["Admin", "Writer", "Admin Assistant"].map((r) => (
             <button key={r} onClick={() => setRole(r)}
               style={{ borderRadius: 6, padding: "4px 10px", fontSize: 10, fontWeight: 500, cursor: "pointer", color: "#fff", textAlign: "left",
                 background: role === r ? "var(--raspberry)" : "transparent",

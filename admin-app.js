@@ -5,7 +5,7 @@
 
 function AdminApp({ route }) {
   const [viewAs, setViewAs] = React.useState("Admin");
-  const [role, setRole] = React.useState("Super Admin");
+  const [role, setRole] = React.useState("Admin");
   const [toast, setToast] = React.useState(null);
   const toastTimer = React.useRef(null);
 
