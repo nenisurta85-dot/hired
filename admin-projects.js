@@ -62,9 +62,8 @@ function AdminProjects() {
 
   return (
     <div>
-      <AdminHeader icon="FolderOpen" title="Projects" subtitle="Manage projects" action={{ label: "+ New Project", onClick: () => setModal(true) }} />
-      <FilterBar search={search} onSearch={setSearch}
-        right={<button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setModal(true)}><Icons.Plus size={13} /> New Project</button>}>
+      <AdminHeader icon="FolderOpen" title="Projects" subtitle="Manage projects" />
+      <FilterBar search={search} onSearch={setSearch}>
         <FilterPill label="Phase" options={ADM.PHASES} active={phase} onChange={setPhase} />
         <FilterPill label="Status" options={["On Track", "Behind", "At Risk", "Overdue", "90-day"]} active={status} onChange={setStatus} />
         <FilterPill label="Package" options={ADM.PACKAGES.map((p) => p.name)} active={pkg} onChange={setPkg} />
