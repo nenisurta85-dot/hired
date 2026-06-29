@@ -299,8 +299,8 @@ function AdminTasks() {
 
   const Board = () => {
     const cols = ["Not Started", "In Progress", "Overdue", "Complete"];
-    const map = { "Not Started": "not_started", "In Progress": "in_progress", "Overdue": "overdue", "Complete": "complete" };
-    // Apply same filters as My Tasks (period + status + attribute filters)
+    const map = { "Not Started": "not_started", "In Progress": "in_progress", "Complete": "complete" };
+    // Apply attribute + period filters
     let boardTasks = periodTasks;
     if (selStatus !== "All") {
       if (selStatus === "Overdue") boardTasks = boardTasks.filter(t => isDateOverdue(t));
@@ -308,42 +308,48 @@ function AdminTasks() {
       else if (selStatus === "Not Started") boardTasks = boardTasks.filter(t => t.status === "not_started");
       else if (selStatus === "Complete") boardTasks = boardTasks.filter(t => t.status === "complete");
     }
+    // Overdue column = tasks with past due dates (regardless of status field)
+    const overdueTasks = baseTasks.filter(t => isDateOverdue(t) && t.status !== "complete");
     return (
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start", overflowX: "auto" }} className="scrollbar-thin">
         {cols.map((col) => {
-          const colStatus = map[col];
-          const items = boardTasks.filter((t) => t.status === colStatus);
+          const isOverdueCol = col === "Overdue";
+          const allItems = isOverdueCol ? overdueTasks : boardTasks.filter((t) => t.status === map[col]);
+          const items = isOverdueCol ? allItems.slice(0, 3) : allItems;
+          const totalCount = allItems.length;
           return (
             <div key={col} style={{ flex: 1, minWidth: 240, background: "#F8F7FF", borderRadius: 10, padding: 12 }}>
               <div className="row between" style={{ marginBottom: 12 }}>
-                <span style={{ fontSize: 12, fontWeight: 700 }}>{col}</span>
-                <span className="badge" style={{ background: "#fff", color: "#888", fontSize: 10 }}>{items.length}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isOverdueCol ? "#C0241F" : "inherit" }}>{col}</span>
+                <span className="badge" style={{ background: isOverdueCol ? "#FDEAEA" : "#fff", color: isOverdueCol ? "#C0241F" : "#888", fontSize: 10 }}>{totalCount}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {items.map((t, i) => {
                   const typeColor = TYPE_COLOR(t.title);
-                  const isOverdue = col === "Overdue";
-                  const cardBorder = isOverdue ? "1px solid rgba(229,57,53,0.35)" : "0.5px solid var(--border)";
-                  const cardBorderLeft = isOverdue ? "3px solid #E53935" : `3px solid ${typeColor}`;
-                  const cardBg = isOverdue ? "rgba(229,57,53,0.03)" : "#fff";
+                  const cardBorder = isOverdueCol ? "1px solid rgba(229,57,53,0.35)" : "0.5px solid var(--border)";
+                  const cardBorderLeft = isOverdueCol ? "3px solid #E53935" : `3px solid ${typeColor}`;
+                  const cardBg = isOverdueCol ? "rgba(229,57,53,0.04)" : "#fff";
                   return (
                     <div key={i} style={{ background: cardBg, border: cardBorder, borderLeft: cardBorderLeft, borderRadius: 8, padding: 12, cursor: "pointer" }} onClick={() => setActiveTask(t)}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 5, marginBottom: 6 }}>
-                        {isOverdue && <span style={{ color: "#E53935", flexShrink: 0, fontSize: 13 }}>⚠️</span>}
+                        {isOverdueCol && <span style={{ flexShrink: 0, fontSize: 13 }}>⚠️</span>}
                         <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{t.title}</div>
                       </div>
-                      <div className="row between" style={{ marginTop: 4 }}>
-                        <div className="row" style={{ gap: 7, flexWrap: "wrap" }}>
-                          <span className="meta">{t.client}</span>
-                          <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
-                          {isOverdue && <span style={{ fontSize: 10, fontWeight: 700, background: "#FDEAEA", color: "#C0241F", borderRadius: 20, padding: "2px 8px" }}>Overdue</span>}
-                        </div>
+                      <div className="row" style={{ gap: 7, flexWrap: "wrap", marginTop: 4 }}>
+                        <span className="meta">{t.client}</span>
+                        <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
                       </div>
-                      {t.due && <div style={{ fontSize: 11, color: isOverdue ? "#E53935" : "#AAAAAA", fontWeight: isOverdue ? 600 : 400, marginTop: 6 }}>Due {t.due}</div>}
+                      {t.due && <div style={{ fontSize: 11, color: isOverdueCol ? "#E53935" : "#AAAAAA", fontWeight: isOverdueCol ? 600 : 400, marginTop: 6 }}>Due {t.due}</div>}
                     </div>
                   );
                 })}
                 {items.length === 0 && <div className="meta" style={{ textAlign: "center", padding: "12px 0" }}>Empty</div>}
+                {isOverdueCol && totalCount > 3 && (
+                  <button onClick={() => { setTab("My Tasks"); setSelStatus("Overdue"); }}
+                    style={{ width: "100%", marginTop: 4, padding: "8px 0", border: "1px solid rgba(229,57,53,0.3)", borderRadius: 8, background: "transparent", color: "#C0241F", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    View all {totalCount} overdue →
+                  </button>
+                )}
               </div>
             </div>
           );
