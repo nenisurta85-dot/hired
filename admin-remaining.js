@@ -322,7 +322,7 @@ function AdminTasks() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {items.map((t, i) => {
                   const typeColor = TYPE_COLOR(t.title);
-                  const isOverdue = isDateOverdue(t);
+                  const isOverdue = col === "Overdue";
                   const cardBorder = isOverdue ? "1px solid rgba(229,57,53,0.35)" : "0.5px solid var(--border)";
                   const cardBorderLeft = isOverdue ? "3px solid #E53935" : `3px solid ${typeColor}`;
                   const cardBg = isOverdue ? "rgba(229,57,53,0.03)" : "#fff";
