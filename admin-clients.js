@@ -95,12 +95,9 @@ function AdminClients() {
 
       <FilterBar search={search} onSearch={setSearch}
         right={<>
-          <ToggleChip on={me} onToggle={() => setMe((v) => !v)} icon="User" color="var(--raspberry)">Me</ToggleChip>
-          <button className="fpill"><Icons.ListChecks size={13} /> Columns</button>
           <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setOnboard(true)}><Icons.Plus size={13} /> Onboard New Client</button>
         </>}>
         <FilterPill label="Status" options={["On Track", "Behind"]} active="All" onChange={() => {}} />
-        <FilterPill label="Blocking" options={["Resume", "LinkedIn", "Payment"]} active="All" onChange={() => {}} />
       </FilterBar>
 
       <div className="admin-body">
