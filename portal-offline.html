@@ -5256,7 +5256,7 @@ function AdminTasks() {
         onMouseLeave={e => e.currentTarget.style.background = cardBg}>
         {showOverdue && <span style={{ fontSize: 12, flexShrink: 0 }}>⚠️</span>}
         <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
-        {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: {t.due}</span>}
+        {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: <span style={{ fontWeight: 600 }}>{t.due}</span></span>}
         {showOverdue && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: "#FDEAEA", color: "#C0241F", whiteSpace: "nowrap", flexShrink: 0 }}>Overdue</span>}
         <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: statusBadge.bg, color: statusBadge.fg, whiteSpace: "nowrap", flexShrink: 0 }}>{statusLabel}</span>
         <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px", flexShrink: 0 }}
@@ -5276,7 +5276,7 @@ function AdminTasks() {
           </div>
           {t.client && <div className="task-desc">{t.client} · {t.phase}</div>}
         </div>
-        {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: {t.due}</span>}
+        {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, fontWeight: dueFw, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: <span style={{ fontWeight: 600 }}>{t.due}</span></span>}
         <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-secondary" style={{ fontSize: 12 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTask(t); }}>{ACTION_LABEL(t.title)}</button>
