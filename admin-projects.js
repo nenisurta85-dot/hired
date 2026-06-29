@@ -134,7 +134,7 @@ function TLNode({ node, state }) {
   return <span style={{ width: 14, height: 14, borderRadius: 99, background: "#fff", border: "1.5px solid #CCC", flex: "0 0 auto" }} />;
 }
 
-function ProjectTimelineBar({ project, onMore }) {
+function ProjectTimelineBar({ project, onMore, onTaskClick }) {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
   const nodes = React.useMemo(() => buildTimelineNodes(project), [project]);
@@ -145,7 +145,7 @@ function ProjectTimelineBar({ project, onMore }) {
   const sel = active != null ? nodes[active] : null;
   const selState = active != null ? stateOf(active) : null;
   const callScheduled = selState && selState !== "future"; // done/active calls are scheduled
-  const inits = (name) => name.split(" ").map((w) => w[0]).join("").slice(0, 2);
+  const inits = (name) => (name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2);
 
   return (
     <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#fff", borderBottom: "1px solid var(--border)" }}>
@@ -180,10 +180,13 @@ function ProjectTimelineBar({ project, onMore }) {
           {sel.tasks && sel.tasks.length ? (
             <div style={{ marginTop: 8 }}>
               {sel.tasks.slice(0, 4).map((t, i) => (
-                <div key={i} className="row" style={{ gap: 12, height: 36, borderBottom: "1px solid var(--border)" }}>
+                <div key={i} className="row" style={{ gap: 12, height: 36, borderBottom: "1px solid var(--border)", cursor: onTaskClick ? "pointer" : "default" }}
+                  onClick={() => onTaskClick && onTaskClick({ ...t, client: project.client, phase: sel.label })}
+                  onMouseEnter={(e) => { if (onTaskClick) e.currentTarget.style.background = "rgba(130,17,255,0.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                   <span style={{ width: 17, height: 17, borderRadius: 99, flex: "0 0 17px", border: t.done ? "none" : "1.5px solid #CFC9DD", background: t.done ? "#00A06C" : "#fff", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{t.done ? <Icons.Check size={10} /> : ""}</span>
                   <span style={{ flex: 1, fontSize: 13, textDecoration: t.done ? "line-through" : "none", color: t.done ? "#999" : "inherit" }}>{t.title}</span>
-                  <span className="row" style={{ gap: 6, color: "#888", fontSize: 12, flex: "0 0 auto" }}><Avatar initials={inits(t.assignee)} color="#B9B4C7" size={18} /> {t.assignee}</span>
+                  <span className="row" style={{ gap: 6, color: "#888", fontSize: 12, flex: "0 0 auto" }}><Avatar initials={inits(t.assignee)} color="#B9B4C7" size={18} /> {t.assignee || "—"}</span>
                   <span style={{ color: "#888", fontSize: 12, width: 60, textAlign: "right", flex: "0 0 60px" }}>{t.due}</span>
                 </div>
               ))}
@@ -1209,6 +1212,7 @@ function AdminProjectDetail({ id }) {
   const client = ADM.CLIENTS.find((c) => c.id === project.clientId);
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
+  const [activeTask, setActiveTask] = React.useState(null);
   const tabs = ["Tasks", "Documents", "Comments", "Notes", "Intake"];
 
   return (
@@ -1239,7 +1243,8 @@ function AdminProjectDetail({ id }) {
       </div>
 
       <div style={{ height: 14 }} />
-      <ProjectTimelineBar project={project} onMore={(ph) => { setFocusPhase(ph); setTab("Tasks"); }} />
+      {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
+      <ProjectTimelineBar project={project} onMore={(ph) => { setFocusPhase(ph); setTab("Tasks"); }} onTaskClick={(t) => setActiveTask(t)} />
 
       {/* Tabs */}
       <div style={{ padding: "0 32px", background: "#fff", borderBottom: "1px solid var(--border)" }}>
