@@ -1092,10 +1092,69 @@ function AdminTeam() {
 }
 
 /* ---------------- PACKAGES ---------------- */
+function NewPackageModal({ onClose }) {
+  const { Icons } = window;
+  const { showToast } = useAdmin();
+  const [name, setName] = React.useState("");
+  const [desc, setDesc] = React.useState("");
+  const [price, setPrice] = React.useState("");
+  const [weeks, setWeeks] = React.useState("");
+  const [type, setType] = React.useState("Package");
+  const [status, setStatus] = React.useState("Active");
+  React.useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: 520, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>New Package</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><FL>Name</FL><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Package name" style={inputStyle} /></div>
+          <div><FL>Description</FL><textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Describe this package…" rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <FL>Price</FL>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#888" }}>$</span>
+                <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" style={{ ...inputStyle, paddingLeft: 24 }} />
+              </div>
+            </div>
+            <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={(e) => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div><FL>Type</FL>
+              <select value={type} onChange={(e) => setType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option>Package</option><option>À La Carte</option>
+              </select>
+            </div>
+            <div><FL>Status</FL>
+              <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option>Active</option><option>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { showToast("Package saved."); onClose(); }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminPackages() {
   const { ADM } = window;
   const { showToast, role } = useAdmin();
   const isWriter = role === "Writer";
+  const [showModal, setShowModal] = React.useState(false);
   const PkgCard = ({ p }) => (
     <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16, transition: "border-color .15s" }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--purple)")} onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}>
@@ -1115,14 +1174,15 @@ function AdminPackages() {
   );
   return (
     <div>
-      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => showToast("New package…") }} />
+      {showModal && <NewPackageModal onClose={() => setShowModal(false)} />}
+      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => setShowModal(true) }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.PACKAGES.map((p) => <PkgCard key={p.id} p={p} />)}
         </div>
         <div className="row between" style={{ margin: "26px 0 14px" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>À La Carte</span>
-          {!isWriter && <button className="btn btn-secondary" onClick={() => showToast("New à la carte item…")}>+ New À La Carte Item</button>}
+          {!isWriter && <button className="btn btn-secondary" onClick={() => setShowModal(true)}>+ New À La Carte Item</button>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.ALACARTE.map((a) => (
@@ -1180,17 +1240,86 @@ function AdminTemplates() {
 }
 
 /* ---------------- KNOWLEDGE BASE ---------------- */
+function UploadResourceModal({ onClose }) {
+  const { Icons } = window;
+  const { showToast } = useAdmin();
+  const [title, setTitle] = React.useState("");
+  const [category, setCategory] = React.useState("General");
+  const [visibility, setVisibility] = React.useState("Everyone");
+  const [dragOver, setDragOver] = React.useState(false);
+  const [file, setFile] = React.useState(null);
+  const inputRef = React.useRef(null);
+  React.useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
+  const handleDrop = (e) => {
+    e.preventDefault(); setDragOver(false);
+    const f = e.dataTransfer.files[0]; if (f) setFile(f);
+  };
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: 500, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>Upload Resource</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><FL>Title</FL><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Resource title" style={inputStyle} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div><FL>Category</FL>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                {["General", "Writer Resources", "Templates", "Training"].map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div><FL>Visible to</FL>
+              <select value={visibility} onChange={(e) => setVisibility(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option>Everyone</option><option>Admin only</option><option>Writers only</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <FL>File</FL>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => inputRef.current && inputRef.current.click()}
+              style={{ border: `2px dashed ${dragOver ? "var(--purple)" : "var(--border)"}`, borderRadius: 10, padding: "24px 16px", background: dragOver ? "rgba(130,17,255,0.04)" : "#F8F7FF", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "border-color .15s" }}>
+              <span style={{ width: 36, height: 36, borderRadius: 8, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Upload size={18} /></span>
+              {file
+                ? <div style={{ textAlign: "center" }}><div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)" }}>{file.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{(file.size / 1024).toFixed(0)} KB</div></div>
+                : <div style={{ textAlign: "center" }}><div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)" }}>Drop file here or browse</div><div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>PDF, DOCX, PNG, JPG — max 20 MB</div></div>
+              }
+              <input ref={inputRef} type="file" style={{ display: "none" }} onChange={(e) => { if (e.target.files[0]) setFile(e.target.files[0]); }} />
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { showToast("Resource uploaded."); onClose(); }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminKB() {
   const { ADM, Icons } = window;
   const { showToast, role } = useAdmin();
   const isWriter = role === "Writer";
+  const [showUpload, setShowUpload] = React.useState(false);
   const tabs = Object.keys(ADM.KB);
   const [tab, setTab] = React.useState(tabs[0]);
   const allItems = ADM.KB[tab] || [];
   const items = isWriter ? allItems.filter(r => r.writerLinked) : allItems;
   return (
     <div>
-      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={isWriter ? null : { label: "+ Upload Resource", onClick: () => showToast("Upload resource…") }} />
+      {showUpload && <UploadResourceModal onClose={() => setShowUpload(false)} />}
+      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={isWriter ? null : { label: "+ Upload Resource", onClick: () => setShowUpload(true) }} />
       {isWriter && (
         <div style={{ background: "rgba(130,17,255,0.05)", borderBottom: "1px solid var(--purple-border)", padding: "8px 32px", fontSize: 12, color: "var(--purple)", display: "flex", alignItems: "center", gap: 6 }}>
           <Icons.Info size={13} /> Showing articles linked to your assigned projects and clients only.
