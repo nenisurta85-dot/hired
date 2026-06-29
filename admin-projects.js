@@ -68,7 +68,6 @@ function AdminProjects() {
         <FilterPill label="Phase" options={ADM.PHASES} active={phase} onChange={setPhase} />
         <FilterPill label="Status" options={["On Track", "Behind", "At Risk", "Overdue", "90-day"]} active={status} onChange={setStatus} />
         <FilterPill label="Package" options={ADM.PACKAGES.map((p) => p.name)} active={pkg} onChange={setPkg} />
-        <button className="fpill"><Icons.ListChecks size={13} /> Columns</button>
       </FilterBar>
 
       <div className="admin-body">
