@@ -145,8 +145,9 @@
     return { done, total: t.length };
   };
 
+  const PROJECT_NAMES = ["Tits Up", "I'm A Big Freaking Deal", "The Scroll-Stopper", "Hit Send"];
   const PROJECTS = CLIENTS.filter((c) => c.stage === "Active").map((c, i) => ({
-    id: "p" + (i + 1), clientId: c.id, name: c.name + " Project", client: c.name,
+    id: "p" + (i + 1), clientId: c.id, name: PROJECT_NAMES[i] || (c.name + " Project"), client: c.name,
     phase: c.phase, status: c.status, writer: c.writer, producer: c.producer,
     editor: c.editor || (i % 2 ? "Erin Doyle" : "Unassigned"), pkg: c.pkg,
     start: c.created, end: "May 22, 2026",

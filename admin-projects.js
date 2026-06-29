@@ -73,15 +73,15 @@ function AdminProjects() {
         <Card style={{ padding: 0, overflow: "hidden" }}>
           <table className="atable">
             <thead><tr>
-              {["Project", "Client", "Phase", "Status", "Writer", "Start Date", "Proj. End", ""].map((h) => <th key={h}>{h}</th>)}
+              {["Client", "Project Name", "Phase", "Status", "Writer", "Start Date", "Proj. End", ""].map((h) => <th key={h}>{h}</th>)}
             </tr></thead>
             <tbody>
               {rows.map((p) => {
                 const c = ADM.CLIENTS.find((x) => x.id === p.clientId);
                 return (
                   <tr key={p.id} className="clickable" onClick={() => navigate("#/admin/projects/" + p.id)}>
-                    <td style={{ fontWeight: 600 }}>{p.name}</td>
                     <td><div className="row" style={{ gap: 8 }}><Avatar initials={c.initials} color={c.color} size={24} /> {p.client}</div></td>
+                    <td style={{ fontWeight: 600 }}>{p.name}</td>
                     <td>{phaseBadge(p.phase)}</td>
                     <td><APill status={p.status} /></td>
                     <td style={{ color: p.writer === "Unassigned" ? "#AAA" : "inherit", fontStyle: p.writer === "Unassigned" ? "italic" : "normal" }}>{p.writer}</td>
