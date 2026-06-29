@@ -259,41 +259,6 @@ function AdminTasks() {
 
   const MyTasksView = () => (
     <div>
-      {/* Period toggle */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <div style={{ display: "flex", gap: 5 }}>
-          {["Today", "This Week", "This Month"].map(p => (
-            <button key={p} onClick={() => setPeriod(p)}
-              style={{ fontSize: 12, fontWeight: 600, padding: "5px 16px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
-                background: period === p ? "var(--purple)" : "#fff",
-                color: period === p ? "#fff" : "var(--text-secondary)",
-                borderColor: period === p ? "var(--purple)" : "var(--border)" }}>
-              {p}
-            </button>
-          ))}
-        </div>
-        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{visibleTasks.length} task{visibleTasks.length !== 1 ? "s" : ""}</span>
-      </div>
-
-      {/* Status filter pills */}
-      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 20, paddingBottom: 16, borderBottom: "0.5px solid var(--border-light)" }}>
-        {STATUS_PILLS.map(s => {
-          const active = selStatus === s;
-          const countMap = { "Overdue": periodTasks.filter(t=>isDateOverdue(t)).length, "In Progress": periodTasks.filter(t=>t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
-          const count = s === "All" ? periodTasks.length : countMap[s] || 0;
-          if (s !== "All" && count === 0) return null;
-          return (
-            <button key={s} onClick={() => setSelStatus(s)}
-              style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
-                background: active ? "var(--purple)" : "#fff",
-                color: active ? "#fff" : "var(--text-secondary)",
-                borderColor: active ? "var(--purple)" : "var(--border)" }}>
-              {s}{s !== "All" ? " · " + count : ""}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Content */}
       {visibleTasks.length === 0
         ? <EmptyState icon="CircleCheck" title="All caught up!" desc="No tasks for this period." />
@@ -378,26 +343,74 @@ function AdminTasks() {
       {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
       {showNewTask && React.createElement(window.NewTaskModal, { onClose: () => setShowNewTask(false) })}
       <AdminHeader icon="ListChecks" title="Tasks" subtitle="Task management across all projects" />
+
+      {/* Tier 1 — View tabs */}
       <div style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "0 32px" }}>
         <div className="tabs" style={{ marginBottom: 0, border: "none" }}>
           {tabs.map(([t, n]) => <button key={t} className={"tab" + (t === tab ? " active" : "")} onClick={() => setTab(t)}>{t} <span style={{ color: "#BBB" }}>[{n}]</span></button>)}
         </div>
       </div>
-      <FilterBar onSearch={null}
-        right={<>
+
+      {/* Tier 2 — Attribute filters (left) · actions (right) */}
+      <div style={{ background: "#fff", borderBottom: "0.5px solid var(--border)", padding: "10px 32px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <FilterPill label="Client" options={clientNames} active={selClient} onChange={(v) => { setSelClient(v); setSelProject("All"); }} />
+        {selClient !== "All" && <FilterPill label="Project" options={projectsForClient.map((p) => p.name)} active={selProject} onChange={setSelProject} />}
+        <FilterPill label="Phase" options={ADM.PHASES} active={selPhase} onChange={setSelPhase} />
+        <FilterPill label="Task Type" options={["Call", "Review", "Upload", "Deliverable", "Other"]} active={selTaskType} onChange={setSelTaskType} />
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <ToggleChip on={showCompleted} onToggle={() => setShowCompleted((v) => !v)} icon="CircleCheck" color="#00A06C">Show Completed</ToggleChip>
           {hasFilters && (
             <button className="fpill" style={{ color: "#888", gap: 4 }} onClick={() => { setSelClient("All"); setSelProject("All"); setSelPhase("All"); setSelTaskType("All"); }}>
               <Icons.X size={12} /> Clear filters
             </button>
           )}
+          <div style={{ width: 1, height: 22, background: "var(--border)", flexShrink: 0 }} />
           <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setShowNewTask(true)}><Icons.Plus size={13} /> New Task</button>
-        </>}>
-        <FilterPill label="Client" options={clientNames} active={selClient} onChange={(v) => { setSelClient(v); setSelProject("All"); }} />
-        {selClient !== "All" && <FilterPill label="Project" options={projectsForClient.map((p) => p.name)} active={selProject} onChange={setSelProject} />}
-        <FilterPill label="Phase" options={ADM.PHASES} active={selPhase} onChange={setSelPhase} />
-        <FilterPill label="Task Type" options={["Call", "Review", "Upload", "Deliverable", "Other"]} active={selTaskType} onChange={setSelTaskType} />
-      </FilterBar>
+        </div>
+      </div>
+
+      {/* Tier 3 — Time range (left) · Status pills + count (right) — My Tasks only */}
+      {tab === "My Tasks" && (() => {
+        const countMap = { "Overdue": periodTasks.filter(t=>isDateOverdue(t)).length, "In Progress": periodTasks.filter(t=>t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
+        const PERIODS = ["Today", "This Week", "This Month"];
+        return (
+          <div style={{ background: "#fff", borderBottom: "1px solid var(--border)", padding: "10px 32px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            {/* Segmented time control */}
+            <div style={{ display: "flex", flexShrink: 0 }}>
+              {PERIODS.map((p, i) => (
+                <button key={p} onClick={() => setPeriod(p)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "5px 14px", border: "1.5px solid", cursor: "pointer", transition: "all .12s",
+                    background: period === p ? "var(--purple)" : "#fff",
+                    color: period === p ? "#fff" : "var(--text-secondary)",
+                    borderColor: period === p ? "var(--purple)" : "var(--border)",
+                    borderRadius: i === 0 ? "999px 0 0 999px" : i === PERIODS.length - 1 ? "0 999px 999px 0" : 0,
+                    marginLeft: i > 0 ? -1 : 0, position: "relative", zIndex: period === p ? 1 : 0 }}>
+                  {p}
+                </button>
+              ))}
+            </div>
+            {/* Status pills + total count */}
+            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+              {STATUS_PILLS.map(s => {
+                const active = selStatus === s;
+                const count = s === "All" ? periodTasks.length : countMap[s] || 0;
+                if (s !== "All" && count === 0) return null;
+                return (
+                  <button key={s} onClick={() => setSelStatus(s)}
+                    style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 99, border: "1.5px solid", cursor: "pointer", transition: "all .12s",
+                      background: active ? "var(--purple)" : "#fff",
+                      color: active ? "#fff" : "var(--text-secondary)",
+                      borderColor: active ? "var(--purple)" : "var(--border)" }}>
+                    {s}{s !== "All" ? " · " + count : ""}
+                  </button>
+                );
+              })}
+              <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 4, whiteSpace: "nowrap" }}>{visibleTasks.length} task{visibleTasks.length !== 1 ? "s" : ""}</span>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="admin-body">
         {tab === "My Tasks" && <MyTasksView />}
         {tab === "Board" && <Board />}
