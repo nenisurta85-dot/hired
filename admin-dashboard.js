@@ -182,23 +182,6 @@ function FocusRightNow({ setActiveTask }) {
 
   const filtered = tab === "All" ? allTasks : allTasks.filter(t => t.type === tab);
 
-  const getDuePill = (t) => {
-    if (t.overdue) return { bg: "#E53935", fg: "#fff", border: "none" };
-    // Parse "Apr 28" style dates
-    const months = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 };
-    const parts = (t.due || "").split(" ");
-    if (parts.length === 2 && months[parts[0]] !== undefined) {
-      const now = new Date();
-      const d = new Date(now.getFullYear(), months[parts[0]], parseInt(parts[1]));
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      if (d >= today) {
-        const days = Math.ceil((d - today) / 86400000);
-        if (days <= 3) return { bg: "#FFF3E0", fg: "#E57300", border: "1px solid rgba(229,115,0,0.3)" };
-      }
-    }
-    return { bg: "#F1EFE8", fg: "#5F5E5A", border: "none" };
-  };
-
   return (
     <Card style={{ padding: "18px 18px 6px" }}>
       <div className="row between" style={{ marginBottom: 14 }}>
@@ -217,12 +200,12 @@ function FocusRightNow({ setActiveTask }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
         {filtered.map((t, i) => {
-          const pill = getDuePill(t);
           const cardBg = t.overdue ? "rgba(229,57,53,0.03)" : "#fff";
           const cardBorder = t.overdue ? "0.5px solid rgba(229,57,53,0.18)" : "1px solid var(--border)";
+          const dueFg = t.overdue ? "#E53935" : "var(--text-primary)";
           return (
             <div key={i} onClick={() => setActiveTask(t)}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, borderRadius: 10, background: cardBg, boxShadow: "0 1px 4px rgba(0,0,0,0.07)", border: cardBorder, borderLeftColor: t.borderColor, transition: "box-shadow .15s, transform .15s" }}
+              style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${t.borderColor}`, borderRadius: 10, background: cardBg, boxShadow: "0 1px 4px rgba(0,0,0,0.07)", border: cardBorder, borderLeftColor: t.borderColor, transition: "box-shadow .15s, transform .15s" }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.11)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.07)"; e.currentTarget.style.transform = ""; }}>
               <div style={{ width: 8, height: 8, borderRadius: 99, background: t.dot, flex: "0 0 8px" }} />
@@ -235,12 +218,7 @@ function FocusRightNow({ setActiveTask }) {
                 </div>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{t.client} · {t.status}</div>
               </div>
-              {t.due && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 99, whiteSpace: "nowrap", flexShrink: 0, background: pill.bg, color: pill.fg, border: pill.border }}>
-                  <Icons.Calendar size={10} />
-                  {t.due}
-                </span>
-              )}
+              {t.due && <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", fontSize: 12, color: dueFg, whiteSpace: "nowrap", pointerEvents: "none" }}>Due date: <span style={{ fontWeight: 600 }}>{t.due}</span></span>}
               <button className="btn btn-secondary" style={{ flex: "0 0 auto", padding: "6px 14px", fontSize: 12 }}
                 onClick={(e) => { e.stopPropagation(); setActiveTask(t); }}>{t.action}</button>
             </div>
