@@ -1093,13 +1093,12 @@ function AdminTeam() {
 
 /* ---------------- PACKAGES ---------------- */
 const DEFAULT_DELIVERABLES_LIBRARY = [
-  { id: "resume", name: "Résumé", type: "document" },
-  { id: "linkedin", name: "LinkedIn Profile Rewrite", type: "document" },
-  { id: "cover_letter", name: "Cover Letter Template", type: "document" },
-  { id: "working_session_1", name: "Working Session #1 (30-min Zoom)", type: "call" },
-  { id: "working_session_2", name: "Working Session #2 (30-min Zoom)", type: "call" },
-  { id: "executive_brief", name: "1-Page Executive Brief", type: "document" },
-  { id: "salary_coaching", name: "Salary Negotiation Coaching", type: "call" },
+  { id: "ssot", name: "Single Source of Truth", relatedTo: "top_level" },
+  { id: "ws-1", name: "Working Session #1", relatedTo: "top_level", isCall: true, zoomLink: "" },
+  { id: "ws-2", name: "Working Session #2", relatedTo: "top_level", isCall: true, zoomLink: "" },
+  { id: "ws-3", name: "Working Session #3", relatedTo: "top_level", isCall: true, zoomLink: "" },
+  { id: "call-1", name: "Call 1", relatedTo: "top_level", isCall: true, zoomLink: "" },
+  { id: "call-2", name: "Call 2", relatedTo: "top_level", isCall: true, zoomLink: "" },
 ];
 
 function NewPackageModal({ onClose }) {
@@ -1114,47 +1113,36 @@ function NewPackageModal({ onClose }) {
   const [pkgType, setPkgType] = React.useState("Package");
   const [status, setStatus] = React.useState("Active");
 
-  // Deliverables checklist
+  // Deliverables
   const [library, setLibrary] = React.useState(DEFAULT_DELIVERABLES_LIBRARY);
-  const [selected, setSelected] = React.useState([]);
+  const [selected, setSelected] = React.useState(["ssot", "ws-1", "ws-2", "call-1"]);
   const [newIds, setNewIds] = React.useState([]);
 
-  // Custom deliverable inline form
-  const [showCustomForm, setShowCustomForm] = React.useState(false);
-  const [customType, setCustomType] = React.useState("document");
-  const [customName, setCustomName] = React.useState("");
-  const [customTemplateLink, setCustomTemplateLink] = React.useState("");
-  const [customTurnaround, setCustomTurnaround] = React.useState(3);
-  const [customDaysAfter, setCustomDaysAfter] = React.useState(3);
-  const [customDuration, setCustomDuration] = React.useState(30);
-  const [customOnboarding, setCustomOnboarding] = React.useState(false);
+  // Add New inline form
+  const [showAddNew, setShowAddNew] = React.useState(false);
+  const [newName, setNewName] = React.useState("");
+  const [relatedTo, setRelatedTo] = React.useState("top_level");
+  const [isCall, setIsCall] = React.useState(false);
+  const [zoomLink, setZoomLink] = React.useState("");
 
   React.useEffect(() => {
-    const fn = (e) => { if (e.key === "Escape") { if (showCustomForm) setShowCustomForm(false); else onClose(); } };
+    const fn = (e) => { if (e.key === "Escape") { if (showAddNew) { setShowAddNew(false); } else onClose(); } };
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
-  }, [showCustomForm]);
+  }, [showAddNew]);
 
   const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
-  const resetCustom = () => {
-    setCustomName(""); setCustomTemplateLink(""); setCustomTurnaround(3);
-    setCustomDaysAfter(3); setCustomDuration(30); setCustomOnboarding(false); setCustomType("document");
-  };
+  const resetAddNew = () => { setNewName(""); setRelatedTo("top_level"); setIsCall(false); setZoomLink(""); };
 
-  const handleAddToLibrary = () => {
-    const id = slugify(customName) || ("custom_" + Date.now());
-    const newItem = {
-      id, name: customName, type: customType,
-      ...(customType === "document"
-        ? { templateLink: customTemplateLink, turnaroundDays: customTurnaround }
-        : { daysAfterPurchase: customDaysAfter, durationMinutes: customDuration, includeOnboarding: customOnboarding }),
-    };
-    setLibrary(prev => [newItem, ...prev]);
+  const handleAddNew = () => {
+    const id = slugify(newName) || ("custom_" + library.length);
+    const item = { id, name: newName, relatedTo, ...(isCall ? { isCall: true, zoomLink } : {}) };
+    setLibrary(prev => [item, ...prev]);
     setSelected(prev => [id, ...prev]);
     setNewIds(prev => [id, ...prev]);
-    setShowCustomForm(false);
-    resetCustom();
+    setShowAddNew(false);
+    resetAddNew();
   };
 
   const toggleSelected = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [id, ...prev]);
@@ -1162,25 +1150,27 @@ function NewPackageModal({ onClose }) {
   const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
   const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
 
-  // Sort: selected first, then rest; newly added always at top
   const sorted = [
     ...library.filter(d => newIds.includes(d.id)),
-    ...library.filter(d => !newIds.includes(d.id) && selected.includes(d.id)),
-    ...library.filter(d => !newIds.includes(d.id) && !selected.includes(d.id)),
+    ...library.filter(d => !newIds.includes(d.id)),
   ];
+
+  const Toggle = ({ on, onToggle }) => (
+    <div onClick={onToggle} style={{ width: 36, height: 20, borderRadius: 99, background: on ? "var(--purple)" : "#DDD", position: "relative", transition: "background .15s", flexShrink: 0, cursor: "pointer" }}>
+      <div style={{ width: 16, height: 16, borderRadius: 99, background: "#fff", position: "absolute", top: 2, left: on ? 18 : 2, transition: "left .15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+    </div>
+  );
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
       <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
 
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
           <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>New Package</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Core fields */}
           <div><FL>Name</FL><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Package name" style={inputStyle} /></div>
           <div><FL>Description</FL><textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Describe this package…" rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1208,7 +1198,7 @@ function NewPackageModal({ onClose }) {
 
           {/* Deliverables checklist */}
           <div>
-            <FL>Deliverables</FL>
+            <FL>Deliverables Included</FL>
             <div style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
               {sorted.map((d, i) => {
                 const checked = selected.includes(d.id);
@@ -1219,81 +1209,45 @@ function NewPackageModal({ onClose }) {
                     onMouseLeave={(e) => { e.currentTarget.style.background = isNew ? "rgba(130,17,255,0.03)" : "#fff"; }}>
                     <input type="checkbox" checked={checked} onChange={() => toggleSelected(d.id)} style={{ accentColor: "var(--purple)", width: 15, height: 15, flexShrink: 0 }} />
                     <span style={{ flex: 1, fontSize: 13, fontWeight: checked ? 500 : 400, color: checked ? "var(--text-primary)" : "var(--text-secondary)" }}>{d.name}</span>
-                    <span style={{ fontSize: 10, color: d.type === "call" ? "var(--purple)" : "#888", background: d.type === "call" ? "var(--purple-light)" : "#F1EFE8", borderRadius: 20, padding: "2px 8px", flexShrink: 0 }}>{d.type === "call" ? "Call" : "Doc"}</span>
                     {isNew && <span style={{ fontSize: 10, fontWeight: 700, background: "rgba(130,17,255,0.12)", color: "var(--purple)", borderRadius: 20, padding: "2px 8px", flexShrink: 0 }}>New</span>}
                   </label>
                 );
               })}
             </div>
 
-            {/* Custom deliverable inline form */}
-            {showCustomForm ? (
+            {/* Add New inline form */}
+            {showAddNew ? (
               <div style={{ border: "1px solid var(--purple)", borderRadius: 10, padding: 16, marginTop: 8, background: "#FAF9FF" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--purple)" }}>Add Custom Deliverable</span>
-                  <button onClick={() => { setShowCustomForm(false); resetCustom(); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 2 }}><Icons.X size={15} /></button>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--purple)" }}>Add New</span>
+                  <button onClick={() => { setShowAddNew(false); resetAddNew(); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 2 }}><Icons.X size={15} /></button>
                 </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <FL>Name *</FL>
-                  <input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="e.g., Salary Negotiation Script" style={inputStyle} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div><FL>Name *</FL><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Deliverable name" style={inputStyle} /></div>
+                  <div><FL>Related To</FL>
+                    <select value={relatedTo} onChange={(e) => setRelatedTo(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <option value="top_level">Top Level</option>
+                      <option value="call_1">Call 1</option>
+                      <option value="call_2">Call 2</option>
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Toggle on={isCall} onToggle={() => setIsCall(v => !v)} />
+                    <span style={{ fontSize: 13, color: "var(--text-primary)" }}>This is a call</span>
+                  </div>
+                  {isCall && (
+                    <div><FL>Zoom Link</FL><input value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} placeholder="https://zoom.us/…" style={inputStyle} /></div>
+                  )}
                 </div>
-
-                <div style={{ marginBottom: 14 }}>
-                  <FL>Type</FL>
-                  <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
-                    {["document", "call"].map((t) => (
-                      <label key={t} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                        <input type="radio" name="customType" checked={customType === t} onChange={() => setCustomType(t)} style={{ accentColor: "var(--purple)" }} />
-                        {t === "document" ? "Document" : "Call"}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {customType === "document" ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div>
-                      <FL>Template Link (optional)</FL>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 5 }}>Reference template for writers</div>
-                      <input value={customTemplateLink} onChange={(e) => setCustomTemplateLink(e.target.value)} placeholder="https://docs.google.com/…" style={inputStyle} />
-                    </div>
-                    <div>
-                      <FL>Turnaround (days)</FL>
-                      <input type="number" value={customTurnaround} onChange={(e) => setCustomTurnaround(Number(e.target.value))} min={1} style={{ ...inputStyle, width: 100 }} />
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div>
-                        <FL>Days after purchase</FL>
-                        <input type="number" value={customDaysAfter} onChange={(e) => setCustomDaysAfter(Number(e.target.value))} min={1} style={inputStyle} />
-                      </div>
-                      <div>
-                        <FL>Duration (minutes)</FL>
-                        <input type="number" value={customDuration} onChange={(e) => setCustomDuration(Number(e.target.value))} min={15} step={15} style={inputStyle} />
-                      </div>
-                    </div>
-                    <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13 }}>
-                      <div onClick={() => setCustomOnboarding(v => !v)}
-                        style={{ width: 36, height: 20, borderRadius: 99, background: customOnboarding ? "var(--purple)" : "#DDD", position: "relative", transition: "background .15s", flexShrink: 0, cursor: "pointer" }}>
-                        <div style={{ width: 16, height: 16, borderRadius: 99, background: "#fff", position: "absolute", top: 2, left: customOnboarding ? 18 : 2, transition: "left .15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-                      </div>
-                      Include onboarding step before this call
-                    </label>
-                  </div>
-                )}
-
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-                  <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { setShowCustomForm(false); resetCustom(); }}>Cancel</button>
-                  <button className="btn btn-primary" style={{ fontSize: 12 }} disabled={!customName.trim()} onClick={handleAddToLibrary}>Add to Library</button>
+                  <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { setShowAddNew(false); resetAddNew(); }}>Cancel</button>
+                  <button className="btn btn-primary" style={{ fontSize: 12 }} disabled={!newName.trim()} onClick={handleAddNew}>Add</button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setShowCustomForm(true)}
+              <button onClick={() => setShowAddNew(true)}
                 style={{ marginTop: 8, background: "none", border: "1px dashed var(--border)", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, color: "var(--purple)", cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <Icons.Plus size={13} /> Add Custom Deliverable
+                <Icons.Plus size={13} /> Add New
               </button>
             )}
           </div>
