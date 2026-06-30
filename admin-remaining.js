@@ -891,7 +891,7 @@ function TeamRowMenu({ member, onEdit, onToggleStatus, onDelete }) {
 }
 
 /* ---- Writer Capacity Card ---- */
-function WriterCapacityCard({ member, navigate }) {
+function TeamWriterCapacityCard({ member, navigate }) {
   const { ADM, Icons } = window;
 
   const pkgMap = {};
@@ -1148,7 +1148,7 @@ function AdminTeam() {
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Writer Capacity</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
             {members.filter(m => m.status === "Active" && m.roles && (m.roles.includes("writer") || m.roles.includes("editor"))).map(m => (
-              <WriterCapacityCard key={m.id} member={m} navigate={navigate} />
+              <TeamWriterCapacityCard key={m.id} member={m} navigate={navigate} />
             ))}
           </div>
         </div>
