@@ -2151,7 +2151,7 @@ function ProjectTimeline({ lockType }) {
 function AdminTimelineTypes() {
   return (
     <div>
-      <AdminHeader icon="GitBranch" title="Timeline Types" subtitle="Preview of all project timeline structures (sample data — not a real project)." />
+      <AdminHeader icon="Folder" title="Timeline Types" subtitle="Preview of all project timeline structures (sample data — not a real project)." />
       <ProjectTimeline />
     </div>
   );

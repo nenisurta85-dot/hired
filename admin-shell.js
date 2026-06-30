@@ -106,7 +106,7 @@ function AdminSidebar({ route }) {
                   color: active ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 12, fontWeight: 500, textAlign: "left" }}
                 onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
                 onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                <Icons.GitBranch size={16} />
+                <Icons.Folder size={16} />
                 <span style={{ flex: 1 }}>Timeline Types</span>
                 <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.45)", borderRadius: 4, padding: "2px 5px", letterSpacing: 0.5 }}>TEMP</span>
               </button>
