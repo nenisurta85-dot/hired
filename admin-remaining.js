@@ -1093,20 +1093,49 @@ function AdminTeam() {
 }
 
 /* ---------------- PACKAGES ---------------- */
-const DEFAULT_DELIVERABLES_LIBRARY = [
-  { id: "ssot", name: "Single Source of Truth", relatedTo: "top_level" },
-  { id: "ws-1", name: "Working Session #1", relatedTo: "top_level", isCall: true, zoomLink: "" },
-  { id: "ws-2", name: "Working Session #2", relatedTo: "top_level", isCall: true, zoomLink: "" },
-  { id: "ws-3", name: "Working Session #3", relatedTo: "top_level", isCall: true, zoomLink: "" },
-  { id: "call-1", name: "Call 1", relatedTo: "top_level", isCall: true, zoomLink: "" },
-  { id: "call-2", name: "Call 2", relatedTo: "top_level", isCall: true, zoomLink: "" },
+const DELIVERABLE_GROUPS = [
+  {
+    id: "top_level",
+    label: "Top Level",
+    items: [
+      { id: "ssot", name: "Single Source of Truth" },
+      { id: "ws-1", name: "Working Session #1" },
+      { id: "ws-2", name: "Working Session #2" },
+      { id: "ws-3", name: "Working Session #3" },
+    ],
+  },
+  {
+    id: "call_1",
+    label: "Call 1",
+    items: [
+      { id: "resume-v1", name: "Resume V1" },
+      { id: "cover-letter-template", name: "Cover Letter Template" },
+      { id: "cover-letter-scripts", name: "Cover Letter Scripts" },
+      { id: "linkedin-audit", name: "LinkedIn Audit" },
+      { id: "linkedin-banners", name: "LinkedIn Banners" },
+      { id: "toolkit", name: "Toolkit" },
+    ],
+  },
+  {
+    id: "call_2",
+    label: "Call 2",
+    items: [
+      { id: "revisions", name: "Revisions to Existing Materials" },
+      { id: "job-search-strategy", name: "Job Search Strategy" },
+      { id: "exec-brief", name: "1-pg Exec Brief for Networking" },
+      { id: "exec-bio", name: "Exec Bio" },
+      { id: "stories", name: "Stories" },
+      { id: "second-resume", name: "Optional Second Resume / What I Am Looking For Script" },
+      { id: "tell-me-about-yourself", name: "So Tell Me About Yourself Script" },
+      { id: "salary-analysis", name: "Salary Analysis" },
+    ],
+  },
 ];
 
 function NewPackageModal({ onClose }) {
   const { Icons } = window;
   const { showToast } = useAdmin();
 
-  // Package fields
   const [name, setName] = React.useState("");
   const [desc, setDesc] = React.useState("");
   const [price, setPrice] = React.useState("");
@@ -1114,57 +1143,57 @@ function NewPackageModal({ onClose }) {
   const [pkgType, setPkgType] = React.useState("Package");
   const [status, setStatus] = React.useState("Active");
 
-  // Deliverables
-  const [library, setLibrary] = React.useState(DEFAULT_DELIVERABLES_LIBRARY);
-  const [selected, setSelected] = React.useState(["ssot", "ws-1", "ws-2", "call-1"]);
-  const [newIds, setNewIds] = React.useState([]);
+  // selected: set of item ids
+  const [selected, setSelected] = React.useState(new Set(["ssot", "ws-1", "ws-2", "resume-v1", "cover-letter-template"]));
+  // extra items added per group: { group_id: [{id, name}] }
+  const [extras, setExtras] = React.useState({});
 
-  // Add New inline form
-  const [showAddNew, setShowAddNew] = React.useState(false);
+  // Add New form state
+  const [addingTo, setAddingTo] = React.useState(null); // group id or null
   const [newName, setNewName] = React.useState("");
-  const [relatedTo, setRelatedTo] = React.useState("top_level");
-  const [isCall, setIsCall] = React.useState(false);
-  const [zoomLink, setZoomLink] = React.useState("");
 
   React.useEffect(() => {
-    const fn = (e) => { if (e.key === "Escape") { if (showAddNew) { setShowAddNew(false); } else onClose(); } };
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
-  }, [showAddNew]);
+  }, []);
 
   const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
-  const resetAddNew = () => { setNewName(""); setRelatedTo("top_level"); setIsCall(false); setZoomLink(""); };
+  const toggleItem = (id) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
 
-  const handleAddNew = () => {
-    const id = slugify(newName) || ("custom_" + library.length);
-    const item = { id, name: newName, relatedTo, ...(isCall ? { isCall: true, zoomLink } : {}) };
-    setLibrary(prev => [item, ...prev]);
-    setSelected(prev => [id, ...prev]);
-    setNewIds(prev => [id, ...prev]);
-    setShowAddNew(false);
-    resetAddNew();
+  const handleAddItem = (groupId) => {
+    if (!newName.trim()) return;
+    const id = slugify(newName) + "_" + groupId;
+    setExtras(prev => ({ ...prev, [groupId]: [...(prev[groupId] || []), { id, name: newName.trim() }] }));
+    setSelected(prev => { const next = new Set(prev); next.add(id); return next; });
+    setNewName("");
+    setAddingTo(null);
   };
-
-  const toggleSelected = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [id, ...prev]);
 
   const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
   const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
 
-  const sorted = [
-    ...library.filter(d => newIds.includes(d.id)),
-    ...library.filter(d => !newIds.includes(d.id)),
-  ];
-
-  const Toggle = ({ on, onToggle }) => (
-    <div onClick={onToggle} style={{ width: 36, height: 20, borderRadius: 99, background: on ? "var(--purple)" : "#DDD", position: "relative", transition: "background .15s", flexShrink: 0, cursor: "pointer" }}>
-      <div style={{ width: 16, height: 16, borderRadius: 99, background: "#fff", position: "absolute", top: 2, left: on ? 18 : 2, transition: "left .15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-    </div>
-  );
+  const CheckItem = ({ item, isNew }) => {
+    const checked = selected.has(item.id);
+    return (
+      <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderTop: "1px solid var(--border-light)", cursor: "pointer", background: isNew ? "rgba(130,17,255,0.03)" : "#fff" }}
+        onMouseEnter={e => { if (!isNew) e.currentTarget.style.background = "#FAFAFA"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = isNew ? "rgba(130,17,255,0.03)" : "#fff"; }}>
+        <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} style={{ accentColor: "var(--purple)", width: 15, height: 15, flexShrink: 0 }} />
+        <span style={{ flex: 1, fontSize: 13, fontWeight: checked ? 500 : 400, color: checked ? "var(--text-primary)" : "var(--text-secondary)" }}>{item.name}</span>
+        {isNew && <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(130,17,255,0.12)", color: "var(--purple)", borderRadius: 20, padding: "2px 7px" }}>New</span>}
+      </label>
+    );
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={e => e.stopPropagation()}>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
           <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>New Package</div>
@@ -1172,85 +1201,66 @@ function NewPackageModal({ onClose }) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div><FL>Name</FL><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Package name" style={inputStyle} /></div>
-          <div><FL>Description</FL><textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Describe this package…" rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
+          <div><FL>Name</FL><input value={name} onChange={e => setName(e.target.value)} placeholder="Package name" style={inputStyle} /></div>
+          <div><FL>Description</FL><textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe this package…" rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <FL>Price</FL>
               <div style={{ position: "relative" }}>
                 <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#888" }}>$</span>
-                <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" style={{ ...inputStyle, paddingLeft: 24 }} />
+                <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" style={{ ...inputStyle, paddingLeft: 24 }} />
               </div>
             </div>
-            <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={(e) => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
+            <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div><FL>Type</FL>
-              <select value={pkgType} onChange={(e) => setPkgType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <select value={pkgType} onChange={e => setPkgType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
                 <option>Package</option><option>À La Carte</option>
               </select>
             </div>
             <div><FL>Status</FL>
-              <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
                 <option>Active</option><option>Inactive</option>
               </select>
             </div>
           </div>
 
-          {/* Deliverables checklist */}
+          {/* Deliverables — 3 grouped sections */}
           <div>
             <FL>Deliverables Included</FL>
-            <div style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-              {sorted.map((d, i) => {
-                const checked = selected.includes(d.id);
-                const isNew = newIds.includes(d.id);
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {DELIVERABLE_GROUPS.map(group => {
+                const groupExtras = extras[group.id] || [];
+                const allItems = [...group.items, ...groupExtras];
                 return (
-                  <label key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderBottom: i < sorted.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer", background: isNew ? "rgba(130,17,255,0.03)" : "#fff" }}
-                    onMouseEnter={(e) => { if (!isNew) e.currentTarget.style.background = "#FAFAFA"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = isNew ? "rgba(130,17,255,0.03)" : "#fff"; }}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleSelected(d.id)} style={{ accentColor: "var(--purple)", width: 15, height: 15, flexShrink: 0 }} />
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: checked ? 500 : 400, color: checked ? "var(--text-primary)" : "var(--text-secondary)" }}>{d.name}</span>
-                    {isNew && <span style={{ fontSize: 10, fontWeight: 700, background: "rgba(130,17,255,0.12)", color: "var(--purple)", borderRadius: 20, padding: "2px 8px", flexShrink: 0 }}>New</span>}
-                  </label>
+                  <div key={group.id} style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+                    {/* Group header */}
+                    <div style={{ background: "#F6F5FB", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--purple)" }}>{group.label}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{allItems.filter(i => selected.has(i.id)).length}/{allItems.length}</span>
+                    </div>
+                    {/* Items */}
+                    {allItems.map(item => <CheckItem key={item.id} item={item} isNew={groupExtras.some(e => e.id === item.id)} />)}
+                    {/* Add item to this group */}
+                    {addingTo === group.id ? (
+                      <div style={{ padding: "8px 12px", borderTop: "1px solid var(--border-light)", display: "flex", gap: 8, alignItems: "center", background: "#FAFAFA" }}>
+                        <input autoFocus value={newName} onChange={e => setNewName(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") handleAddItem(group.id); if (e.key === "Escape") { setAddingTo(null); setNewName(""); } }}
+                          placeholder="Item name…" style={{ ...inputStyle, padding: "5px 8px", fontSize: 12, flex: 1 }} />
+                        <button className="btn btn-primary" style={{ fontSize: 11, padding: "5px 12px" }} onClick={() => handleAddItem(group.id)} disabled={!newName.trim()}>Add</button>
+                        <button className="btn btn-ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => { setAddingTo(null); setNewName(""); }}>Cancel</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setAddingTo(group.id); setNewName(""); }}
+                        style={{ width: "100%", background: "none", border: "none", borderTop: "1px dashed var(--border)", padding: "7px 12px", fontSize: 11, color: "var(--purple)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}>
+                        <Icons.Plus size={11} /> Add item to {group.label}
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
-
-            {/* Add New inline form */}
-            {showAddNew ? (
-              <div style={{ border: "1px solid var(--purple)", borderRadius: 10, padding: 16, marginTop: 8, background: "#FAF9FF" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--purple)" }}>Add New</span>
-                  <button onClick={() => { setShowAddNew(false); resetAddNew(); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 2 }}><Icons.X size={15} /></button>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div><FL>Name *</FL><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Deliverable name" style={inputStyle} /></div>
-                  <div><FL>Related To</FL>
-                    <select value={relatedTo} onChange={(e) => setRelatedTo(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                      <option value="top_level">Top Level</option>
-                      <option value="call_1">Call 1</option>
-                      <option value="call_2">Call 2</option>
-                    </select>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <Toggle on={isCall} onToggle={() => setIsCall(v => !v)} />
-                    <span style={{ fontSize: 13, color: "var(--text-primary)" }}>This is a call</span>
-                  </div>
-                  {isCall && (
-                    <div><FL>Zoom Link</FL><input value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} placeholder="https://zoom.us/…" style={inputStyle} /></div>
-                  )}
-                </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-                  <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { setShowAddNew(false); resetAddNew(); }}>Cancel</button>
-                  <button className="btn btn-primary" style={{ fontSize: 12 }} disabled={!newName.trim()} onClick={handleAddNew}>Add</button>
-                </div>
-              </div>
-            ) : (
-              <button onClick={() => setShowAddNew(true)}
-                style={{ marginTop: 8, background: "none", border: "1px dashed var(--border)", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, color: "var(--purple)", cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <Icons.Plus size={13} /> Add New
-              </button>
-            )}
           </div>
         </div>
 
