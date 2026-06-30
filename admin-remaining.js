@@ -1151,6 +1151,7 @@ function NewPackageModal({ onClose }) {
   // Add New form state
   const [addingTo, setAddingTo] = React.useState(null); // group id or null
   const [newName, setNewName] = React.useState("");
+  const [targetGroup, setTargetGroup] = React.useState("top_level");
 
   React.useEffect(() => {
     const fn = (e) => { if (e.key === "Escape") onClose(); };
@@ -1166,10 +1167,10 @@ function NewPackageModal({ onClose }) {
     return next;
   });
 
-  const handleAddItem = (groupId) => {
+  const handleAddItem = () => {
     if (!newName.trim()) return;
-    const id = slugify(newName) + "_" + groupId;
-    setExtras(prev => ({ ...prev, [groupId]: [...(prev[groupId] || []), { id, name: newName.trim() }] }));
+    const id = slugify(newName) + "_" + targetGroup;
+    setExtras(prev => ({ ...prev, [targetGroup]: [...(prev[targetGroup] || []), { id, name: newName.trim() }] }));
     setSelected(prev => { const next = new Set(prev); next.add(id); return next; });
     setNewName("");
     setAddingTo(null);
@@ -1242,25 +1243,43 @@ function NewPackageModal({ onClose }) {
                     </div>
                     {/* Items */}
                     {allItems.map(item => <CheckItem key={item.id} item={item} isNew={groupExtras.some(e => e.id === item.id)} />)}
-                    {/* Add item to this group */}
-                    {addingTo === group.id ? (
-                      <div style={{ padding: "8px 12px", borderTop: "1px solid var(--border-light)", display: "flex", gap: 8, alignItems: "center", background: "#FAFAFA" }}>
-                        <input autoFocus value={newName} onChange={e => setNewName(e.target.value)}
-                          onKeyDown={e => { if (e.key === "Enter") handleAddItem(group.id); if (e.key === "Escape") { setAddingTo(null); setNewName(""); } }}
-                          placeholder="Item name…" style={{ ...inputStyle, padding: "5px 8px", fontSize: 12, flex: 1 }} />
-                        <button className="btn btn-primary" style={{ fontSize: 11, padding: "5px 12px" }} onClick={() => handleAddItem(group.id)} disabled={!newName.trim()}>Add</button>
-                        <button className="btn btn-ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => { setAddingTo(null); setNewName(""); }}>Cancel</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => { setAddingTo(group.id); setNewName(""); }}
-                        style={{ width: "100%", background: "none", border: "none", borderTop: "1px dashed var(--border)", padding: "7px 12px", fontSize: 11, color: "var(--purple)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}>
-                        <Icons.Plus size={11} /> Add item to {group.label}
-                      </button>
-                    )}
                   </div>
                 );
               })}
             </div>
+
+            {/* Global Add New form */}
+            {addingTo ? (
+              <div style={{ border: "1px solid var(--purple)", borderRadius: 10, padding: 16, marginTop: 10, background: "#FAF9FF" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--purple)" }}>Add New Deliverable</span>
+                  <button onClick={() => { setAddingTo(null); setNewName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 2 }}><Icons.X size={15} /></button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div>
+                    <FL>Name *</FL>
+                    <input autoFocus value={newName} onChange={e => setNewName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleAddItem(); if (e.key === "Escape") { setAddingTo(null); setNewName(""); } }}
+                      placeholder="Deliverable name" style={inputStyle} />
+                  </div>
+                  <div>
+                    <FL>Group</FL>
+                    <select value={targetGroup} onChange={e => setTargetGroup(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      {DELIVERABLE_GROUPS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                  <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { setAddingTo(null); setNewName(""); }}>Cancel</button>
+                  <button className="btn btn-primary" style={{ fontSize: 12 }} disabled={!newName.trim()} onClick={handleAddItem}>Add</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => { setAddingTo("new"); setTargetGroup("top_level"); setNewName(""); }}
+                style={{ marginTop: 10, background: "none", border: "1px dashed var(--border)", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, color: "var(--purple)", cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <Icons.Plus size={13} /> Add New Deliverable
+              </button>
+            )}
           </div>
         </div>
 
