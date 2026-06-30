@@ -1996,8 +1996,9 @@ const PT_CONFIGS = {
       { id: "phase1",   type: "circle", label: "Phase 1",           state: "active" },
       { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Working Session #1", state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
       { id: "phase2",   type: "circle", label: "Phase 2",           state: "future" },
-      { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Working Session #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
-      { id: "offboard", type: "circle", label: "Offboarding",       state: "future" },
+      { id: "call2",       type: "diamond", label: "Call 2", sublabel: "Working Session #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "end_project", type: "circle",  label: "End Project",  state: "future" },
+      { id: "offboard",    type: "circle",  label: "Offboarding",  state: "future" },
     ],
   },
   standard_30: {
@@ -2011,8 +2012,9 @@ const PT_CONFIGS = {
       { id: "phase2",   type: "circle",  label: "Phase 2",          state: "future" },
       { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Working Session #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
       { id: "phase3",   type: "circle",  label: "Phase 3",          state: "future" },
-      { id: "call3",    type: "diamond", label: "Call 3", sublabel: "Working Session #3", state: "future", tasks: ["Summary email from Call #3 (due same day)"] },
-      { id: "offboard", type: "circle",  label: "Offboarding",      state: "future" },
+      { id: "call3",       type: "diamond", label: "Call 3", sublabel: "Working Session #3", state: "future", tasks: ["Summary email from Call #3 (due same day)"] },
+      { id: "end_project", type: "circle",  label: "End Project",  state: "future" },
+      { id: "offboard",    type: "circle",  label: "Offboarding",  state: "future" },
     ],
   },
   a_la_carte: {
