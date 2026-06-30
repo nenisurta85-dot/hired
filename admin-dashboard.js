@@ -124,6 +124,9 @@ function WriterCapacityCard({ navigate }) {
   const pkgMap = {};
   (ADM.PACKAGES || []).forEach((p) => { pkgMap[p.name] = p; });
 
+  // Mock self-available flags (writer-controlled from their own account)
+  const SELF_AVAILABLE = { "lh": true, "mb": true };
+
   const team = (ADM.TEAM || []).filter((m) =>
     m.status === "Active" && m.roles && (m.roles.includes("writer") || m.roles.includes("editor"))
   );
@@ -183,6 +186,12 @@ function WriterCapacityCard({ navigate }) {
                 <div style={{ width: 26, height: 26, borderRadius: 99, background: member.color || "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{member.initials}</div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: overloaded ? "#E53935" : "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{firstName}</span>
                 {isEditor && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 6, padding: "2px 7px", background: "rgba(130,17,255,0.1)", color: "#8211FF", flexShrink: 0 }}>Editor</span>}
+                {!overloaded && SELF_AVAILABLE[member.id] && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 8px", background: "rgba(0,160,108,0.12)", color: "#00A06C", flexShrink: 0 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00A06C", display: "inline-block" }} />
+                    Available
+                  </span>
+                )}
                 {overloaded && <span style={{ color: "#E53935", display: "flex", flexShrink: 0 }}><Icons.Flag size={13} /></span>}
               </div>
               <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.alacarte}</div>
