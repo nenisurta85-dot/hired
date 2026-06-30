@@ -1262,11 +1262,129 @@ function NewPackageModal({ onClose }) {
   );
 }
 
+function NewALaCarteModal({ onClose }) {
+  const { ADM } = window;
+  const { showToast } = useAdmin();
+  const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [price, setPrice] = React.useState(0);
+  const [durationWeeks, setDurationWeeks] = React.useState(0);
+  const [active, setActive] = React.useState(true);
+  const [type, setType] = React.useState("call");
+  const [zoomLink, setZoomLink] = React.useState("");
+  const [daysAfterPurchase, setDaysAfterPurchase] = React.useState(3);
+  const [includeOnboarding, setIncludeOnboarding] = React.useState(false);
+  const [addToPackage, setAddToPackage] = React.useState("none");
+
+  const packages = (ADM.PACKAGES || []).filter((p) => !p.alc);
+
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 6, padding: "7px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+  const HR = () => <div style={{ borderTop: "1px solid var(--border)", margin: "16px 0" }} />;
+  const Toggle = ({ on, onToggle }) => (
+    <div onClick={onToggle} style={{ width: 36, height: 20, borderRadius: 99, background: on ? "var(--purple)" : "#DDD", position: "relative", cursor: "pointer", flexShrink: 0, transition: "background .2s" }}>
+      <div style={{ width: 16, height: 16, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: on ? 18 : 2, transition: "left .15s" }} />
+    </div>
+  );
+
+  const handleCreate = () => {
+    if (!name.trim()) { showToast("Name is required"); return; }
+    showToast("À la carte item created");
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 28, width: 480, maxWidth: "95vw", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,0.18)" }}>
+        <div className="row between" style={{ marginBottom: 20 }}>
+          <span style={{ fontSize: 16, fontWeight: 700 }}>New À La Carte Item</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)", lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <FL>Name *</FL>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Mock Interview Session" style={inputStyle} />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <FL>Description</FL>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this item..." rows={3} style={{ ...inputStyle, resize: "vertical" }} />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+          <div>
+            <FL>Price</FL>
+            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="$ 0" style={inputStyle} />
+          </div>
+          <div>
+            <FL>Duration (weeks)</FL>
+            <input type="number" value={durationWeeks} onChange={(e) => setDurationWeeks(e.target.value)} placeholder="0" style={inputStyle} />
+          </div>
+        </div>
+
+        <div className="row" style={{ gap: 10, alignItems: "center", marginBottom: 14 }}>
+          <Toggle on={active} onToggle={() => setActive(!active)} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Active</span>
+        </div>
+
+        <HR />
+
+        <div style={{ marginBottom: 12 }}>
+          <FL>Type</FL>
+          <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
+            {["call", "document"].map((t) => (
+              <label key={t} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                <input type="radio" name="alc-type" checked={type === t} onChange={() => setType(t)} />
+                {t === "call" ? "Call" : "Document"}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {type === "call" && (
+          <>
+            <div style={{ marginBottom: 14 }}>
+              <FL>Zoom Link</FL>
+              <input value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} placeholder="https://zoom.us/..." style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <FL>Days after purchase</FL>
+              <input type="number" value={daysAfterPurchase} onChange={(e) => setDaysAfterPurchase(Number(e.target.value))} style={{ ...inputStyle, width: 100 }} />
+            </div>
+          </>
+        )}
+
+        <div className="row" style={{ gap: 10, alignItems: "center", marginBottom: 4 }}>
+          <Toggle on={includeOnboarding} onToggle={() => setIncludeOnboarding(!includeOnboarding)} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Include onboarding step before this</span>
+        </div>
+
+        <HR />
+
+        <div style={{ marginBottom: 20 }}>
+          <FL>Add to Package (optional)</FL>
+          <select value={addToPackage} onChange={(e) => setAddToPackage(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+            <option value="none">None — standalone item</option>
+            <option disabled>──────────</option>
+            {packages.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+
+        <div className="row" style={{ gap: 10, justifyContent: "flex-end" }}>
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleCreate}>Create Item</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminPackages() {
   const { ADM } = window;
   const { showToast, role } = useAdmin();
   const isWriter = role === "Writer";
   const [showModal, setShowModal] = React.useState(false);
+  const [showAlcModal, setShowAlcModal] = React.useState(false);
   const PkgCard = ({ p }) => (
     <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16, transition: "border-color .15s" }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--purple)")} onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}>
@@ -1287,6 +1405,7 @@ function AdminPackages() {
   return (
     <div>
       {showModal && <NewPackageModal onClose={() => setShowModal(false)} />}
+      {showAlcModal && <NewALaCarteModal onClose={() => setShowAlcModal(false)} />}
       <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => setShowModal(true) }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
@@ -1294,7 +1413,7 @@ function AdminPackages() {
         </div>
         <div className="row between" style={{ margin: "26px 0 14px" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>À La Carte</span>
-          {!isWriter && <button className="btn btn-secondary" onClick={() => setShowModal(true)}>+ New À La Carte Item</button>}
+          {!isWriter && <button className="btn btn-secondary" onClick={() => setShowAlcModal(true)}>+ New À La Carte Item</button>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.ALACARTE.map((a) => (
