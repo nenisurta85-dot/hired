@@ -1404,18 +1404,12 @@ function UploadResourceModal({ onClose }) {
   const [title, setTitle] = React.useState("");
   const [category, setCategory] = React.useState("General");
   const [visibility, setVisibility] = React.useState("Everyone");
-  const [dragOver, setDragOver] = React.useState(false);
-  const [file, setFile] = React.useState(null);
-  const inputRef = React.useRef(null);
+  const [url, setUrl] = React.useState("");
   React.useEffect(() => {
     const fn = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
   }, []);
-  const handleDrop = (e) => {
-    e.preventDefault(); setDragOver(false);
-    const f = e.dataTransfer.files[0]; if (f) setFile(f);
-  };
   const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
   const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
   return (
@@ -1440,20 +1434,8 @@ function UploadResourceModal({ onClose }) {
             </div>
           </div>
           <div>
-            <FL>File</FL>
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => inputRef.current && inputRef.current.click()}
-              style={{ border: `2px dashed ${dragOver ? "var(--purple)" : "var(--border)"}`, borderRadius: 10, padding: "24px 16px", background: dragOver ? "rgba(130,17,255,0.04)" : "#F8F7FF", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "border-color .15s" }}>
-              <span style={{ width: 36, height: 36, borderRadius: 8, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Upload size={18} /></span>
-              {file
-                ? <div style={{ textAlign: "center" }}><div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)" }}>{file.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{(file.size / 1024).toFixed(0)} KB</div></div>
-                : <div style={{ textAlign: "center" }}><div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)" }}>Drop file here or browse</div><div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>PDF, DOCX, PNG, JPG — max 20 MB</div></div>
-              }
-              <input ref={inputRef} type="file" style={{ display: "none" }} onChange={(e) => { if (e.target.files[0]) setFile(e.target.files[0]); }} />
-            </div>
+            <FL>Google Doc / Drive URL</FL>
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://docs.google.com/…" style={inputStyle} />
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
