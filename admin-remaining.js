@@ -1140,7 +1140,6 @@ function NewPackageModal({ onClose }) {
   const [desc, setDesc] = React.useState("");
   const [price, setPrice] = React.useState("");
   const [weeks, setWeeks] = React.useState("");
-  const [pkgType, setPkgType] = React.useState("Package");
   const [status, setStatus] = React.useState("Active");
 
   // selected: set of item ids
@@ -1214,17 +1213,11 @@ function NewPackageModal({ onClose }) {
             </div>
             <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div><FL>Type</FL>
-              <select value={pkgType} onChange={e => setPkgType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                <option>Package</option><option>À La Carte</option>
-              </select>
-            </div>
-            <div><FL>Status</FL>
-              <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                <option>Active</option><option>Inactive</option>
-              </select>
-            </div>
+          <div style={{ maxWidth: "50%" }}>
+            <FL>Status</FL>
+            <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <option>Active</option><option>Inactive</option>
+            </select>
           </div>
 
           {/* Deliverables — 3 grouped sections */}
