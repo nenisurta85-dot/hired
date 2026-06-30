@@ -1953,195 +1953,228 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
 
 /* ============================================================
    ProjectTimeline — standalone preview component
+   Structures per spec; type switcher shown when lockType is falsy
    ============================================================ */
 
-const TIMELINE_CONFIGS = {
+const PT_CONFIGS = {
   standard_15: {
-    label: "Standard 15-Day",
+    label: "15-Day",
     nodes: [
-      { id: "start", type: "start", label: "Kick-off", state: "done" },
-      { id: "ssot", type: "milestone", label: "SSOT Session", state: "done" },
-      { id: "c1", type: "call", label: "Call 1", state: "active" },
-      { id: "support1", type: "segment", label: "Support Window", state: "future" },
-      { id: "c2", type: "call", label: "Call 2", state: "future" },
-      { id: "end", type: "end", label: "Package Complete", state: "future" },
+      { id: "interest", type: "circle", label: "Initial Interest", state: "done" },
+      { id: "onboard",  type: "circle", label: "Onboarding",       state: "done" },
+      { id: "start",    type: "circle", label: "Start Project",     state: "done" },
+      { id: "phase1",   type: "circle", label: "Phase 1",           state: "active" },
+      { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Working Session #1", state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "phase2",   type: "circle", label: "Phase 2",           state: "future" },
+      { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Working Session #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "offboard", type: "circle", label: "Offboarding",       state: "future" },
     ],
   },
   standard_30: {
-    label: "Standard 30-Day",
+    label: "30-Day",
     nodes: [
-      { id: "start", type: "start", label: "Kick-off", state: "done" },
-      { id: "ssot", type: "milestone", label: "SSOT Session", state: "done" },
-      { id: "c1", type: "call", label: "Call 1", state: "done" },
-      { id: "support1", type: "segment", label: "Support Window", state: "active" },
-      { id: "c2", type: "call", label: "Call 2", state: "future" },
-      { id: "support2", type: "segment", label: "Support Window", state: "future" },
-      { id: "end", type: "end", label: "Package Complete", state: "future" },
+      { id: "interest", type: "circle",  label: "Initial Interest", state: "done" },
+      { id: "onboard",  type: "circle",  label: "Onboarding",       state: "done" },
+      { id: "start",    type: "circle",  label: "Start Project",    state: "done" },
+      { id: "phase1",   type: "circle",  label: "Phase 1",          state: "active" },
+      { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Working Session #1", state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "phase2",   type: "circle",  label: "Phase 2",          state: "future" },
+      { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Working Session #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "phase3",   type: "circle",  label: "Phase 3",          state: "future" },
+      { id: "call3",    type: "diamond", label: "Call 3", sublabel: "Working Session #3", state: "future", tasks: ["Summary email from Call #3 (due same day)"] },
+      { id: "offboard", type: "circle",  label: "Offboarding",      state: "future" },
     ],
   },
   a_la_carte: {
     label: "À La Carte",
     nodes: [
-      { id: "start", type: "start", label: "Purchase", state: "done" },
-      { id: "onboard", type: "milestone", label: "Onboarding", state: "done" },
-      { id: "delivery", type: "milestone", label: "Delivery", state: "active" },
-      { id: "revision", type: "milestone", label: "Revisions", state: "future" },
-      { id: "end", type: "end", label: "Complete", state: "future" },
+      { id: "interest", type: "circle",  label: "Initial Interest", state: "done" },
+      { id: "onboard",  type: "circle",  label: "Onboarding",       state: "done" },
+      { id: "start",    type: "circle",  label: "Start Project",    state: "done" },
+      { id: "phase1",   type: "circle",  label: "Phase 1",          state: "active" },
+      { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Working Session #1", state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Working Session #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",      state: "future" },
     ],
   },
   mock_interview: {
     label: "Mock Interview",
     nodes: [
-      { id: "start", type: "start", label: "Booked", state: "done" },
-      { id: "prep", type: "milestone", label: "Prep Materials Sent", state: "done" },
-      { id: "session", type: "call", label: "Interview Session", state: "active" },
-      { id: "feedback", type: "milestone", label: "Feedback Delivered", state: "future" },
-      { id: "end", type: "end", label: "Complete", state: "future" },
+      { id: "interest", type: "circle",  label: "Initial Interest", state: "done" },
+      { id: "onboard",  type: "circle",  label: "Onboarding",       state: "done" },
+      { id: "start",    type: "circle",  label: "Start Project",    state: "done" },
+      { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Mock Interview #1", state: "active", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Mock Interview #2", state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",      state: "future" },
     ],
   },
   coaching_1off: {
-    label: "Coaching (1-off)",
+    label: "Coaching — 1-off Power Session",
     nodes: [
-      { id: "start", type: "start", label: "Booked", state: "done" },
-      { id: "session", type: "call", label: "Coaching Session", state: "active" },
-      { id: "notes", type: "milestone", label: "Notes & Resources", state: "future" },
-      { id: "end", type: "end", label: "Complete", state: "future" },
+      { id: "interest", type: "circle",  label: "Initial Interest", state: "done" },
+      { id: "onboard",  type: "circle",  label: "Onboarding",       state: "done" },
+      { id: "start",    type: "circle",  label: "Start Project",    state: "done" },
+      { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Coaching Session", state: "active", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",      state: "future" },
+      { id: "support",  type: "segment", label: "30-Day Support",   state: "future" },
+      { id: "endsup",   type: "circle",  label: "End of Support",   state: "future" },
     ],
   },
   coaching_momentum: {
-    label: "Coaching Momentum",
+    label: "Coaching — Momentum Package",
     nodes: [
-      { id: "start", type: "start", label: "Kick-off", state: "done" },
-      { id: "s1", type: "call", label: "Session 1", state: "done" },
-      { id: "s2", type: "call", label: "Session 2", state: "active" },
-      { id: "support", type: "segment", label: "Async Support", state: "future" },
-      { id: "s3", type: "call", label: "Session 3", state: "future" },
-      { id: "end", type: "end", label: "Complete", state: "future" },
+      { id: "interest", type: "circle",  label: "Initial Interest",  state: "done" },
+      { id: "onboard",  type: "circle",  label: "Onboarding",        state: "done" },
+      { id: "start",    type: "circle",  label: "Start Project",     state: "done" },
+      { id: "call1",    type: "diamond", label: "Call 1", sublabel: "Coaching Session #1", state: "active", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "call2",    type: "diamond", label: "Call 2", sublabel: "Coaching Session #2", state: "future", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "call3",    type: "diamond", label: "Call 3", sublabel: "Coaching Session #3", state: "future", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "call4",    type: "diamond", label: "Call 4", sublabel: "Coaching Session #4", state: "future", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",       state: "future" },
     ],
   },
 };
 
-const SAMPLE_TASKS = {
-  call: ["Confirm agenda with client", "Send Zoom link", "Prepare talking points"],
-  milestone: ["Review submitted materials", "Update tracker", "Send follow-up email"],
-  segment: ["Available for async questions", "Review any client messages"],
-  start: ["Welcome email sent", "Onboarding form received"],
-  end: ["Final review complete", "Archive project"],
-};
-
-function TLMarker({ node, selected, onClick }) {
-  const isDone = node.state === "done";
+function PTNode({ node, selected, onClick }) {
+  const isDone   = node.state === "done";
   const isActive = node.state === "active";
   const isFuture = node.state === "future";
-
+  const isDiamond = node.type === "diamond";
   const isSegment = node.type === "segment";
-  const isDiamond = node.type === "call" || node.type === "session" || node.type === "milestone";
-  const isCircle = !isSegment && !isDiamond;
-
   const purple = "#8211FF";
-  const grey = "#C8C6C0";
-  const white = "#fff";
+  const grey   = "#C8C6C0";
 
-  let bg = isFuture ? grey : purple;
-  let border = "none";
-  let ring = "none";
-  if (isActive) { bg = white; border = `3px solid ${purple}`; ring = `0 0 0 4px rgba(130,17,255,0.15)`; }
+  let shapeStyle;
+  if (isSegment) {
+    shapeStyle = {
+      width: "100%", height: 10, borderRadius: 3,
+      background: isFuture ? grey : purple,
+      cursor: "pointer",
+    };
+  } else if (isDiamond) {
+    const sz = 18;
+    let bg = isFuture ? grey : purple;
+    let border = "none", shadow = "none";
+    if (isActive) { bg = "#fff"; border = `2.5px solid ${purple}`; shadow = `0 0 0 3px rgba(130,17,255,0.15)`; }
+    shapeStyle = {
+      width: sz, height: sz, background: bg, border, boxShadow: shadow,
+      transform: `rotate(45deg) ${selected ? "scale(1.18)" : ""}`,
+      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+    };
+  } else {
+    const sz = 18;
+    let bg = isFuture ? grey : purple;
+    let border = "none", shadow = "none";
+    if (isActive) { bg = "#fff"; border = `2.5px solid ${purple}`; shadow = `0 0 0 3px rgba(130,17,255,0.15)`; }
+    shapeStyle = {
+      width: sz, height: sz, borderRadius: 99, background: bg, border, boxShadow: shadow,
+      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+      transform: selected ? "scale(1.18)" : "scale(1)",
+    };
+  }
 
-  const size = isSegment ? 18 : isDiamond ? 22 : 24;
-
-  const shapeStyle = {
-    width: size, height: size, flexShrink: 0,
-    background: bg,
-    border,
-    boxShadow: ring,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer",
-    transition: "transform .1s",
-    transform: selected ? "scale(1.15)" : "scale(1)",
-    ...(isSegment ? { borderRadius: 4 } : isDiamond ? { transform: `${selected ? "scale(1.15) " : ""}rotate(45deg)` } : { borderRadius: 99 }),
-  };
+  const labelColor = isFuture ? "#AAA" : isActive ? purple : "#555";
+  const labelWeight = isActive ? 600 : 400;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: isSegment ? "1 1 auto" : "0 0 auto", minWidth: isSegment ? 48 : 0 }}
-      onClick={() => onClick(node)}>
-      <div style={shapeStyle}>
-        {isDone && !isSegment && (
-          <span style={{ color: white, fontSize: isSegment ? 8 : 11, transform: isDiamond ? "rotate(-45deg)" : "none" }}>✓</span>
-        )}
+    <div onClick={() => onClick(node)}
+      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+        flex: isSegment ? "1 1 40px" : "0 0 auto", minWidth: isSegment ? 24 : 0, cursor: "pointer" }}>
+      {isSegment ? (
+        <div style={{ width: "100%", display: "flex", alignItems: "center", height: 18 }}>
+          <div style={shapeStyle} />
+        </div>
+      ) : (
+        <div style={shapeStyle}>
+          {isDone && (
+            <span style={{ color: "#fff", fontSize: 9, fontWeight: 700,
+              transform: isDiamond ? "rotate(-45deg)" : "none", display: "block", lineHeight: 1 }}>✓</span>
+          )}
+        </div>
+      )}
+      <div style={{ textAlign: "center", maxWidth: 68 }}>
+        <div style={{ fontSize: 10, color: labelColor, fontWeight: labelWeight, lineHeight: 1.25 }}>{node.label}</div>
+        {node.sublabel && <div style={{ fontSize: 9, color: "#AAA", lineHeight: 1.2, marginTop: 2 }}>{node.sublabel}</div>}
       </div>
-      <span style={{ fontSize: 10, color: isFuture ? "#999" : "#444", fontWeight: isActive ? 600 : 400, textAlign: "center", maxWidth: 72, lineHeight: 1.3 }}>{node.label}</span>
     </div>
   );
 }
 
 function ProjectTimeline({ lockType }) {
-  const typeKeys = Object.keys(TIMELINE_CONFIGS);
+  const typeKeys = Object.keys(PT_CONFIGS);
   const [activeType, setActiveType] = React.useState(typeKeys[0]);
   const [selected, setSelected] = React.useState(null);
-
-  const config = TIMELINE_CONFIGS[activeType];
-  const nodes = config.nodes;
-  const tasks = selected ? (SAMPLE_TASKS[selected.type] || []) : [];
-
   const purple = "#8211FF";
+
+  const config = PT_CONFIGS[activeType];
+  const nodes  = config.nodes;
+
+  const handleSelect = (node) => setSelected((p) => p && p.id === node.id ? null : node);
 
   return (
     <div style={{ padding: "24px 32px" }}>
-      {/* Type switcher — only shown when lockType is falsy */}
+      {/* Type tabs */}
       {!lockType && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 28 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
           {typeKeys.map((k) => (
             <button key={k} onClick={() => { setActiveType(k); setSelected(null); }}
-              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: "1.5px solid",
+              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer",
+                border: "1.5px solid",
                 background: activeType === k ? purple : "#fff",
                 color: activeType === k ? "#fff" : "#555",
                 borderColor: activeType === k ? purple : "#D8D5CF" }}>
-              {TIMELINE_CONFIGS[k].label}
+              {PT_CONFIGS[k].label}
             </button>
           ))}
         </div>
       )}
 
-      {/* Rail */}
-      <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 14, padding: "28px 24px 20px" }}>
+      {/* Rail card */}
+      <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 14, padding: "24px 20px 20px", overflowX: "auto" }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: "#333", marginBottom: 20 }}>{config.label}</div>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 0, position: "relative" }}>
-          {/* Connector lines */}
-          <div style={{ position: "absolute", top: 11, left: 12, right: 12, height: 2, background: "#E0DDD7", zIndex: 0 }} />
-          <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "flex-start", width: "100%", gap: 0 }}>
-            {nodes.map((node, i) => (
-              <React.Fragment key={node.id}>
-                {i > 0 && <div style={{ flex: 1, height: 2, background: node.state === "future" ? "#E0DDD7" : purple, alignSelf: "flex-start", marginTop: 11, minWidth: 8 }} />}
-                <TLMarker node={node} selected={selected?.id === node.id} onClick={setSelected} />
-              </React.Fragment>
-            ))}
-          </div>
+        <div style={{ display: "flex", alignItems: "flex-start", minWidth: nodes.length * 72 }}>
+          {nodes.map((node, i) => (
+            <React.Fragment key={node.id}>
+              {i > 0 && (
+                <div style={{
+                  flex: 1, height: 2, alignSelf: "flex-start", marginTop: 8, minWidth: 10,
+                  background: node.state === "future" ? "#E0DDD7" : purple,
+                }} />
+              )}
+              <PTNode node={node} selected={selected && selected.id === node.id} onClick={handleSelect} />
+            </React.Fragment>
+          ))}
         </div>
       </div>
 
       {/* Detail panel */}
       {selected && (
-        <div style={{ marginTop: 16, background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "18px 22px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#222" }}>{selected.label}</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {selected.type === "call" || selected.type === "session" ? (
-                <>
-                  <button style={{ padding: "5px 12px", fontSize: 12, borderRadius: 7, border: "1px solid #D8D5CF", background: "#fff", cursor: "pointer" }}>Reschedule</button>
-                  <button style={{ padding: "5px 12px", fontSize: 12, borderRadius: 7, border: "none", background: purple, color: "#fff", cursor: "pointer" }}>Join Zoom</button>
-                </>
-              ) : null}
+        <div style={{ marginTop: 14, background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "18px 22px", animation: "fade .15s ease" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#222" }}>{selected.label}</div>
+              {selected.sublabel && <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{selected.sublabel}</div>}
             </div>
-          </div>
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>Tasks</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {tasks.map((t, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#444" }}>
-                <div style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #C8C6C0", flexShrink: 0 }} />
-                {t}
+            {selected.type === "diamond" && (
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <button style={{ padding: "5px 12px", fontSize: 12, borderRadius: 7, border: "1px solid #D8D5CF", background: "#fff", cursor: "pointer" }}>Reschedule</button>
+                <button style={{ padding: "5px 12px", fontSize: 12, borderRadius: 7, border: "none", background: purple, color: "#fff", cursor: "pointer" }}>Join Zoom</button>
               </div>
-            ))}
+            )}
           </div>
+          {selected.tasks && selected.tasks.length > 0 && (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#AAA", marginBottom: 8 }}>Tasks</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {selected.tasks.map((t, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#444" }}>
+                    <div style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #C8C6C0", flexShrink: 0 }} />
+                    {t}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
