@@ -119,16 +119,34 @@ function RecentCommentsCard({ navigate, setActiveTask }) {
 
 /* ---------- Writer Capacity card ---------- */
 function WriterCapacityCard({ navigate }) {
-  const { Icons } = window;
-  const writers = [
-    { name: "Lourdes", fullName: "Lourdes H-D", init: "LH", cur: 3, max: 8 },
-    { name: "Jhoneth", fullName: "Jhoneth Briones", init: "JB", cur: 6, max: 8 },
-    { name: "Mimi", fullName: "Mimi Bishop", init: "MB", cur: 1, max: 8 },
-    { name: "Kate", fullName: "Kate Wade", init: "KW", cur: 8, max: 8, overloaded: true, role: "Editor" },
-  ];
+  const { ADM, Icons } = window;
 
-  const goToWriter = (w) => {
-    window._expandTeamMember = w.fullName;
+  const pkgMap = {};
+  (ADM.PACKAGES || []).forEach((p) => { pkgMap[p.name] = p; });
+
+  const team = (ADM.TEAM || []).filter((m) =>
+    m.status === "Active" && m.roles && (m.roles.includes("writer") || m.roles.includes("editor"))
+  );
+
+  const getWriterCounts = (member) => {
+    const projects = (ADM.PROJECTS || []).filter((p) =>
+      p.writer === member.name || p.editor === member.name
+    );
+    const counts = { alacarte: 0, day15: 0, day30: 0 };
+    projects.forEach((p) => {
+      const pkg = pkgMap[p.pkg] || {};
+      if (pkg.alc) { counts.alacarte++; }
+      else {
+        const w = parseInt((pkg.weeks || "0").replace(/[^0-9]/g, ""));
+        if (w <= 2) counts.day15++;
+        else counts.day30++;
+      }
+    });
+    return counts;
+  };
+
+  const goToWriter = (member) => {
+    window._expandTeamMember = member.name;
     navigate("#/admin/team");
   };
 
@@ -137,27 +155,34 @@ function WriterCapacityCard({ navigate }) {
       <div className="row between" style={{ marginBottom: 14 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Writer Capacity</span>
       </div>
-      {writers.map((w, i) => {
-        const pct = Math.round((w.cur / w.max) * 100);
-        const barColor = pct <= 50 ? "#00A06C" : pct <= 80 ? "#E57300" : "#E53935";
+      {team.map((member, i) => {
+        const counts = getWriterCounts(member);
+        const total = counts.alacarte + counts.day15 + counts.day30;
+        const overloaded = total >= 8;
+        const isEditor = member.roles.includes("editor") && !member.roles.includes("writer");
+        const firstName = member.name.split(" ")[0];
         return (
-          <div key={i} style={{ padding: "10px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
-            onClick={() => goToWriter(w)}
+          <div key={member.id} style={{ padding: "10px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+            onClick={() => goToWriter(member)}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <div className="row between" style={{ marginBottom: 6 }}>
-              <div className="row" style={{ gap: 9 }}>
-                <div style={{ width: 26, height: 26, borderRadius: 99, background: "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{w.init}</div>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{w.name}</span>
-                {w.role && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 7px", background: "rgba(255,107,53,0.12)", color: "#CC4A10" }}>{w.role}</span>}
+            <div className="row between" style={{ marginBottom: 7 }}>
+              <div className="row" style={{ gap: 8 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 99, background: member.color || "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{member.initials}</div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: overloaded ? "#E53935" : "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{firstName}</span>
+                {isEditor && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 6, padding: "2px 7px", background: "rgba(130,17,255,0.1)", color: "#8211FF" }}>Editor</span>}
               </div>
-              <div className="row" style={{ gap: 6 }}>
-                {w.overloaded && <span style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={13} /></span>}
-                <span style={{ fontSize: 12, color: "#888" }}>{w.cur}/{w.max}</span>
+              <div className="row" style={{ gap: 10 }}>
+                <span style={{ fontSize: 11, color: "#8211FF", whiteSpace: "nowrap" }}>À la carte {counts.alacarte}</span>
+                <span style={{ fontSize: 11, color: "#378ADD", whiteSpace: "nowrap" }}>15-day {counts.day15}</span>
+                <span style={{ fontSize: 11, color: "#BA7517", whiteSpace: "nowrap" }}>30-day {counts.day30}</span>
+                {overloaded && <span style={{ color: "#E53935", display: "flex", flexShrink: 0 }}><Icons.Flag size={13} /></span>}
               </div>
             </div>
-            <div style={{ height: 5, borderRadius: 3, background: "#F0F0F0", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: pct + "%", background: barColor, borderRadius: 3, transition: "width .3s" }} />
+            <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: "#F0F0F0" }}>
+              <div style={{ width: ((counts.alacarte / 8) * 100) + "%", background: "#8211FF", flexShrink: 0 }} />
+              <div style={{ width: ((counts.day15 / 8) * 100) + "%", background: "#378ADD", flexShrink: 0 }} />
+              <div style={{ width: ((counts.day30 / 8) * 100) + "%", background: "#BA7517", flexShrink: 0 }} />
             </div>
           </div>
         );

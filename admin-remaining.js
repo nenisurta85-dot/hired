@@ -890,62 +890,6 @@ function TeamRowMenu({ member, onEdit, onToggleStatus, onDelete }) {
   );
 }
 
-/* ---- Writer Capacity Card ---- */
-function TeamWriterCapacityCard({ member, navigate }) {
-  const { ADM, Icons } = window;
-
-  const pkgMap = {};
-  (ADM.PACKAGES || []).forEach((p) => { pkgMap[p.name] = p; });
-
-  const projects = (ADM.PROJECTS || []).filter((p) =>
-    p.writer === member.name || p.editor === member.name
-  );
-
-  const counts = { alacarte: 0, day15: 0, day30: 0 };
-  projects.forEach((p) => {
-    const pkg = pkgMap[p.pkg] || {};
-    if (pkg.alc) { counts.alacarte++; }
-    else {
-      const w = parseInt((pkg.weeks || "0").replace(/[^0-9]/g, ""));
-      if (w <= 2) counts.day15++;
-      else counts.day30++;
-    }
-  });
-
-  const totalLoad = counts.alacarte + counts.day15 + counts.day30;
-  const isEditor = member.roles && member.roles.includes("editor") && !member.roles.includes("writer");
-  const firstName = member.name.split(" ")[0];
-
-  const handleFilter = (type) => {
-    navigate("#/admin/projects?writer=" + encodeURIComponent(member.name) + "&type=" + type);
-  };
-
-  return (
-    <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <Avatar initials={member.initials} color={member.color} size={30} />
-        <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{firstName}</span>
-        {isEditor && (
-          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: "rgba(130,17,255,0.1)", color: "#8211FF", fontWeight: 600 }}>Editor</span>
-        )}
-        <div style={{ display: "flex", gap: 14, marginLeft: "auto", fontSize: 12 }}>
-          <span style={{ color: "#8211FF", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleFilter("alacarte")}>À la carte {counts.alacarte}</span>
-          <span style={{ color: "#378ADD", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleFilter("day15")}>15-day {counts.day15}</span>
-          <span style={{ color: "#BA7517", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleFilter("day30")}>30-day {counts.day30}</span>
-        </div>
-        {totalLoad >= 8 && (
-          <span style={{ flexShrink: 0, display: "flex", color: "#E53935" }}><Icons.Flag size={15} /></span>
-        )}
-      </div>
-      <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: "var(--border)" }}>
-        <div style={{ width: Math.min((counts.alacarte / 8) * 100, 100) + "%", background: "#8211FF", flexShrink: 0 }} />
-        <div style={{ width: Math.min((counts.day15 / 8) * 100, 100 - (counts.alacarte / 8) * 100) + "%", background: "#378ADD", flexShrink: 0 }} />
-        <div style={{ width: Math.min((counts.day30 / 8) * 100, 100 - ((counts.alacarte + counts.day15) / 8) * 100) + "%", background: "#BA7517", flexShrink: 0 }} />
-      </div>
-    </div>
-  );
-}
-
 /* ---- Team member expanded detail card ---- */
 function TeamMemberDetail({ member, navigate }) {
   const { ADM, Icons } = window;
@@ -1143,15 +1087,6 @@ function AdminTeam() {
           <span><b style={{ color: "var(--text-primary)" }}>{members.length}</b> total</span>
         </div>
 
-        {/* Writer Capacity */}
-        <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Writer Capacity</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-            {members.filter(m => m.status === "Active" && m.roles && (m.roles.includes("writer") || m.roles.includes("editor"))).map(m => (
-              <TeamWriterCapacityCard key={m.id} member={m} navigate={navigate} />
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
