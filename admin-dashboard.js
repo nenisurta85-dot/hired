@@ -150,34 +150,44 @@ function WriterCapacityCard({ navigate }) {
     navigate("#/admin/team");
   };
 
+  const GRID = { display: "grid", gridTemplateColumns: "1fr 72px 72px 72px", alignItems: "center" };
+  const colStyle = { textAlign: "right", fontVariantNumeric: "tabular-nums" };
+
   return (
     <Card style={{ padding: "18px 18px 10px" }}>
-      <div className="row between" style={{ marginBottom: 14 }}>
+      <div className="row between" style={{ marginBottom: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Writer Capacity</span>
       </div>
-      {team.map((member, i) => {
+
+      {/* Column headers */}
+      <div style={{ ...GRID, padding: "0 6px", marginBottom: 2 }}>
+        <div />
+        <div style={{ ...colStyle, fontSize: 10, fontWeight: 600, color: "#8211FF", textTransform: "uppercase", letterSpacing: ".5px" }}>À la carte</div>
+        <div style={{ ...colStyle, fontSize: 10, fontWeight: 600, color: "#378ADD", textTransform: "uppercase", letterSpacing: ".5px" }}>15-day</div>
+        <div style={{ ...colStyle, fontSize: 10, fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".5px" }}>30-day</div>
+      </div>
+
+      {team.map((member) => {
         const counts = getWriterCounts(member);
         const total = counts.alacarte + counts.day15 + counts.day30;
         const overloaded = total >= 8;
         const isEditor = member.roles.includes("editor") && !member.roles.includes("writer");
         const firstName = member.name.split(" ")[0];
         return (
-          <div key={member.id} style={{ padding: "10px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+          <div key={member.id} style={{ padding: "9px 6px", borderTop: "0.5px solid var(--border-light)", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
             onClick={() => goToWriter(member)}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <div className="row between" style={{ marginBottom: 7 }}>
-              <div className="row" style={{ gap: 8 }}>
+            <div style={{ ...GRID, marginBottom: 7 }}>
+              <div className="row" style={{ gap: 8, minWidth: 0 }}>
                 <div style={{ width: 26, height: 26, borderRadius: 99, background: member.color || "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{member.initials}</div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: overloaded ? "#E53935" : "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{firstName}</span>
-                {isEditor && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 6, padding: "2px 7px", background: "rgba(130,17,255,0.1)", color: "#8211FF" }}>Editor</span>}
-              </div>
-              <div className="row" style={{ gap: 10 }}>
-                <span style={{ fontSize: 11, color: "#8211FF", whiteSpace: "nowrap" }}>À la carte {counts.alacarte}</span>
-                <span style={{ fontSize: 11, color: "#378ADD", whiteSpace: "nowrap" }}>15-day {counts.day15}</span>
-                <span style={{ fontSize: 11, color: "#BA7517", whiteSpace: "nowrap" }}>30-day {counts.day30}</span>
+                {isEditor && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 6, padding: "2px 7px", background: "rgba(130,17,255,0.1)", color: "#8211FF", flexShrink: 0 }}>Editor</span>}
                 {overloaded && <span style={{ color: "#E53935", display: "flex", flexShrink: 0 }}><Icons.Flag size={13} /></span>}
               </div>
+              <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.alacarte}</div>
+              <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.day15}</div>
+              <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.day30}</div>
             </div>
             <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: "#F0F0F0" }}>
               <div style={{ width: ((counts.alacarte / 8) * 100) + "%", background: "#8211FF", flexShrink: 0 }} />
