@@ -94,6 +94,25 @@ function AdminSidebar({ route }) {
           <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>
           <button onClick={() => navigate("#/")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.LogOut size={16} /> Log Out</button>
         </div>
+        <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0 0", paddingTop: 8 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "0 18px 6px" }}>Dev / Temp</div>
+          {(() => {
+            const active = activeKey === "timeline-types";
+            return (
+              <button onClick={() => navigate("#/admin/timeline-types")}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 36, padding: "0 16px", border: "none",
+                  background: active ? "var(--sidebar-active)" : "transparent",
+                  borderLeft: active ? "2px solid var(--purple)" : "2px solid transparent",
+                  color: active ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 12, fontWeight: 500, textAlign: "left" }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                <Icons.GitBranch size={16} />
+                <span style={{ flex: 1 }}>Timeline Types</span>
+                <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.45)", borderRadius: 4, padding: "2px 5px", letterSpacing: 0.5 }}>TEMP</span>
+              </button>
+            );
+          })()}
+        </div>
       </nav>
 
       {/* User */}

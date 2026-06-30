@@ -40,6 +40,7 @@ function AdminApp({ route }) {
     case "packages": screen = <AdminPackages />; break;
     case "task-templates": screen = <AdminTemplates />; break;
     case "knowledge-base": screen = <AdminKB />; break;
+    case "timeline-types": screen = <AdminTimelineTypes />; break;
     default: screen = <AdminDashboard />;
   }
 
