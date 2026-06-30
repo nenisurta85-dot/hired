@@ -1298,6 +1298,7 @@ function NewALaCarteModal({ onClose }) {
   const [daysAfterPurchase, setDaysAfterPurchase] = React.useState(3);
   const [includeOnboarding, setIncludeOnboarding] = React.useState(false);
   const [addToPackage, setAddToPackage] = React.useState("none");
+  const [addToGroup, setAddToGroup] = React.useState("top_level");
 
   const packages = (ADM.PACKAGES || []).filter((p) => !p.alc);
 
@@ -1384,7 +1385,7 @@ function NewALaCarteModal({ onClose }) {
 
         <HR />
 
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: addToPackage !== "none" ? 12 : 20 }}>
           <FL>Add to Package (optional)</FL>
           <select value={addToPackage} onChange={(e) => setAddToPackage(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
             <option value="none">None — standalone item</option>
@@ -1392,6 +1393,17 @@ function NewALaCarteModal({ onClose }) {
             {packages.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
+
+        {addToPackage !== "none" && (
+          <div style={{ marginBottom: 20 }}>
+            <FL>Add to Group</FL>
+            <select value={addToGroup} onChange={(e) => setAddToGroup(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <option value="top_level">Top Level</option>
+              <option value="call_1">Call 1</option>
+              <option value="call_2">Call 2</option>
+            </select>
+          </div>
+        )}
 
         <div className="row" style={{ gap: 10, justifyContent: "flex-end" }}>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
