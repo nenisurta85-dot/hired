@@ -1689,6 +1689,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   const [editCommentText, setEditCommentText] = React.useState("");
   const [hoverComment, setHoverComment] = React.useState(null);
   const [bookingLink, setBookingLink] = React.useState("");
+  const [published, setPublished] = React.useState(false);
   const DEFAULT_SUBS_SA = [
     { id: "d0", done: false, assignee: "Editor" },
     { id: "d1", done: false, assignee: "Writer" },
@@ -1734,7 +1735,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ background: "#fff", borderRadius: 16, width: "min(760px, 95vw)", maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
@@ -1789,9 +1790,20 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
-                <button onClick={() => showToast("Published to client.")}
-                  style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
-                  Publish to client
+                <button onClick={() => {
+                    if (published) {
+                      setPublished(false);
+                      showToast("File locked — client edit closed.");
+                    } else {
+                      setPublished(true);
+                      showToast("Published to client — new major version created.");
+                    }
+                  }}
+                  style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: published ? "#555" : "#C8005A",
+                    background: published ? "#F5F4F2" : "#FFF5F9",
+                    border: published ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
+                  {published ? <><Icons.Lock size={13} /> Lock file</> : "Publish to client"}
                 </button>
               </div>
               <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
@@ -1827,9 +1839,20 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
-                <button onClick={() => showToast("Published to client.")}
-                  style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
-                  Publish to client
+                <button onClick={() => {
+                    if (published) {
+                      setPublished(false);
+                      showToast("File locked — client edit closed.");
+                    } else {
+                      setPublished(true);
+                      showToast("Published to client — new major version created.");
+                    }
+                  }}
+                  style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: published ? "#555" : "#C8005A",
+                    background: published ? "#F5F4F2" : "#FFF5F9",
+                    border: published ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
+                  {published ? <><Icons.Lock size={13} /> Lock file</> : "Publish to client"}
                 </button>
               </div>
               <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
