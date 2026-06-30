@@ -1141,6 +1141,7 @@ function NewPackageModal({ onClose }) {
   const [price, setPrice] = React.useState("");
   const [weeks, setWeeks] = React.useState("");
   const [status, setStatus] = React.useState("Active");
+  const [stripePriceId, setStripePriceId] = React.useState("");
 
   // selected: set of item ids
   const [selected, setSelected] = React.useState(new Set(["ssot", "ws-1", "ws-2", "resume-v1", "cover-letter-template"]));
@@ -1213,11 +1214,17 @@ function NewPackageModal({ onClose }) {
             </div>
             <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
           </div>
-          <div style={{ maxWidth: "50%" }}>
-            <FL>Status</FL>
-            <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-              <option>Active</option><option>Inactive</option>
-            </select>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ maxWidth: "100%" }}>
+              <FL>Status</FL>
+              <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option>Active</option><option>Inactive</option>
+              </select>
+            </div>
+            <div>
+              <FL>Stripe Price ID</FL>
+              <input value={stripePriceId} onChange={e => setStripePriceId(e.target.value)} placeholder="price_..." style={inputStyle} />
+            </div>
           </div>
 
           {/* Deliverables — 3 grouped sections */}
