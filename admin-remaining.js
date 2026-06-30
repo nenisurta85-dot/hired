@@ -2023,7 +2023,9 @@ const PT_CONFIGS = {
       { id: "interest", type: "circle",  label: "Initial Interest",                                                  state: "done"   },
       { id: "onboard",  type: "circle",  label: "Onboarding",                                                        state: "done"   },
       { id: "start",    type: "circle",  label: "Start Project",  date: "Apr 1",                                     state: "done"   },
-      { id: "phase1",   type: "circle",  label: "Phase 1",                                                           state: "active" },
+      { id: "phase1",   type: "circle",  label: "Phase 1",  state: "active",
+        tasks: ["Résumé + Cover Letter", "OR — 1-page Executive Brief", "OR — 10-pt LinkedIn Audit"],
+        tasksNote: "Selected item due Day 4 (depends on item selected)", tasksStyle: "or" },
       { id: "call1",    type: "diamond", label: "Call 1",  sublabel: "Working Session #1",  date: "Apr 8",           state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
       { id: "call2",    type: "diamond", label: "Call 2",  sublabel: "Working Session #2",  date: "Apr 15",          state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
       { id: "end",      type: "circle",  label: "Project End",    date: "Apr 22",                                     state: "future" },
@@ -2197,14 +2199,34 @@ function ProjectTimeline({ lockType }) {
           {selected.tasks && selected.tasks.length > 0 && (
             <>
               <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#AAA", marginBottom: 8 }}>Tasks</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {selected.tasks.map((t, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#444" }}>
-                    <div style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #C8C6C0", flexShrink: 0 }} />
-                    {t}
-                  </div>
-                ))}
-              </div>
+              {selected.tasksStyle === "or" ? (
+                <div style={{ border: "1px solid #E8E6E0", borderRadius: 10, overflow: "hidden" }}>
+                  {selected.tasks.map((t, i) => {
+                    const isOr = t.startsWith("OR —");
+                    return (
+                      <div key={i}>
+                        {isOr && <div style={{ textAlign: "center", fontSize: 10, fontWeight: 700, color: "#AAA", letterSpacing: 1, padding: "4px 0", background: "#F8F7F5", borderTop: "1px solid #E8E6E0", borderBottom: "1px solid #E8E6E0" }}>OR</div>}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#333", padding: "10px 14px", background: "#fff" }}>
+                          <div style={{ width: 7, height: 7, borderRadius: 99, background: "#8211FF", flexShrink: 0 }} />
+                          {isOr ? t.replace("OR — ", "") : t}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {selected.tasks.map((t, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#444" }}>
+                      <div style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #C8C6C0", flexShrink: 0 }} />
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selected.tasksNote && (
+                <div style={{ fontSize: 11, color: "#999", marginTop: 8, fontStyle: "italic" }}>{selected.tasksNote}</div>
+              )}
             </>
           )}
         </div>
