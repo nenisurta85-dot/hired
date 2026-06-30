@@ -646,35 +646,198 @@ function ProjectTasks({ project, focusPhase }) {
 }
 
 /* ---------------- Documents tab ---------------- */
-function DocSection({ title, arrow, docs }) {
+
+// Mock extended doc metadata: comments, access state, version history
+const DOC_META = {
+  d1: {
+    published: true,
+    clientComments: 3,
+    hasUnresolved: true,
+    versions: [
+      { v: "v2.1", type: "minor", clientComments: 3, ts: "Jun 28, 2:14 PM", trigger: "client comment", latest: true },
+      { v: "v2.0", type: "major", clientComments: 0, ts: "Jun 25, 9:02 AM", trigger: "publish" },
+      { v: "v1.2", type: "minor", clientComments: 0, ts: "Jun 20", trigger: "lock/unlock" },
+      { v: "v1.1", type: "minor", clientComments: 0, ts: "Jun 18", trigger: "lock/unlock" },
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Jun 15", trigger: "publish" },
+    ],
+  },
+  d2: {
+    published: false,
+    clientComments: 0,
+    hasUnresolved: false,
+    versions: [
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Apr 25", trigger: "publish", latest: true },
+    ],
+  },
+  d4: {
+    published: true,
+    clientComments: 1,
+    hasUnresolved: false,
+    versions: [
+      { v: "v2.0", type: "major", clientComments: 1, ts: "Apr 22, 10:00 AM", trigger: "publish", latest: true },
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Apr 15", trigger: "publish" },
+    ],
+  },
+  d5: {
+    published: false,
+    clientComments: 0,
+    hasUnresolved: false,
+    versions: [
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Apr 20", trigger: "publish", latest: true },
+    ],
+  },
+};
+
+function DocVersionHistory({ versions }) {
+  const pillStyle = (type) => ({
+    fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: ".4px",
+    background: type === "major" ? "rgba(130,17,255,0.1)" : "#F0F0F0",
+    color: type === "major" ? "#8211FF" : "#888",
+  });
+  return (
+    <tr style={{ background: "#FAFAFA" }}>
+      <td colSpan={6} style={{ padding: "0 0 0 48px", borderTop: "none" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            {versions.map((ver, i) => (
+              <tr key={ver.v} style={{ borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
+                <td style={{ padding: "7px 8px", width: 54, fontWeight: 700, fontSize: 12, color: ver.latest ? "var(--purple)" : "var(--text-primary)" }}>{ver.v}</td>
+                <td style={{ padding: "7px 4px", width: 60 }}><span style={pillStyle(ver.type)}>{ver.type}</span></td>
+                <td style={{ padding: "7px 4px", width: 130 }}>
+                  {ver.clientComments > 0 && (
+                    <span style={{ fontSize: 11, color: "#E53935", fontWeight: 600 }}>💬 {ver.clientComments} client</span>
+                  )}
+                </td>
+                <td style={{ padding: "7px 4px", fontSize: 11, color: "#888", width: 140 }}>{ver.ts}</td>
+                <td style={{ padding: "7px 4px", fontSize: 11, color: "#AAA", width: 120 }}>{ver.trigger}</td>
+                <td style={{ padding: "7px 8px", textAlign: "right" }}>
+                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                    <button style={{ fontSize: 11, color: "var(--purple)", background: "none", border: "1px solid var(--border)", borderRadius: 5, padding: "2px 10px", cursor: "pointer" }}>Open</button>
+                    {ver.latest && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--purple)", background: "var(--purple-light)", borderRadius: 4, padding: "2px 6px" }}>Latest</span>}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  );
+}
+
+function DocRow({ d, isGHH }) {
+  const { Icons } = window;
+  const [expanded, setExpanded] = React.useState(false);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const { showToast } = useAdmin();
+
+  const meta = DOC_META[d.id] || { published: false, clientComments: 0, hasUnresolved: false, versions: [] };
+  const latestVer = meta.versions.length ? meta.versions[0].v : d.version;
+  const hasComments = meta.clientComments > 0;
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    setTimeout(() => window.addEventListener("click", close), 0);
+    return () => window.removeEventListener("click", close);
+  }, [menuOpen]);
+
+  return (
+    <React.Fragment>
+      <tr className="clickable" style={{ background: (isGHH && meta.hasUnresolved) ? "rgba(229,57,53,0.02)" : undefined }}>
+        <td style={{ fontWeight: 500 }}>
+          <span className="row" style={{ gap: 7, flexWrap: "wrap" }}>
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "0 2px", color: "var(--text-muted)", display: "flex", alignItems: "center", flexShrink: 0 }}>
+              <Icons.ChevronDown size={12} style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform .15s" }} />
+            </button>
+            <Icons.FileText size={15} style={{ flexShrink: 0 }} />
+            <span>{d.name}</span>
+            {d.drive && <Icons.ArrowUpRight size={12} />}
+            {isGHH && hasComments && (
+              <span style={{ fontSize: 11, fontWeight: 600, color: meta.hasUnresolved ? "#E53935" : "#AAA", display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                💬 {meta.clientComments}
+                {meta.hasUnresolved && <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(229,57,53,0.12)", color: "#E53935", borderRadius: 4, padding: "1px 5px", textTransform: "uppercase", letterSpacing: ".4px" }}>Needs review</span>}
+              </span>
+            )}
+            {isGHH && (
+              <span title={meta.published ? "Published — client can edit" : "Locked — GHH working"}
+                style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, color: meta.published ? "#00A06C" : "#AAA", flexShrink: 0 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: meta.published ? "#00A06C" : "#CCC", display: "inline-block" }} />
+                {meta.published ? "Published" : "Locked"}
+              </span>
+            )}
+          </span>
+        </td>
+        <td><span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)" }}>{d.type}</span></td>
+        <td><APill status={d.status} /></td>
+        <td style={{ color: "#888" }}>{latestVer}</td>
+        <td style={{ color: "#888" }}>{d.modified}</td>
+        <td onClick={(e) => e.stopPropagation()} style={{ position: "relative" }}>
+          <button className="icon-btn" style={{ border: "none" }} onClick={() => setMenuOpen(v => !v)}>⋯</button>
+          {menuOpen && (
+            <div style={{ position: "absolute", right: 8, top: "100%", background: "#fff", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 150, padding: "4px 0" }}>
+              {[
+                { label: "Open in Drive", action: () => showToast("Opening…") },
+                { label: "Open task", action: () => showToast("Opening task…") },
+                { label: "Copy link", action: () => showToast("Link copied") },
+                { label: "Download", action: () => showToast("Downloading…") },
+              ].map((item) => (
+                <button key={item.label} onClick={() => { item.action(); setMenuOpen(false); }}
+                  style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 14px", fontSize: 12, background: "none", border: "none", cursor: "pointer", color: "var(--text-primary)" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--purple-light)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </td>
+      </tr>
+      {expanded && meta.versions.length > 0 && <DocVersionHistory versions={meta.versions} />}
+    </React.Fragment>
+  );
+}
+
+function DocSection({ title, arrow, docs, isGHH, docFilter }) {
   const { Icons } = window;
   const [open, setOpen] = React.useState(true);
+
+  // For GHH→Client: sort unresolved-comments rows first
+  const sorted = isGHH
+    ? [...docs].sort((a, b) => {
+        const ma = DOC_META[a.id] || {};
+        const mb = DOC_META[b.id] || {};
+        return (mb.hasUnresolved ? 1 : 0) - (ma.hasUnresolved ? 1 : 0);
+      })
+    : docs;
+
+  // Apply quick filter
+  const filtered = sorted.filter((d) => {
+    const meta = DOC_META[d.id] || {};
+    if (docFilter === "Has client comments") return meta.clientComments > 0;
+    if (docFilter === "Published") return meta.published;
+    if (docFilter === "Locked") return !meta.published;
+    return true;
+  });
+
   return (
     <Card style={{ padding: 0, overflow: "hidden" }}>
       <button onClick={() => setOpen((v) => !v)} className="row between" style={{ width: "100%", background: "#FAF9F6", border: "none", borderBottom: open ? "0.5px solid var(--border-light)" : "none", padding: "11px 16px", cursor: "pointer" }}>
         <span className="row" style={{ gap: 8 }}>
           {open ? <Icons.ChevronDown size={14} /> : <Icons.ChevronRight size={14} />}
           <span className="label" style={{ margin: 0 }}>{arrow} {title}</span>
-          <span className="meta">{docs.length}</span>
+          <span className="meta">{filtered.length}</span>
         </span>
       </button>
-      {open && (docs.length ? (
+      {open && (filtered.length ? (
         <table className="atable">
           <thead><tr>{["Name", "Type", "Status", "Version", "Modified", ""].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>
-            {docs.map((d) => (
-              <tr key={d.id} className="clickable">
-                <td style={{ fontWeight: 500 }}><span className="row" style={{ gap: 7 }}><Icons.FileText size={15} /> {d.name} {d.drive && <Icons.ArrowUpRight size={12} />}</span></td>
-                <td><span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)" }}>{d.type}</span></td>
-                <td><APill status={d.status} /></td>
-                <td style={{ color: "#888" }}>{d.version}</td>
-                <td style={{ color: "#888" }}>{d.modified}</td>
-                <td onClick={(e) => e.stopPropagation()}><button className="icon-btn" style={{ border: "none" }}>⋯</button></td>
-              </tr>
-            ))}
+            {filtered.map((d) => <DocRow key={d.id} d={d} isGHH={isGHH} />)}
           </tbody>
         </table>
-      ) : <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}><span className="meta">No documents yet</span></div>)}
+      ) : <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}><span className="meta">No documents</span></div>)}
     </Card>
   );
 }
@@ -682,19 +845,39 @@ function DocSection({ title, arrow, docs }) {
 function ProjectDocs({ client }) {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
+  const [docFilter, setDocFilter] = React.useState("All");
+
   const docs = ADM.DOCS.filter((d) => d.client === client);
   const fromGHH = docs.filter((d) => d.dir === "GHH to Client");
   const fromClient = docs.filter((d) => d.dir === "Client to GHH");
+
+  const FILTERS = ["All", "Has client comments", "Published", "Locked"];
+
   return (
     <div className="admin-body">
-      <div className="row" style={{ justifyContent: "flex-end", gap: 10, marginBottom: 14 }}>
-        <button className="fpill" onClick={() => showToast("Syncing from Drive…")}><Icons.ChevronDown size={13} /> Sync from Drive</button>
-        <button className="fpill" onClick={() => showToast("Upload…")}><Icons.Upload size={13} /> Upload File</button>
-        <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New document…")}><Icons.Plus size={13} /> New Document</button>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        {/* Quick filter */}
+        <div className="row" style={{ gap: 6 }}>
+          {FILTERS.map((f) => (
+            <button key={f} onClick={() => setDocFilter(f)}
+              style={{ borderRadius: 6, padding: "4px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer",
+                background: docFilter === f ? "var(--purple)" : "transparent",
+                color: docFilter === f ? "#fff" : "var(--text-secondary)",
+                border: docFilter === f ? "1px solid var(--purple)" : "1px solid var(--border)" }}>
+              {f}
+            </button>
+          ))}
+        </div>
+        {/* Top actions */}
+        <div className="row" style={{ gap: 10 }}>
+          <button className="fpill" onClick={() => showToast("Syncing from Drive…")}><Icons.ChevronDown size={13} /> Sync from Drive</button>
+          <button className="fpill" onClick={() => showToast("Upload…")}><Icons.Upload size={13} /> Upload File</button>
+          <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New document…")}><Icons.Plus size={13} /> New Document</button>
+        </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <DocSection title="From GHH to Client" arrow="↙" docs={fromGHH} />
-        <DocSection title="From Client to GHH" arrow="↗" docs={fromClient} />
+        <DocSection title="From GHH to Client" arrow="↙" docs={fromGHH} isGHH={true} docFilter={docFilter} />
+        <DocSection title="From Client to GHH" arrow="↗" docs={fromClient} isGHH={false} docFilter={docFilter} />
       </div>
     </div>
   );
