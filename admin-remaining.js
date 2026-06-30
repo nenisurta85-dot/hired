@@ -2048,8 +2048,7 @@ const PT_CONFIGS = {
       { id: "start",    type: "circle",  label: "Start Project",  date: "Apr 1",                                     state: "done"   },
       { id: "call1",    type: "diamond", label: "Call 1",  sublabel: "Coaching Session",     date: "Apr 8",          state: "active", tasks: ["Summary email from Coaching Session (due same day)"] },
       { id: "end",      type: "circle",  label: "Project End",    date: "Apr 15",                                     state: "future" },
-      { id: "support",  type: "segment", label: "30-Day Support",                                                     state: "future" },
-      { id: "endsup",   type: "circle",  label: "End of Support", date: "May 15",                                     state: "future" },
+      { id: "offboard", type: "circle",  label: "Offboarding",    date: "Apr 15 – Apr 22",                            state: "future" },
     ],
   },
   coaching_momentum: {
