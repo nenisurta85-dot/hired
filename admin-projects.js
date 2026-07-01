@@ -871,7 +871,6 @@ function ProjectDocs({ client }) {
         {/* Top actions */}
         <div className="row" style={{ gap: 10 }}>
           <button className="fpill" onClick={() => showToast("Syncing from Drive…")}><Icons.ChevronDown size={13} /> Sync from Drive</button>
-          <button className="fpill" onClick={() => showToast("Upload…")}><Icons.Upload size={13} /> Upload File</button>
           <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New document…")}><Icons.Plus size={13} /> New Document</button>
         </div>
       </div>
