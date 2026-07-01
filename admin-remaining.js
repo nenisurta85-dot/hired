@@ -1696,7 +1696,14 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   const [editCommentText, setEditCommentText] = React.useState("");
   const [hoverComment, setHoverComment] = React.useState(null);
   const [bookingLink, setBookingLink] = React.useState("");
-  const [published, setPublished] = React.useState(false);
+  const [published, setPublished] = React.useState(() => !!(task.docId && window.DOC_LOCK?.[task.docId]));
+  const setLock = (isPublished) => {
+    setPublished(isPublished);
+    if (task.docId) {
+      if (window.DOC_LOCK) window.DOC_LOCK[task.docId] = isPublished;
+      window.dispatchEvent(new CustomEvent("doc-lock-change", { detail: { docId: task.docId, published: isPublished } }));
+    }
+  };
   const DEFAULT_SUBS_SA = [
     { id: "d0", done: false, assignee: "Editor" },
     { id: "d1", done: false, assignee: "Writer" },
@@ -1799,10 +1806,10 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                 </div>
                 <button onClick={() => {
                     if (published) {
-                      setPublished(false);
+                      setLock(false);
                       showToast("File locked — client edit closed.");
                     } else {
-                      setPublished(true);
+                      setLock(true);
                       showToast("Published to client — new major version created.");
                     }
                   }}
@@ -1827,7 +1834,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                   </div>
                 </div>
                 {published ? (
-                  <button onClick={() => { setPublished(false); showToast("File locked — client edit closed."); }}
+                  <button onClick={() => { setLock(false); showToast("File locked — client edit closed."); }}
                     style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                       color: "#555", background: "#F0EFED", border: "1.5px solid #D0CEC8" }}>
                     <Icons.Lock size={13} /> Lock file
@@ -1860,10 +1867,10 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                 </div>
                 <button onClick={() => {
                     if (published) {
-                      setPublished(false);
+                      setLock(false);
                       showToast("File locked — client edit closed.");
                     } else {
-                      setPublished(true);
+                      setLock(true);
                       showToast("Published to client — new major version created.");
                     }
                   }}
@@ -1888,7 +1895,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                   </div>
                 </div>
                 {published ? (
-                  <button onClick={() => { setPublished(false); showToast("File locked — client edit closed."); }}
+                  <button onClick={() => { setLock(false); showToast("File locked — client edit closed."); }}
                     style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                       color: "#555", background: "#F0EFED", border: "1.5px solid #D0CEC8" }}>
                     <Icons.Lock size={13} /> Lock file

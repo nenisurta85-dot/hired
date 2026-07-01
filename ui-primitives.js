@@ -5,6 +5,18 @@
 const PortalCtx = React.createContext(null);
 const usePortal = () => React.useContext(PortalCtx);
 
+/* Subscribe to doc-lock-change events and return current lock state for a docId */
+function useLockState(docId) {
+  const [locked, setLocked] = React.useState(() => !window.DOC_LOCK?.[docId]);
+  React.useEffect(() => {
+    if (!docId) return;
+    const handler = (e) => { if (e.detail?.docId === docId) setLocked(!e.detail.published); };
+    window.addEventListener("doc-lock-change", handler);
+    return () => window.removeEventListener("doc-lock-change", handler);
+  }, [docId]);
+  return locked;
+}
+
 /* ---------- Badge ---------- */
 function Badge({ status, children, style }) {
   const s = (window.GHH.STATUS[status]) || { bg: "#F1EFE8", fg: "#5F5E5A" };
@@ -69,7 +81,8 @@ function TaskCard({ task, onOpen, onComplete }) {
   const is = window.GHH.ICON_STYLE[task.type] || window.GHH.ICON_STYLE.none;
   const IconCmp = Icons[is.icon] || Icons.FileText;
   const muted = task.muted && !task.done;
-  const clickable = !!onOpen && task.type !== "none";
+  const docLocked = useLockState(task.docId);
+  const clickable = !!onOpen && task.type !== "none" && !docLocked;
   return (
     <div
       className={"task-card" + (task.highlight && !task.done ? " highlight" : "") + (task.done ? " done" : "") + (clickable ? " clickable" : "")}
@@ -83,8 +96,18 @@ function TaskCard({ task, onOpen, onComplete }) {
           {task.title}
           {!task.done && <Badge status={task.status} />}
           {task.done && <Badge status="Complete" />}
+          {task.docId && docLocked && !task.done && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
+              background: "#F0EFED", color: "#888", border: "1px solid #D8D5CF", borderRadius: 20,
+              padding: "2px 8px", marginLeft: 4 }}>
+              <Icons.Lock size={10} /> Locked
+            </span>
+          )}
         </div>
-        {task.desc && <div className="task-desc">{task.desc}</div>}
+        {task.docId && docLocked && !task.done
+          ? <div className="task-desc" style={{ color: "#AAA", fontStyle: "italic" }}>Locked while your writer is updating it.</div>
+          : task.desc && <div className="task-desc">{task.desc}</div>
+        }
         {task.due && (
           <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>{task.due}</div>
         )}
@@ -94,7 +117,9 @@ function TaskCard({ task, onOpen, onComplete }) {
           <span style={{ fontSize: 12, color: task.due?.toLowerCase().includes('overdue') ? '#E53935' : '#AAAAAA', flexShrink: 0, marginRight: 8, whiteSpace: 'nowrap' }}>{task.due}</span>
         )}
         {task.action && !task.done && (
-          <button className="btn btn-secondary" onClick={() => onOpen && onOpen(task)}>{task.action}</button>
+          <button className="btn btn-secondary" disabled={!!(task.docId && docLocked)}
+            style={task.docId && docLocked ? { opacity: 0.38, cursor: "not-allowed" } : {}}
+            onClick={() => !docLocked && onOpen && onOpen(task)}>{task.action}</button>
         )}
         {onComplete && <QuickComplete done={task.done} onComplete={() => onComplete(task)} label={task.title} />}
       </div>

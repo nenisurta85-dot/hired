@@ -27,7 +27,7 @@
     { id: "d1", type: "review", highlight: true, title: "Résumé — Draft v1",
       status: "Ready for Review", desc: "Open the doc, leave your comments, submit feedback",
       due: "Due May 12",
-      action: "Review Draft", doc: "Résumé — Draft v1.pdf",
+      action: "Review Draft", doc: "Résumé — Draft v1.pdf", docId: "d1",
       detail: "Your writer has completed the first draft of your résumé. Open it, leave inline comments, and submit your feedback so we can refine it before your next session.",
       meta: { phase: "Phase 1", due: "Due May 12", assigned: "Kate Wade", priority: "High" },
       comment: { who: "Kate Wade", when: "4 days ago", text: "I've focused the executive summary on your P&L ownership and the team scale-up. Let me know if the framing feels right." } },
@@ -227,3 +227,6 @@
     ],
   };
 })();
+
+// doc lock state: keyed by docId; true = published (open), false = locked
+window.DOC_LOCK = { d1: false };
