@@ -1814,7 +1814,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                 </button>
               </div>
               <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                   <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
                   <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -1826,6 +1826,18 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
+                {published ? (
+                  <button onClick={() => { setPublished(false); showToast("File locked — client edit closed."); }}
+                    style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      color: "#555", background: "#F0EFED", border: "1.5px solid #D0CEC8" }}>
+                    <Icons.Lock size={13} /> Lock file
+                  </button>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: "#AAA", background: "#F8F7F5", border: "1.5px solid #E0DDD8", boxSizing: "border-box" }}>
+                    <Icons.Lock size={13} /> Locked
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1863,7 +1875,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                 </button>
               </div>
               <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                   <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
                   <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -1875,6 +1887,18 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
+                {published ? (
+                  <button onClick={() => { setPublished(false); showToast("File locked — client edit closed."); }}
+                    style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      color: "#555", background: "#F0EFED", border: "1.5px solid #D0CEC8" }}>
+                    <Icons.Lock size={13} /> Lock file
+                  </button>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: "#AAA", background: "#F8F7F5", border: "1.5px solid #E0DDD8", boxSizing: "border-box" }}>
+                    <Icons.Lock size={13} /> Locked
+                  </div>
+                )}
               </div>
             </div>
           </div>
