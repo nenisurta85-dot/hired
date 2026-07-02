@@ -1425,6 +1425,7 @@ function AdminPackages() {
   const { ADM } = window;
   const { showToast, role } = useAdmin();
   const isWriter = role === "Writer";
+  const isReadOnly = role === "Writer" || role === "Admin Assistant";
   const [showModal, setShowModal] = React.useState(false);
   const [showAlcModal, setShowAlcModal] = React.useState(false);
   const PkgCard = ({ p }) => (
@@ -1448,14 +1449,14 @@ function AdminPackages() {
     <div>
       {showModal && <NewPackageModal onClose={() => setShowModal(false)} />}
       {showAlcModal && <NewALaCarteModal onClose={() => setShowAlcModal(false)} />}
-      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => setShowModal(true) }} />
+      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isReadOnly ? null : { label: "+ New Package", onClick: () => setShowModal(true) }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.PACKAGES.map((p) => <PkgCard key={p.id} p={p} />)}
         </div>
         <div className="row between" style={{ margin: "26px 0 14px" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>À La Carte</span>
-          {!isWriter && <button className="btn btn-secondary" onClick={() => setShowAlcModal(true)}>+ New À La Carte Item</button>}
+          {!isReadOnly && <button className="btn btn-secondary" onClick={() => setShowAlcModal(true)}>+ New À La Carte Item</button>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.ALACARTE.map((a) => (

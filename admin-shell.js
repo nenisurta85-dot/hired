@@ -89,9 +89,12 @@ function AdminSidebar({ route }) {
       {/* Nav */}
       <nav style={{ marginTop: 14, flex: 1 }}>
         <NavGroup title="Overview" items={ADM.NAV.overview} />
-        <NavGroup title="Management" items={ADM.NAV.management.filter(item => !(role === "Writer" && item.key === "team"))} />
+        <NavGroup title="Management" items={ADM.NAV.management.filter(item => {
+            if (role === "Writer" && (item.key === "team" || item.key === "packages")) return false;
+            return true;
+          })} />
         <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0", paddingTop: 8 }}>
-          <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>
+          {role !== "Writer" && <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>}
           <button onClick={() => navigate("#/")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.LogOut size={16} /> Log Out</button>
         </div>
         <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0 0", paddingTop: 8 }}>
@@ -248,4 +251,18 @@ function AdminLayout({ route, children }) {
   );
 }
 
-Object.assign(window, { AdminCtx, useAdmin, APill, Avatar, AdminSidebar, AdminHeader, FilterPill, ToggleChip, FilterBar, SlideOver, AdminLayout });
+/* ---------- Access Denied ---------- */
+function AccessDenied() {
+  const { Icons } = window;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 32px", textAlign: "center", gap: 16 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 99, background: "rgba(130,17,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icons.Lock size={24} style={{ color: "var(--purple)" }} />
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 700 }}>Access Restricted</div>
+      <div style={{ fontSize: 13, color: "#888", maxWidth: 340 }}>Your role does not have permission to view this section. Contact your administrator if you need access.</div>
+    </div>
+  );
+}
+
+Object.assign(window, { AdminCtx, useAdmin, APill, Avatar, AdminSidebar, AdminHeader, FilterPill, ToggleChip, FilterBar, SlideOver, AdminLayout, AccessDenied });

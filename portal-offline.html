@@ -1030,7 +1030,7 @@ var e,t,r="function"==typeof Symbol?Symbol:{},a=r.iterator||"@@iterator",n=r.toS
     { id: "d1", type: "review", highlight: true, title: "Résumé — Draft v1",
       status: "Ready for Review", desc: "Open the doc, leave your comments, submit feedback",
       due: "Due May 12",
-      action: "Review Draft", doc: "Résumé — Draft v1.pdf",
+      action: "Review Draft", doc: "Résumé — Draft v1.pdf", docId: "d1",
       detail: "Your writer has completed the first draft of your résumé. Open it, leave inline comments, and submit your feedback so we can refine it before your next session.",
       meta: { phase: "Phase 1", due: "Due May 12", assigned: "Kate Wade", priority: "High" },
       comment: { who: "Kate Wade", when: "4 days ago", text: "I've focused the executive summary on your P&L ownership and the team scale-up. Let me know if the framing feels right." } },
@@ -1231,6 +1231,9 @@ var e,t,r="function"==typeof Symbol?Symbol:{},a=r.iterator||"@@iterator",n=r.toS
   };
 })();
 
+// doc lock state: keyed by docId; true = published (open), false = locked
+window.DOC_LOCK = { d1: false };
+
 </script><script type="text/babel">
 /* ============================================================
    UI primitives + shared context  →  window
@@ -1238,6 +1241,18 @@ var e,t,r="function"==typeof Symbol?Symbol:{},a=r.iterator||"@@iterator",n=r.toS
 
 const PortalCtx = React.createContext(null);
 const usePortal = () => React.useContext(PortalCtx);
+
+/* Subscribe to doc-lock-change events and return current lock state for a docId */
+function useLockState(docId) {
+  const [locked, setLocked] = React.useState(() => !window.DOC_LOCK?.[docId]);
+  React.useEffect(() => {
+    if (!docId) return;
+    const handler = (e) => { if (e.detail?.docId === docId) setLocked(!e.detail.published); };
+    window.addEventListener("doc-lock-change", handler);
+    return () => window.removeEventListener("doc-lock-change", handler);
+  }, [docId]);
+  return locked;
+}
 
 /* ---------- Badge ---------- */
 function Badge({ status, children, style }) {
@@ -1303,7 +1318,8 @@ function TaskCard({ task, onOpen, onComplete }) {
   const is = window.GHH.ICON_STYLE[task.type] || window.GHH.ICON_STYLE.none;
   const IconCmp = Icons[is.icon] || Icons.FileText;
   const muted = task.muted && !task.done;
-  const clickable = !!onOpen && task.type !== "none";
+  const docLocked = useLockState(task.docId);
+  const clickable = !!onOpen && task.type !== "none" && !docLocked;
   return (
     <div
       className={"task-card" + (task.highlight && !task.done ? " highlight" : "") + (task.done ? " done" : "") + (clickable ? " clickable" : "")}
@@ -1317,8 +1333,18 @@ function TaskCard({ task, onOpen, onComplete }) {
           {task.title}
           {!task.done && <Badge status={task.status} />}
           {task.done && <Badge status="Complete" />}
+          {task.docId && docLocked && !task.done && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
+              background: "#F0EFED", color: "#888", border: "1px solid #D8D5CF", borderRadius: 20,
+              padding: "2px 8px", marginLeft: 4 }}>
+              <Icons.Lock size={10} /> Locked
+            </span>
+          )}
         </div>
-        {task.desc && <div className="task-desc">{task.desc}</div>}
+        {task.docId && docLocked && !task.done
+          ? <div className="task-desc" style={{ color: "#AAA", fontStyle: "italic" }}>Locked while your writer is updating it.</div>
+          : task.desc && <div className="task-desc">{task.desc}</div>
+        }
         {task.due && (
           <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 2 }}>{task.due}</div>
         )}
@@ -1328,7 +1354,9 @@ function TaskCard({ task, onOpen, onComplete }) {
           <span style={{ fontSize: 12, color: task.due?.toLowerCase().includes('overdue') ? '#E53935' : '#AAAAAA', flexShrink: 0, marginRight: 8, whiteSpace: 'nowrap' }}>{task.due}</span>
         )}
         {task.action && !task.done && (
-          <button className="btn btn-secondary" onClick={() => onOpen && onOpen(task)}>{task.action}</button>
+          <button className="btn btn-secondary" disabled={!!(task.docId && docLocked)}
+            style={task.docId && docLocked ? { opacity: 0.38, cursor: "not-allowed" } : {}}
+            onClick={() => !docLocked && onOpen && onOpen(task)}>{task.action}</button>
         )}
         {onComplete && <QuickComplete done={task.done} onComplete={() => onComplete(task)} label={task.title} />}
       </div>
@@ -2682,8 +2710,9 @@ Object.assign(window, { MyFiles, MySessions, Comments, Toolkit, MyTasks, Help, S
     return { done, total: t.length };
   };
 
+  const PROJECT_NAMES = ["Tits Up", "I'm A Big Freaking Deal", "The Scroll-Stopper", "Hit Send"];
   const PROJECTS = CLIENTS.filter((c) => c.stage === "Active").map((c, i) => ({
-    id: "p" + (i + 1), clientId: c.id, name: c.name + " Project", client: c.name,
+    id: "p" + (i + 1), clientId: c.id, name: PROJECT_NAMES[i] || (c.name + " Project"), client: c.name,
     phase: c.phase, status: c.status, writer: c.writer, producer: c.producer,
     editor: c.editor || (i % 2 ? "Erin Doyle" : "Unassigned"), pkg: c.pkg,
     start: c.created, end: "May 22, 2026",
@@ -2948,10 +2977,32 @@ function AdminSidebar({ route }) {
       {/* Nav */}
       <nav style={{ marginTop: 14, flex: 1 }}>
         <NavGroup title="Overview" items={ADM.NAV.overview} />
-        <NavGroup title="Management" items={ADM.NAV.management.filter(item => !(role === "Writer" && item.key === "team"))} />
+        <NavGroup title="Management" items={ADM.NAV.management.filter(item => {
+            if (role === "Writer" && (item.key === "team" || item.key === "packages")) return false;
+            return true;
+          })} />
         <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0", paddingTop: 8 }}>
-          <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>
+          {role !== "Writer" && <button onClick={() => navigate("#/admin/dashboard")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.Settings size={16} /> Settings</button>}
           <button onClick={() => navigate("#/")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 16px", border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 500, textAlign: "left" }}><Icons.LogOut size={16} /> Log Out</button>
+        </div>
+        <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)", margin: "4px 0 0", paddingTop: 8 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.25)", padding: "0 18px 6px" }}>Dev / Temp</div>
+          {(() => {
+            const active = activeKey === "timeline-types";
+            return (
+              <button onClick={() => navigate("#/admin/timeline-types")}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, height: 36, padding: "0 16px", border: "none",
+                  background: active ? "var(--sidebar-active)" : "transparent",
+                  borderLeft: active ? "2px solid var(--purple)" : "2px solid transparent",
+                  color: active ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 12, fontWeight: 500, textAlign: "left" }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                <Icons.Folder size={16} />
+                <span style={{ flex: 1 }}>Timeline Types</span>
+                <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.45)", borderRadius: 4, padding: "2px 5px", letterSpacing: 0.5 }}>TEMP</span>
+              </button>
+            );
+          })()}
         </div>
       </nav>
 
@@ -3088,7 +3139,21 @@ function AdminLayout({ route, children }) {
   );
 }
 
-Object.assign(window, { AdminCtx, useAdmin, APill, Avatar, AdminSidebar, AdminHeader, FilterPill, ToggleChip, FilterBar, SlideOver, AdminLayout });
+/* ---------- Access Denied ---------- */
+function AccessDenied() {
+  const { Icons } = window;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 32px", textAlign: "center", gap: 16 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 99, background: "rgba(130,17,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icons.Lock size={24} style={{ color: "var(--purple)" }} />
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 700 }}>Access Restricted</div>
+      <div style={{ fontSize: 13, color: "#888", maxWidth: 340 }}>Your role does not have permission to view this section. Contact your administrator if you need access.</div>
+    </div>
+  );
+}
+
+Object.assign(window, { AdminCtx, useAdmin, APill, Avatar, AdminSidebar, AdminHeader, FilterPill, ToggleChip, FilterBar, SlideOver, AdminLayout, AccessDenied });
 
 </script><script type="text/babel">
 /* ============================================================
@@ -3212,45 +3277,89 @@ function RecentCommentsCard({ navigate, setActiveTask }) {
 
 /* ---------- Writer Capacity card ---------- */
 function WriterCapacityCard({ navigate }) {
-  const { Icons } = window;
-  const writers = [
-    { name: "Lourdes", fullName: "Lourdes H-D", init: "LH", cur: 3, max: 8 },
-    { name: "Jhoneth", fullName: "Jhoneth Briones", init: "JB", cur: 6, max: 8 },
-    { name: "Mimi", fullName: "Mimi Bishop", init: "MB", cur: 1, max: 8 },
-    { name: "Kate", fullName: "Kate Wade", init: "KW", cur: 8, max: 8, overloaded: true, role: "Editor" },
-  ];
+  const { ADM, Icons } = window;
 
-  const goToWriter = (w) => {
-    window._expandTeamMember = w.fullName;
+  const pkgMap = {};
+  (ADM.PACKAGES || []).forEach((p) => { pkgMap[p.name] = p; });
+
+  // Mock self-available flags (writer-controlled from their own account)
+  const SELF_AVAILABLE = { "lh": true, "mb": true };
+
+  const team = (ADM.TEAM || []).filter((m) =>
+    m.status === "Active" && m.roles && (m.roles.includes("writer") || m.roles.includes("editor"))
+  );
+
+  const getWriterCounts = (member) => {
+    const projects = (ADM.PROJECTS || []).filter((p) =>
+      p.writer === member.name || p.editor === member.name
+    );
+    const counts = { alacarte: 0, day15: 0, day30: 0 };
+    projects.forEach((p) => {
+      const pkg = pkgMap[p.pkg] || {};
+      if (pkg.alc) { counts.alacarte++; }
+      else {
+        const w = parseInt((pkg.weeks || "0").replace(/[^0-9]/g, ""));
+        if (w <= 2) counts.day15++;
+        else counts.day30++;
+      }
+    });
+    return counts;
+  };
+
+  const goToWriter = (member) => {
+    window._expandTeamMember = member.name;
     navigate("#/admin/team");
   };
 
+  const GRID = { display: "grid", gridTemplateColumns: "1fr 72px 72px 72px", alignItems: "center" };
+  const colStyle = { textAlign: "right", fontVariantNumeric: "tabular-nums" };
+
   return (
     <Card style={{ padding: "18px 18px 10px" }}>
-      <div className="row between" style={{ marginBottom: 14 }}>
+      <div className="row between" style={{ marginBottom: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Writer Capacity</span>
       </div>
-      {writers.map((w, i) => {
-        const pct = Math.round((w.cur / w.max) * 100);
-        const barColor = pct <= 50 ? "#00A06C" : pct <= 80 ? "#E57300" : "#E53935";
+
+      {/* Column headers */}
+      <div style={{ ...GRID, padding: "0 6px", marginBottom: 2 }}>
+        <div />
+        <div style={{ ...colStyle, fontSize: 10, fontWeight: 600, color: "#8211FF", textTransform: "uppercase", letterSpacing: ".5px" }}>À la carte</div>
+        <div style={{ ...colStyle, fontSize: 10, fontWeight: 600, color: "#378ADD", textTransform: "uppercase", letterSpacing: ".5px" }}>15-day</div>
+        <div style={{ ...colStyle, fontSize: 10, fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".5px" }}>30-day</div>
+      </div>
+
+      {team.map((member) => {
+        const counts = getWriterCounts(member);
+        const total = counts.alacarte + counts.day15 + counts.day30;
+        const overloaded = total >= 8;
+        const isEditor = member.roles.includes("editor") && !member.roles.includes("writer");
+        const firstName = member.name.split(" ")[0];
         return (
-          <div key={i} style={{ padding: "10px 6px", borderTop: i ? "0.5px solid var(--border-light)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
-            onClick={() => goToWriter(w)}
+          <div key={member.id} style={{ padding: "9px 6px", borderTop: "0.5px solid var(--border-light)", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+            onClick={() => goToWriter(member)}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(130,17,255,0.03)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <div className="row between" style={{ marginBottom: 6 }}>
-              <div className="row" style={{ gap: 9 }}>
-                <div style={{ width: 26, height: 26, borderRadius: 99, background: "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{w.init}</div>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{w.name}</span>
-                {w.role && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 7px", background: "rgba(255,107,53,0.12)", color: "#CC4A10" }}>{w.role}</span>}
+            <div style={{ ...GRID, marginBottom: 7 }}>
+              <div className="row" style={{ gap: 8, minWidth: 0 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 99, background: member.color || "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{member.initials}</div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: overloaded ? "#E53935" : "var(--purple)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 2 }}>{firstName}</span>
+                {isEditor && <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 6, padding: "2px 7px", background: "rgba(130,17,255,0.1)", color: "#8211FF", flexShrink: 0 }}>Editor</span>}
+                {!overloaded && SELF_AVAILABLE[member.id] && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 8px", background: "rgba(0,160,108,0.12)", color: "#00A06C", flexShrink: 0 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00A06C", display: "inline-block" }} />
+                    Available
+                  </span>
+                )}
+                {overloaded && <span style={{ color: "#E53935", display: "flex", flexShrink: 0 }}><Icons.Flag size={13} /></span>}
               </div>
-              <div className="row" style={{ gap: 6 }}>
-                {w.overloaded && <span style={{ color: "#E53935", display: "flex" }}><Icons.Flag size={13} /></span>}
-                <span style={{ fontSize: 12, color: "#888" }}>{w.cur}/{w.max}</span>
-              </div>
+              <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.alacarte}</div>
+              <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.day15}</div>
+              <div style={{ ...colStyle, fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{counts.day30}</div>
             </div>
-            <div style={{ height: 5, borderRadius: 3, background: "#F0F0F0", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: pct + "%", background: barColor, borderRadius: 3, transition: "width .3s" }} />
+            <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: "#F0F0F0" }}>
+              <div style={{ width: ((counts.alacarte / 8) * 100) + "%", background: "#8211FF", flexShrink: 0 }} />
+              <div style={{ width: ((counts.day15 / 8) * 100) + "%", background: "#378ADD", flexShrink: 0 }} />
+              <div style={{ width: ((counts.day30 / 8) * 100) + "%", background: "#BA7517", flexShrink: 0 }} />
             </div>
           </div>
         );
@@ -3548,28 +3657,26 @@ function AdminProjects() {
 
   return (
     <div>
-      <AdminHeader icon="FolderOpen" title="Projects" subtitle="Manage projects" action={{ label: "+ New Project", onClick: () => setModal(true) }} />
-      <FilterBar search={search} onSearch={setSearch}
-        right={<button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setModal(true)}><Icons.Plus size={13} /> New Project</button>}>
+      <AdminHeader icon="FolderOpen" title="Projects" subtitle="Manage projects" />
+      <FilterBar search={search} onSearch={setSearch}>
         <FilterPill label="Phase" options={ADM.PHASES} active={phase} onChange={setPhase} />
         <FilterPill label="Status" options={["On Track", "Behind", "At Risk", "Overdue", "90-day"]} active={status} onChange={setStatus} />
         <FilterPill label="Package" options={ADM.PACKAGES.map((p) => p.name)} active={pkg} onChange={setPkg} />
-        <button className="fpill"><Icons.ListChecks size={13} /> Columns</button>
       </FilterBar>
 
       <div className="admin-body">
         <Card style={{ padding: 0, overflow: "hidden" }}>
           <table className="atable">
             <thead><tr>
-              {["Project", "Client", "Phase", "Status", "Writer", "Start Date", "Proj. End", ""].map((h) => <th key={h}>{h}</th>)}
+              {["Client", "Project Name", "Phase", "Status", "Writer", "Start Date", "Proj. End", ""].map((h) => <th key={h}>{h}</th>)}
             </tr></thead>
             <tbody>
               {rows.map((p) => {
                 const c = ADM.CLIENTS.find((x) => x.id === p.clientId);
                 return (
                   <tr key={p.id} className="clickable" onClick={() => navigate("#/admin/projects/" + p.id)}>
-                    <td style={{ fontWeight: 600 }}>{p.name}</td>
                     <td><div className="row" style={{ gap: 8 }}><Avatar initials={c.initials} color={c.color} size={24} /> {p.client}</div></td>
+                    <td style={{ fontWeight: 600 }}>{p.name}</td>
                     <td>{phaseBadge(p.phase)}</td>
                     <td><APill status={p.status} /></td>
                     <td style={{ color: p.writer === "Unassigned" ? "#AAA" : "inherit", fontStyle: p.writer === "Unassigned" ? "italic" : "normal" }}>{p.writer}</td>
@@ -3622,7 +3729,7 @@ function TLNode({ node, state }) {
   return <span style={{ width: 14, height: 14, borderRadius: 99, background: "#fff", border: "1.5px solid #CCC", flex: "0 0 auto" }} />;
 }
 
-function ProjectTimelineBar({ project, onMore }) {
+function ProjectTimelineBar({ project, onMore, onTaskClick }) {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
   const nodes = React.useMemo(() => buildTimelineNodes(project), [project]);
@@ -3633,7 +3740,7 @@ function ProjectTimelineBar({ project, onMore }) {
   const sel = active != null ? nodes[active] : null;
   const selState = active != null ? stateOf(active) : null;
   const callScheduled = selState && selState !== "future"; // done/active calls are scheduled
-  const inits = (name) => name.split(" ").map((w) => w[0]).join("").slice(0, 2);
+  const inits = (name) => (name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2);
 
   return (
     <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#fff", borderBottom: "1px solid var(--border)" }}>
@@ -3668,10 +3775,13 @@ function ProjectTimelineBar({ project, onMore }) {
           {sel.tasks && sel.tasks.length ? (
             <div style={{ marginTop: 8 }}>
               {sel.tasks.slice(0, 4).map((t, i) => (
-                <div key={i} className="row" style={{ gap: 12, height: 36, borderBottom: "1px solid var(--border)" }}>
+                <div key={i} className="row" style={{ gap: 12, height: 36, borderBottom: "1px solid var(--border)", cursor: onTaskClick ? "pointer" : "default" }}
+                  onClick={() => onTaskClick && onTaskClick({ ...t, client: project.client, phase: sel.label })}
+                  onMouseEnter={(e) => { if (onTaskClick) e.currentTarget.style.background = "rgba(130,17,255,0.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                   <span style={{ width: 17, height: 17, borderRadius: 99, flex: "0 0 17px", border: t.done ? "none" : "1.5px solid #CFC9DD", background: t.done ? "#00A06C" : "#fff", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{t.done ? <Icons.Check size={10} /> : ""}</span>
                   <span style={{ flex: 1, fontSize: 13, textDecoration: t.done ? "line-through" : "none", color: t.done ? "#999" : "inherit" }}>{t.title}</span>
-                  <span className="row" style={{ gap: 6, color: "#888", fontSize: 12, flex: "0 0 auto" }}><Avatar initials={inits(t.assignee)} color="#B9B4C7" size={18} /> {t.assignee}</span>
+                  <span className="row" style={{ gap: 6, color: "#888", fontSize: 12, flex: "0 0 auto" }}><Avatar initials={inits(t.assignee)} color="#B9B4C7" size={18} /> {t.assignee || "—"}</span>
                   <span style={{ color: "#888", fontSize: 12, width: 60, textAlign: "right", flex: "0 0 60px" }}>{t.due}</span>
                 </div>
               ))}
@@ -4131,35 +4241,198 @@ function ProjectTasks({ project, focusPhase }) {
 }
 
 /* ---------------- Documents tab ---------------- */
-function DocSection({ title, arrow, docs }) {
+
+// Mock extended doc metadata: comments, access state, version history
+const DOC_META = {
+  d1: {
+    published: true,
+    clientComments: 3,
+    hasUnresolved: true,
+    versions: [
+      { v: "v2.1", type: "minor", clientComments: 3, ts: "Jun 28, 2:14 PM", trigger: "client comment", latest: true },
+      { v: "v2.0", type: "major", clientComments: 0, ts: "Jun 25, 9:02 AM", trigger: "publish" },
+      { v: "v1.2", type: "minor", clientComments: 0, ts: "Jun 20", trigger: "lock/unlock" },
+      { v: "v1.1", type: "minor", clientComments: 0, ts: "Jun 18", trigger: "lock/unlock" },
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Jun 15", trigger: "publish" },
+    ],
+  },
+  d2: {
+    published: false,
+    clientComments: 0,
+    hasUnresolved: false,
+    versions: [
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Apr 25", trigger: "publish", latest: true },
+    ],
+  },
+  d4: {
+    published: true,
+    clientComments: 1,
+    hasUnresolved: false,
+    versions: [
+      { v: "v2.0", type: "major", clientComments: 1, ts: "Apr 22, 10:00 AM", trigger: "publish", latest: true },
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Apr 15", trigger: "publish" },
+    ],
+  },
+  d5: {
+    published: false,
+    clientComments: 0,
+    hasUnresolved: false,
+    versions: [
+      { v: "v1.0", type: "major", clientComments: 0, ts: "Apr 20", trigger: "publish", latest: true },
+    ],
+  },
+};
+
+function DocVersionHistory({ versions }) {
+  const pillStyle = (type) => ({
+    fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: ".4px",
+    background: type === "major" ? "rgba(130,17,255,0.1)" : "#F0F0F0",
+    color: type === "major" ? "#8211FF" : "#888",
+  });
+  return (
+    <tr style={{ background: "#FAFAFA" }}>
+      <td colSpan={6} style={{ padding: "0 0 0 48px", borderTop: "none" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            {versions.map((ver, i) => (
+              <tr key={ver.v} style={{ borderTop: i ? "0.5px solid var(--border-light)" : "none" }}>
+                <td style={{ padding: "7px 8px", width: 54, fontWeight: 700, fontSize: 12, color: ver.latest ? "var(--purple)" : "var(--text-primary)" }}>{ver.v}</td>
+                <td style={{ padding: "7px 4px", width: 60 }}><span style={pillStyle(ver.type)}>{ver.type}</span></td>
+                <td style={{ padding: "7px 4px", width: 130 }}>
+                  {ver.clientComments > 0 && (
+                    <span style={{ fontSize: 11, color: "#E53935", fontWeight: 600 }}>💬 {ver.clientComments} client</span>
+                  )}
+                </td>
+                <td style={{ padding: "7px 4px", fontSize: 11, color: "#888", width: 140 }}>{ver.ts}</td>
+                <td style={{ padding: "7px 4px", fontSize: 11, color: "#AAA", width: 120 }}>{ver.trigger}</td>
+                <td style={{ padding: "7px 8px", textAlign: "right" }}>
+                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                    <button style={{ fontSize: 11, color: "var(--purple)", background: "none", border: "1px solid var(--border)", borderRadius: 5, padding: "2px 10px", cursor: "pointer" }}>Open</button>
+                    {ver.latest && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--purple)", background: "var(--purple-light)", borderRadius: 4, padding: "2px 6px" }}>Latest</span>}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  );
+}
+
+function DocRow({ d, isGHH }) {
+  const { Icons } = window;
+  const [expanded, setExpanded] = React.useState(false);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const { showToast } = useAdmin();
+
+  const meta = DOC_META[d.id] || { published: false, clientComments: 0, hasUnresolved: false, versions: [] };
+  const latestVer = meta.versions.length ? meta.versions[0].v : d.version;
+  const hasComments = meta.clientComments > 0;
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    setTimeout(() => window.addEventListener("click", close), 0);
+    return () => window.removeEventListener("click", close);
+  }, [menuOpen]);
+
+  return (
+    <React.Fragment>
+      <tr className="clickable" style={{ background: (isGHH && meta.hasUnresolved) ? "rgba(229,57,53,0.02)" : undefined }}>
+        <td style={{ fontWeight: 500 }}>
+          <span className="row" style={{ gap: 7, flexWrap: "wrap" }}>
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "0 2px", color: "var(--text-muted)", display: "flex", alignItems: "center", flexShrink: 0 }}>
+              <Icons.ChevronDown size={12} style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform .15s" }} />
+            </button>
+            <Icons.FileText size={15} style={{ flexShrink: 0 }} />
+            <span>{d.name}</span>
+            {d.drive && <Icons.ArrowUpRight size={12} />}
+            {isGHH && hasComments && (
+              <span style={{ fontSize: 11, fontWeight: 600, color: meta.hasUnresolved ? "#E53935" : "#AAA", display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                💬 {meta.clientComments}
+                {meta.hasUnresolved && <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(229,57,53,0.12)", color: "#E53935", borderRadius: 4, padding: "1px 5px", textTransform: "uppercase", letterSpacing: ".4px" }}>Needs review</span>}
+              </span>
+            )}
+            {isGHH && (
+              <span title={meta.published ? "Published — client can edit" : "Locked — GHH working"}
+                style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, color: meta.published ? "#00A06C" : "#AAA", flexShrink: 0 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: meta.published ? "#00A06C" : "#CCC", display: "inline-block" }} />
+                {meta.published ? "Published" : "Locked"}
+              </span>
+            )}
+          </span>
+        </td>
+        <td><span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)" }}>{d.type}</span></td>
+        <td><APill status={d.status} /></td>
+        <td style={{ color: "#888" }}>{latestVer}</td>
+        <td style={{ color: "#888" }}>{d.modified}</td>
+        <td onClick={(e) => e.stopPropagation()} style={{ position: "relative" }}>
+          <button className="icon-btn" style={{ border: "none" }} onClick={() => setMenuOpen(v => !v)}>⋯</button>
+          {menuOpen && (
+            <div style={{ position: "absolute", right: 8, top: "100%", background: "#fff", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 150, padding: "4px 0" }}>
+              {[
+                { label: "Open in Drive", action: () => showToast("Opening…") },
+                { label: "Open task", action: () => showToast("Opening task…") },
+                { label: "Copy link", action: () => showToast("Link copied") },
+                { label: "Download", action: () => showToast("Downloading…") },
+              ].map((item) => (
+                <button key={item.label} onClick={() => { item.action(); setMenuOpen(false); }}
+                  style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 14px", fontSize: 12, background: "none", border: "none", cursor: "pointer", color: "var(--text-primary)" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--purple-light)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </td>
+      </tr>
+      {expanded && meta.versions.length > 0 && <DocVersionHistory versions={meta.versions} />}
+    </React.Fragment>
+  );
+}
+
+function DocSection({ title, arrow, docs, isGHH, docFilter }) {
   const { Icons } = window;
   const [open, setOpen] = React.useState(true);
+
+  // For GHH→Client: sort unresolved-comments rows first
+  const sorted = isGHH
+    ? [...docs].sort((a, b) => {
+        const ma = DOC_META[a.id] || {};
+        const mb = DOC_META[b.id] || {};
+        return (mb.hasUnresolved ? 1 : 0) - (ma.hasUnresolved ? 1 : 0);
+      })
+    : docs;
+
+  // Apply quick filter
+  const filtered = sorted.filter((d) => {
+    const meta = DOC_META[d.id] || {};
+    if (docFilter === "Has client comments") return meta.clientComments > 0;
+    if (docFilter === "Published") return meta.published;
+    if (docFilter === "Locked") return !meta.published;
+    return true;
+  });
+
   return (
     <Card style={{ padding: 0, overflow: "hidden" }}>
       <button onClick={() => setOpen((v) => !v)} className="row between" style={{ width: "100%", background: "#FAF9F6", border: "none", borderBottom: open ? "0.5px solid var(--border-light)" : "none", padding: "11px 16px", cursor: "pointer" }}>
         <span className="row" style={{ gap: 8 }}>
           {open ? <Icons.ChevronDown size={14} /> : <Icons.ChevronRight size={14} />}
           <span className="label" style={{ margin: 0 }}>{arrow} {title}</span>
-          <span className="meta">{docs.length}</span>
+          <span className="meta">{filtered.length}</span>
         </span>
       </button>
-      {open && (docs.length ? (
+      {open && (filtered.length ? (
         <table className="atable">
           <thead><tr>{["Name", "Type", "Status", "Version", "Modified", ""].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>
-            {docs.map((d) => (
-              <tr key={d.id} className="clickable">
-                <td style={{ fontWeight: 500 }}><span className="row" style={{ gap: 7 }}><Icons.FileText size={15} /> {d.name} {d.drive && <Icons.ArrowUpRight size={12} />}</span></td>
-                <td><span className="badge" style={{ background: "var(--review-bg)", color: "var(--raspberry)" }}>{d.type}</span></td>
-                <td><APill status={d.status} /></td>
-                <td style={{ color: "#888" }}>{d.version}</td>
-                <td style={{ color: "#888" }}>{d.modified}</td>
-                <td onClick={(e) => e.stopPropagation()}><button className="icon-btn" style={{ border: "none" }}>⋯</button></td>
-              </tr>
-            ))}
+            {filtered.map((d) => <DocRow key={d.id} d={d} isGHH={isGHH} />)}
           </tbody>
         </table>
-      ) : <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}><span className="meta">No documents yet</span></div>)}
+      ) : <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}><span className="meta">No documents</span></div>)}
     </Card>
   );
 }
@@ -4167,19 +4440,38 @@ function DocSection({ title, arrow, docs }) {
 function ProjectDocs({ client }) {
   const { ADM, Icons } = window;
   const { showToast } = useAdmin();
+  const [docFilter, setDocFilter] = React.useState("All");
+
   const docs = ADM.DOCS.filter((d) => d.client === client);
   const fromGHH = docs.filter((d) => d.dir === "GHH to Client");
   const fromClient = docs.filter((d) => d.dir === "Client to GHH");
+
+  const FILTERS = ["All", "Has client comments", "Published", "Locked"];
+
   return (
     <div className="admin-body">
-      <div className="row" style={{ justifyContent: "flex-end", gap: 10, marginBottom: 14 }}>
-        <button className="fpill" onClick={() => showToast("Syncing from Drive…")}><Icons.ChevronDown size={13} /> Sync from Drive</button>
-        <button className="fpill" onClick={() => showToast("Upload…")}><Icons.Upload size={13} /> Upload File</button>
-        <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New document…")}><Icons.Plus size={13} /> New Document</button>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        {/* Quick filter */}
+        <div className="row" style={{ gap: 6 }}>
+          {FILTERS.map((f) => (
+            <button key={f} onClick={() => setDocFilter(f)}
+              style={{ borderRadius: 6, padding: "4px 12px", fontSize: 11, fontWeight: 500, cursor: "pointer",
+                background: docFilter === f ? "var(--purple)" : "transparent",
+                color: docFilter === f ? "#fff" : "var(--text-secondary)",
+                border: docFilter === f ? "1px solid var(--purple)" : "1px solid var(--border)" }}>
+              {f}
+            </button>
+          ))}
+        </div>
+        {/* Top actions */}
+        <div className="row" style={{ gap: 10 }}>
+          <button className="fpill" onClick={() => showToast("Syncing from Drive…")}><Icons.ChevronDown size={13} /> Sync from Drive</button>
+          <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => showToast("New document…")}><Icons.Plus size={13} /> New Document</button>
+        </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <DocSection title="From GHH to Client" arrow="↙" docs={fromGHH} />
-        <DocSection title="From Client to GHH" arrow="↗" docs={fromClient} />
+        <DocSection title="From GHH to Client" arrow="↙" docs={fromGHH} isGHH={true} docFilter={docFilter} />
+        <DocSection title="From Client to GHH" arrow="↗" docs={fromClient} isGHH={false} docFilter={docFilter} />
       </div>
     </div>
   );
@@ -4468,7 +4760,7 @@ function ProjectOnboarding({ projectId }) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Onboarding</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Intake</div>
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{subLineText}</div>
           </div>
           <span style={{ fontSize: 12, color: "var(--purple)", fontWeight: 600 }}>Editing</span>
@@ -4586,7 +4878,7 @@ function ProjectOnboarding({ projectId }) {
     <div style={{ padding: "24px 32px" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Onboarding</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Intake</div>
           <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{subLineText}</div>
         </div>
         <button onClick={startEdit}
@@ -4666,6 +4958,26 @@ function ProjectOnboarding({ projectId }) {
           )}
         </div>
       </div>
+
+      {/* Notes */}
+      <IntakeNotes />
+    </div>
+  );
+}
+
+function IntakeNotes() {
+  const [notes, setNotes] = React.useState("");
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Notes</div>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Add notes..."
+        style={{ width: "100%", minHeight: 100, border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "var(--text-primary)", fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+      />
     </div>
   );
 }
@@ -4677,7 +4989,8 @@ function AdminProjectDetail({ id }) {
   const client = ADM.CLIENTS.find((c) => c.id === project.clientId);
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
-  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Project Info", "Onboarding"];
+  const [activeTask, setActiveTask] = React.useState(null);
+  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Intake"];
 
   return (
     <div>
@@ -4707,7 +5020,8 @@ function AdminProjectDetail({ id }) {
       </div>
 
       <div style={{ height: 14 }} />
-      <ProjectTimelineBar project={project} onMore={(ph) => { setFocusPhase(ph); setTab("Tasks"); }} />
+      {activeTask && React.createElement(window.AdminTaskModal, { task: activeTask, onClose: () => setActiveTask(null) })}
+      <ProjectTimelineBar project={project} onMore={(ph) => { setFocusPhase(ph); setTab("Tasks"); }} onTaskClick={(t) => setActiveTask(t)} />
 
       {/* Tabs */}
       <div style={{ padding: "0 32px", background: "#fff", borderBottom: "1px solid var(--border)" }}>
@@ -4721,7 +5035,7 @@ function AdminProjectDetail({ id }) {
       {tab === "Comments" && <ProjectComments setTab={setTab} />}
       {tab === "Notes" && <ProjectNotes setTab={setTab} />}
       {tab === "Project Info" && <ProjectInfo />}
-      {tab === "Onboarding" && <ProjectOnboarding projectId={project.id} />}
+      {tab === "Intake" && <ProjectOnboarding projectId={project.id} />}
     </div>
   );
 }
@@ -4826,12 +5140,9 @@ function AdminClients() {
 
       <FilterBar search={search} onSearch={setSearch}
         right={<>
-          <ToggleChip on={me} onToggle={() => setMe((v) => !v)} icon="User" color="var(--raspberry)">Me</ToggleChip>
-          <button className="fpill"><Icons.ListChecks size={13} /> Columns</button>
           <button className="fpill" style={{ background: "var(--purple)", color: "#fff", borderColor: "var(--purple)" }} onClick={() => setOnboard(true)}><Icons.Plus size={13} /> Onboard New Client</button>
         </>}>
         <FilterPill label="Status" options={["On Track", "Behind"]} active="All" onChange={() => {}} />
-        <FilterPill label="Blocking" options={["Resume", "LinkedIn", "Payment"]} active="All" onChange={() => {}} />
       </FilterBar>
 
       <div className="admin-body">
@@ -5337,35 +5648,57 @@ function AdminTasks() {
 
   const Board = () => {
     const cols = ["Not Started", "In Progress", "Overdue", "Complete"];
-    const map = { "Not Started": "not_started", "In Progress": "in_progress", "Overdue": "overdue", "Complete": "complete" };
-    const all = flatTasks();
+    const map = { "Not Started": "not_started", "In Progress": "in_progress", "Complete": "complete" };
+    // Apply attribute + period filters
+    let boardTasks = periodTasks;
+    if (selStatus !== "All") {
+      if (selStatus === "Overdue") boardTasks = boardTasks.filter(t => isDateOverdue(t));
+      else if (selStatus === "In Progress") boardTasks = boardTasks.filter(t => t.status === "in_progress");
+      else if (selStatus === "Not Started") boardTasks = boardTasks.filter(t => t.status === "not_started");
+      else if (selStatus === "Complete") boardTasks = boardTasks.filter(t => t.status === "complete");
+    }
+    // Overdue column = tasks with past due dates (regardless of status field)
+    const overdueTasks = baseTasks.filter(t => isDateOverdue(t) && t.status !== "complete");
     return (
       <div style={{ display: "flex", gap: 14, alignItems: "flex-start", overflowX: "auto" }} className="scrollbar-thin">
         {cols.map((col) => {
-          const items = all.filter((t) => t.status === map[col]).slice(0, 6);
+          const isOverdueCol = col === "Overdue";
+          const allItems = isOverdueCol ? overdueTasks : boardTasks.filter((t) => t.status === map[col]);
+          const items = isOverdueCol ? allItems.slice(0, 3) : allItems;
+          const totalCount = allItems.length;
           return (
             <div key={col} style={{ flex: 1, minWidth: 240, background: "#F8F7FF", borderRadius: 10, padding: 12 }}>
               <div className="row between" style={{ marginBottom: 12 }}>
-                <span style={{ fontSize: 12, fontWeight: 700 }}>{col}</span>
-                <span className="badge" style={{ background: "#fff", color: "#888", fontSize: 10 }}>{items.length}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isOverdueCol ? "#C0241F" : "inherit" }}>{col}</span>
+                <span className="badge" style={{ background: isOverdueCol ? "#FDEAEA" : "#fff", color: isOverdueCol ? "#C0241F" : "#888", fontSize: 10 }}>{totalCount}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {items.map((t, i) => {
                   const typeColor = TYPE_COLOR(t.title);
+                  const cardBorder = isOverdueCol ? "1px solid rgba(229,57,53,0.35)" : "0.5px solid var(--border)";
+                  const cardBorderLeft = isOverdueCol ? "3px solid #E53935" : `3px solid ${typeColor}`;
+                  const cardBg = isOverdueCol ? "rgba(229,57,53,0.04)" : "#fff";
                   return (
-                    <div key={i} style={{ background: "#fff", border: "0.5px solid var(--border)", borderLeft: `3px solid ${typeColor}`, borderRadius: 8, padding: 12, cursor: "pointer" }} onClick={() => setActiveTask(t)}>
-                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t.title}</div>
-                      <div className="row between" style={{ marginTop: 4 }}>
-                        <div className="row" style={{ gap: 7 }}>
-                          <span className="meta">{t.client}</span>
-                          <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
-                        </div>
+                    <div key={i} style={{ background: cardBg, border: cardBorder, borderLeft: cardBorderLeft, borderRadius: 8, padding: 12, cursor: "pointer" }} onClick={() => setActiveTask(t)}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 5, marginBottom: 6 }}>
+                        {isOverdueCol && <span style={{ flexShrink: 0, fontSize: 13 }}>⚠️</span>}
+                        <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{t.title}</div>
                       </div>
-                      {t.due && <div style={{ fontSize: 11, color: "#AAAAAA", marginTop: 6 }}>Due {t.due}</div>}
+                      <div className="row" style={{ gap: 7, flexWrap: "wrap", marginTop: 4 }}>
+                        <span className="meta">{t.client}</span>
+                        <span className="badge" style={{ background: ADM.phaseColor(t.phase) + "1f", color: ADM.phaseColor(t.phase), fontWeight: 600, fontSize: 10 }}>{t.phase}</span>
+                      </div>
+                      {t.due && <div style={{ fontSize: 11, color: isOverdueCol ? "#E53935" : "#AAAAAA", fontWeight: isOverdueCol ? 600 : 400, marginTop: 6 }}>Due {t.due}</div>}
                     </div>
                   );
                 })}
                 {items.length === 0 && <div className="meta" style={{ textAlign: "center", padding: "12px 0" }}>Empty</div>}
+                {isOverdueCol && totalCount > 3 && (
+                  <button onClick={() => { setTab("My Tasks"); setSelStatus("Overdue"); }}
+                    style={{ width: "100%", marginTop: 4, padding: "8px 0", border: "1px solid rgba(229,57,53,0.3)", borderRadius: 8, background: "transparent", color: "#C0241F", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    View all {totalCount} overdue →
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -5407,8 +5740,8 @@ function AdminTasks() {
         </div>
       </div>
 
-      {/* Tier 3 — Time range (left) · Status pills + count (right) — My Tasks only */}
-      {tab === "My Tasks" && (() => {
+      {/* Tier 3 — Time range (left) · Status pills + count (right) */}
+      {(tab === "My Tasks" || tab === "Board") && (() => {
         const countMap = { "Overdue": periodTasks.filter(t=>isDateOverdue(t)).length, "In Progress": periodTasks.filter(t=>t.status==="in_progress").length, "Not Started": periodTasks.filter(t=>t.status==="not_started").length, "Complete": periodTasks.filter(t=>t.status==="complete").length };
         const PERIODS = ["Today", "This Week", "This Month"];
         return (
@@ -6102,16 +6435,348 @@ function AdminTeam() {
           <span><b style={{ color: "var(--text-primary)" }}>{members.filter(m => m.status === "Inactive").length}</b> inactive</span>
           <span><b style={{ color: "var(--text-primary)" }}>{members.length}</b> total</span>
         </div>
+
       </div>
     </div>
   );
 }
 
 /* ---------------- PACKAGES ---------------- */
+const DELIVERABLE_GROUPS = [
+  {
+    id: "top_level",
+    label: "Top Level",
+    items: [
+      { id: "ssot", name: "Single Source of Truth" },
+      { id: "ws-1", name: "Working Session #1" },
+      { id: "ws-2", name: "Working Session #2" },
+      { id: "ws-3", name: "Working Session #3" },
+    ],
+  },
+  {
+    id: "call_1",
+    label: "Call 1",
+    items: [
+      { id: "resume-v1", name: "Resume V1" },
+      { id: "cover-letter-template", name: "Cover Letter Template" },
+      { id: "cover-letter-scripts", name: "Cover Letter Scripts" },
+      { id: "linkedin-audit", name: "LinkedIn Audit" },
+      { id: "linkedin-banners", name: "LinkedIn Banners" },
+      { id: "toolkit", name: "Toolkit" },
+    ],
+  },
+  {
+    id: "call_2",
+    label: "Call 2",
+    items: [
+      { id: "revisions", name: "Revisions to Existing Materials" },
+      { id: "job-search-strategy", name: "Job Search Strategy" },
+      { id: "exec-brief", name: "1-pg Exec Brief for Networking" },
+      { id: "exec-bio", name: "Exec Bio" },
+      { id: "stories", name: "Stories" },
+      { id: "second-resume", name: "Optional Second Resume / What I Am Looking For Script" },
+      { id: "tell-me-about-yourself", name: "So Tell Me About Yourself Script" },
+      { id: "salary-analysis", name: "Salary Analysis" },
+    ],
+  },
+];
+
+function NewPackageModal({ onClose }) {
+  const { Icons } = window;
+  const { showToast } = useAdmin();
+
+  const [name, setName] = React.useState("");
+  const [desc, setDesc] = React.useState("");
+  const [price, setPrice] = React.useState("");
+  const [weeks, setWeeks] = React.useState("");
+  const [status, setStatus] = React.useState("Active");
+  const [stripePriceId, setStripePriceId] = React.useState("");
+
+  // selected: set of item ids
+  const [selected, setSelected] = React.useState(new Set(["ssot", "ws-1", "ws-2", "resume-v1", "cover-letter-template"]));
+  // extra items added per group: { group_id: [{id, name}] }
+  const [extras, setExtras] = React.useState({});
+
+  // Add New form state
+  const [addingTo, setAddingTo] = React.useState(null); // group id or null
+  const [newName, setNewName] = React.useState("");
+  const [targetGroup, setTargetGroup] = React.useState("top_level");
+
+  React.useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
+
+  const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+
+  const toggleItem = (id) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const handleAddItem = () => {
+    if (!newName.trim()) return;
+    const id = slugify(newName) + "_" + targetGroup;
+    setExtras(prev => ({ ...prev, [targetGroup]: [...(prev[targetGroup] || []), { id, name: newName.trim() }] }));
+    setSelected(prev => { const next = new Set(prev); next.add(id); return next; });
+    setNewName("");
+    setAddingTo(null);
+  };
+
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+
+  const CheckItem = ({ item, isNew }) => {
+    const checked = selected.has(item.id);
+    return (
+      <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderTop: "1px solid var(--border-light)", cursor: "pointer", background: isNew ? "rgba(130,17,255,0.03)" : "#fff" }}
+        onMouseEnter={e => { if (!isNew) e.currentTarget.style.background = "#FAFAFA"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = isNew ? "rgba(130,17,255,0.03)" : "#fff"; }}>
+        <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} style={{ accentColor: "var(--purple)", width: 15, height: 15, flexShrink: 0 }} />
+        <span style={{ flex: 1, fontSize: 13, fontWeight: checked ? 500 : 400, color: checked ? "var(--text-primary)" : "var(--text-secondary)" }}>{item.name}</span>
+        {isNew && <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(130,17,255,0.12)", color: "var(--purple)", borderRadius: 20, padding: "2px 7px" }}>New</span>}
+      </label>
+    );
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={e => e.stopPropagation()}>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>New Package</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><FL>Name</FL><input value={name} onChange={e => setName(e.target.value)} placeholder="Package name" style={inputStyle} /></div>
+          <div><FL>Description</FL><textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe this package…" rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <FL>Price</FL>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#888" }}>$</span>
+                <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" style={{ ...inputStyle, paddingLeft: 24 }} />
+              </div>
+            </div>
+            <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ maxWidth: "100%" }}>
+              <FL>Status</FL>
+              <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option>Active</option><option>Inactive</option>
+              </select>
+            </div>
+            <div>
+              <FL>Stripe Price ID</FL>
+              <input value={stripePriceId} onChange={e => setStripePriceId(e.target.value)} placeholder="price_..." style={inputStyle} />
+            </div>
+          </div>
+
+          {/* Deliverables — 3 grouped sections */}
+          <div>
+            <FL>Deliverables Included</FL>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {DELIVERABLE_GROUPS.map(group => {
+                const groupExtras = extras[group.id] || [];
+                const allItems = [...group.items, ...groupExtras];
+                return (
+                  <div key={group.id} style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+                    {/* Group header */}
+                    <div style={{ background: "#F6F5FB", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--purple)" }}>{group.label}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{allItems.filter(i => selected.has(i.id)).length}/{allItems.length}</span>
+                    </div>
+                    {/* Items */}
+                    {allItems.map(item => <CheckItem key={item.id} item={item} isNew={groupExtras.some(e => e.id === item.id)} />)}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Global Add New form */}
+            {addingTo ? (
+              <div style={{ border: "1px solid var(--purple)", borderRadius: 10, padding: 16, marginTop: 10, background: "#FAF9FF" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--purple)" }}>Add New Deliverable</span>
+                  <button onClick={() => { setAddingTo(null); setNewName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 2 }}><Icons.X size={15} /></button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div>
+                    <FL>Name *</FL>
+                    <input autoFocus value={newName} onChange={e => setNewName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleAddItem(); if (e.key === "Escape") { setAddingTo(null); setNewName(""); } }}
+                      placeholder="Deliverable name" style={inputStyle} />
+                  </div>
+                  <div>
+                    <FL>Group</FL>
+                    <select value={targetGroup} onChange={e => setTargetGroup(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      {DELIVERABLE_GROUPS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                  <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { setAddingTo(null); setNewName(""); }}>Cancel</button>
+                  <button className="btn btn-primary" style={{ fontSize: 12 }} disabled={!newName.trim()} onClick={handleAddItem}>Add</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => { setAddingTo("new"); setTargetGroup("top_level"); setNewName(""); }}
+                style={{ marginTop: 10, background: "none", border: "1px dashed var(--border)", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, color: "var(--purple)", cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <Icons.Plus size={13} /> Add New Deliverable
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { showToast("Package saved."); onClose(); }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewALaCarteModal({ onClose }) {
+  const { ADM } = window;
+  const { showToast } = useAdmin();
+  const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [price, setPrice] = React.useState(0);
+  const [durationWeeks, setDurationWeeks] = React.useState(0);
+  const [active, setActive] = React.useState(true);
+  const [type, setType] = React.useState("call");
+  const [zoomLink, setZoomLink] = React.useState("");
+  const [daysAfterPurchase, setDaysAfterPurchase] = React.useState(3);
+  const [includeOnboarding, setIncludeOnboarding] = React.useState(false);
+  const [addToPackage, setAddToPackage] = React.useState("none");
+  const [addToGroup, setAddToGroup] = React.useState("top_level");
+
+  const packages = (ADM.PACKAGES || []).filter((p) => !p.alc);
+
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 6, padding: "7px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+  const HR = () => <div style={{ borderTop: "1px solid var(--border)", margin: "16px 0" }} />;
+  const Toggle = ({ on, onToggle }) => (
+    <div onClick={onToggle} style={{ width: 36, height: 20, borderRadius: 99, background: on ? "var(--purple)" : "#DDD", position: "relative", cursor: "pointer", flexShrink: 0, transition: "background .2s" }}>
+      <div style={{ width: 16, height: 16, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: on ? 18 : 2, transition: "left .15s" }} />
+    </div>
+  );
+
+  const handleCreate = () => {
+    if (!name.trim()) { showToast("Name is required"); return; }
+    showToast("À la carte item created");
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 28, width: 480, maxWidth: "95vw", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,0.18)" }}>
+        <div className="row between" style={{ marginBottom: 20 }}>
+          <span style={{ fontSize: 16, fontWeight: 700 }}>New À La Carte Item</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)", lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <FL>Name *</FL>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Mock Interview Session" style={inputStyle} />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <FL>Description</FL>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this item..." rows={3} style={{ ...inputStyle, resize: "vertical" }} />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+          <div>
+            <FL>Price</FL>
+            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="$ 0" style={inputStyle} />
+          </div>
+          <div>
+            <FL>Duration (weeks)</FL>
+            <input type="number" value={durationWeeks} onChange={(e) => setDurationWeeks(e.target.value)} placeholder="0" style={inputStyle} />
+          </div>
+        </div>
+
+        <div className="row" style={{ gap: 10, alignItems: "center", marginBottom: 14 }}>
+          <Toggle on={active} onToggle={() => setActive(!active)} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Active</span>
+        </div>
+
+        <HR />
+
+        <div style={{ marginBottom: 12 }}>
+          <FL>Type</FL>
+          <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
+            {["call", "document"].map((t) => (
+              <label key={t} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                <input type="radio" name="alc-type" checked={type === t} onChange={() => setType(t)} />
+                {t === "call" ? "Call" : "Document"}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {type === "call" && (
+          <>
+            <div style={{ marginBottom: 14 }}>
+              <FL>Zoom Link</FL>
+              <input value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} placeholder="https://zoom.us/..." style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <FL>Days after purchase</FL>
+              <input type="number" value={daysAfterPurchase} onChange={(e) => setDaysAfterPurchase(Number(e.target.value))} style={{ ...inputStyle, width: 100 }} />
+            </div>
+          </>
+        )}
+
+        <div className="row" style={{ gap: 10, alignItems: "center", marginBottom: 4 }}>
+          <Toggle on={includeOnboarding} onToggle={() => setIncludeOnboarding(!includeOnboarding)} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Include onboarding step before this</span>
+        </div>
+
+        <HR />
+
+        <div style={{ marginBottom: addToPackage !== "none" ? 12 : 20 }}>
+          <FL>Add to Package (optional)</FL>
+          <select value={addToPackage} onChange={(e) => setAddToPackage(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+            <option value="none">None — standalone item</option>
+            <option disabled>──────────</option>
+            {packages.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+
+        {addToPackage !== "none" && (
+          <div style={{ marginBottom: 20 }}>
+            <FL>Add to Group</FL>
+            <select value={addToGroup} onChange={(e) => setAddToGroup(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <option value="top_level">Top Level</option>
+              <option value="call_1">Call 1</option>
+              <option value="call_2">Call 2</option>
+            </select>
+          </div>
+        )}
+
+        <div className="row" style={{ gap: 10, justifyContent: "flex-end" }}>
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleCreate}>Create Item</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminPackages() {
   const { ADM } = window;
   const { showToast, role } = useAdmin();
   const isWriter = role === "Writer";
+  const isReadOnly = role === "Writer" || role === "Admin Assistant";
+  const [showModal, setShowModal] = React.useState(false);
+  const [showAlcModal, setShowAlcModal] = React.useState(false);
   const PkgCard = ({ p }) => (
     <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16, transition: "border-color .15s" }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--purple)")} onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}>
@@ -6131,14 +6796,16 @@ function AdminPackages() {
   );
   return (
     <div>
-      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isWriter ? null : { label: "+ New Package", onClick: () => showToast("New package…") }} />
+      {showModal && <NewPackageModal onClose={() => setShowModal(false)} />}
+      {showAlcModal && <NewALaCarteModal onClose={() => setShowAlcModal(false)} />}
+      <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isReadOnly ? null : { label: "+ New Package", onClick: () => setShowModal(true) }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.PACKAGES.map((p) => <PkgCard key={p.id} p={p} />)}
         </div>
         <div className="row between" style={{ margin: "26px 0 14px" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>À La Carte</span>
-          {!isWriter && <button className="btn btn-secondary" onClick={() => showToast("New à la carte item…")}>+ New À La Carte Item</button>}
+          {!isReadOnly && <button className="btn btn-secondary" onClick={() => setShowAlcModal(true)}>+ New À La Carte Item</button>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {ADM.ALACARTE.map((a) => (
@@ -6196,17 +6863,68 @@ function AdminTemplates() {
 }
 
 /* ---------------- KNOWLEDGE BASE ---------------- */
+function UploadResourceModal({ onClose }) {
+  const { Icons } = window;
+  const { showToast } = useAdmin();
+  const [title, setTitle] = React.useState("");
+  const [category, setCategory] = React.useState("General");
+  const [visibility, setVisibility] = React.useState("Everyone");
+  const [url, setUrl] = React.useState("");
+  React.useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: 500, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>Upload Resource</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><FL>Title</FL><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Resource title" style={inputStyle} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div><FL>Category</FL>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                {["General", "Writer Resources", "Templates", "Training"].map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div><FL>Visible to</FL>
+              <select value={visibility} onChange={(e) => setVisibility(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option>Everyone</option><option>Admin only</option><option>Writers only</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <FL>Google Doc / Drive URL</FL>
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://docs.google.com/…" style={inputStyle} />
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { showToast("Resource uploaded."); onClose(); }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminKB() {
   const { ADM, Icons } = window;
   const { showToast, role } = useAdmin();
   const isWriter = role === "Writer";
+  const [showUpload, setShowUpload] = React.useState(false);
   const tabs = Object.keys(ADM.KB);
   const [tab, setTab] = React.useState(tabs[0]);
   const allItems = ADM.KB[tab] || [];
   const items = isWriter ? allItems.filter(r => r.writerLinked) : allItems;
   return (
     <div>
-      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={isWriter ? null : { label: "+ Upload Resource", onClick: () => showToast("Upload resource…") }} />
+      {showUpload && <UploadResourceModal onClose={() => setShowUpload(false)} />}
+      <AdminHeader icon="Lightbulb" title="Knowledge Base" subtitle="Internal resource library" action={isWriter ? null : { label: "+ Upload Resource", onClick: () => setShowUpload(true) }} />
       {isWriter && (
         <div style={{ background: "rgba(130,17,255,0.05)", borderBottom: "1px solid var(--purple-border)", padding: "8px 32px", fontSize: 12, color: "var(--purple)", display: "flex", alignItems: "center", gap: 6 }}>
           <Icons.Info size={13} /> Showing articles linked to your assigned projects and clients only.
@@ -6328,6 +7046,14 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   const [editCommentText, setEditCommentText] = React.useState("");
   const [hoverComment, setHoverComment] = React.useState(null);
   const [bookingLink, setBookingLink] = React.useState("");
+  const [published, setPublished] = React.useState(() => !!(task.docId && window.DOC_LOCK?.[task.docId]));
+  const setLock = (isPublished) => {
+    setPublished(isPublished);
+    if (task.docId) {
+      if (window.DOC_LOCK) window.DOC_LOCK[task.docId] = isPublished;
+      window.dispatchEvent(new CustomEvent("doc-lock-change", { detail: { docId: task.docId, published: isPublished } }));
+    }
+  };
   const DEFAULT_SUBS_SA = [
     { id: "d0", done: false, assignee: "Editor" },
     { id: "d1", done: false, assignee: "Writer" },
@@ -6373,7 +7099,7 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ background: "#fff", borderRadius: 16, width: "min(760px, 95vw)", maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
@@ -6428,13 +7154,24 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
-                <button onClick={() => showToast("Published to client.")}
-                  style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
-                  Publish to client
+                <button onClick={() => {
+                    if (published) {
+                      setLock(false);
+                      showToast("File locked — client edit closed.");
+                    } else {
+                      setLock(true);
+                      showToast("Published to client — new major version created.");
+                    }
+                  }}
+                  style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: published ? "#555" : "#C8005A",
+                    background: published ? "#F5F4F2" : "#FFF5F9",
+                    border: published ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
+                  {published ? <><Icons.Lock size={13} /> Lock file</> : "Publish to client"}
                 </button>
               </div>
               <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                   <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
                   <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -6446,6 +7183,18 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
+                {published ? (
+                  <button onClick={() => { setLock(false); showToast("File locked — client edit closed."); }}
+                    style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      color: "#555", background: "#F0EFED", border: "1.5px solid #D0CEC8" }}>
+                    <Icons.Lock size={13} /> Lock file
+                  </button>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: "#AAA", background: "#F8F7F5", border: "1.5px solid #E0DDD8", boxSizing: "border-box" }}>
+                    <Icons.Lock size={13} /> Locked
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -6466,13 +7215,24 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
-                <button onClick={() => showToast("Published to client.")}
-                  style={{ fontSize: 12, fontWeight: 600, color: "#C8005A", background: "#FFF5F9", border: "1.5px solid #F5C0D2", borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center" }}>
-                  Publish to client
+                <button onClick={() => {
+                    if (published) {
+                      setLock(false);
+                      showToast("File locked — client edit closed.");
+                    } else {
+                      setLock(true);
+                      showToast("Published to client — new major version created.");
+                    }
+                  }}
+                  style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: published ? "#555" : "#C8005A",
+                    background: published ? "#F5F4F2" : "#FFF5F9",
+                    border: published ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
+                  {published ? <><Icons.Lock size={13} /> Lock file</> : "Publish to client"}
                 </button>
               </div>
               <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", background: "#FAF9F7" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                   <span style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,160,108,0.08)", color: "#00A06C", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icons.Eye size={15} /></span>
                   <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600 }}>Version to review</div><div className="meta">Client-facing copy</div></div>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -6484,6 +7244,18 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
                     </button>
                   </div>
                 </div>
+                {published ? (
+                  <button onClick={() => { setLock(false); showToast("File locked — client edit closed."); }}
+                    style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      color: "#555", background: "#F0EFED", border: "1.5px solid #D0CEC8" }}>
+                    <Icons.Lock size={13} /> Lock file
+                  </button>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "7px 14px", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    color: "#AAA", background: "#F8F7F5", border: "1.5px solid #E0DDD8", boxSizing: "border-box" }}>
+                    <Icons.Lock size={13} /> Locked
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -6590,6 +7362,278 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   );
 };
 
+/* ============================================================
+   ProjectTimeline — standalone preview component
+   Structures per spec; type switcher shown when lockType is falsy
+   ============================================================ */
+
+const PT_CONFIGS = {
+  standard_15: {
+    label: "15-Day",
+    nodes: [
+      { id: "interest",    type: "circle",  label: "Initial Interest",                                               state: "done"   },
+      { id: "onboard",     type: "circle",  label: "Onboarding",                                                     state: "done"   },
+      { id: "start",       type: "circle",  label: "Start Project",  date: "Apr 1",                                  state: "done"   },
+      { id: "phase1",      type: "circle",  label: "Phase 1",  sublabel: "Day 4",  state: "active",
+        tasks: ["Single Source of Truth"] },
+      { id: "call1",       type: "diamond", label: "Call 1",  sublabel: "Working Session #1",  date: "Apr 8",        state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "phase2",      type: "circle",  label: "Phase 2",  sublabel: "Day 10",  state: "future",
+        tasks: ["Resume V1", "Cover Letter Template", "Cover Letter Scripts", "LinkedIn Audit", "LinkedIn Banners", "Toolkit"] },
+      { id: "call2",       type: "diamond", label: "Call 2",  sublabel: "Working Session #2",  date: "Apr 15",       state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "end_project", type: "circle",  label: "End Project",    date: "Apr 22",                                  state: "future" },
+      { id: "offboard",    type: "circle",  label: "Offboarding",    date: "Apr 22 – Apr 29",  state: "future",
+        tasks: ["Revisions to materials", "Final materials"] },
+    ],
+  },
+  standard_30: {
+    label: "30-Day",
+    nodes: [
+      { id: "interest",    type: "circle",  label: "Initial Interest",                                               state: "done"   },
+      { id: "onboard",     type: "circle",  label: "Onboarding",                                                     state: "done"   },
+      { id: "start",       type: "circle",  label: "Start Project",  date: "Apr 1",                                  state: "done"   },
+      { id: "phase1",      type: "circle",  label: "Phase 1",  sublabel: "Day 4",  state: "active",
+        tasks: ["Single Source of Truth"] },
+      { id: "call1",       type: "diamond", label: "Call 1",  sublabel: "Working Session #1",  date: "Apr 8",        state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "phase2",      type: "circle",  label: "Phase 2",  sublabel: "Day 10",  state: "future",
+        tasks: ["Resume V1", "Cover Letter Template", "Cover Letter Scripts", "LinkedIn Audit", "LinkedIn Banners", "Toolkit"] },
+      { id: "call2",       type: "diamond", label: "Call 2",  sublabel: "Working Session #2",  date: "Apr 15",       state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "phase3",      type: "circle",  label: "Phase 3",  sublabel: "Day 17",  state: "future",
+        tasks: ["Revisions to existing materials", "Job Search Strategy", "1-pg Exec Brief for Networking", "Exec Bio", "5 Stories", "Optional second resume", "What I Am Looking For Script", "So Tell Me About Yourself Script", "Salary Analysis"] },
+      { id: "call3",       type: "diamond", label: "Call 3",  sublabel: "Working Session #3",  date: "Apr 22",       state: "future", tasks: ["Summary email from Call #3 (due same day)"] },
+      { id: "phase4",      type: "circle",  label: "Phase 4",  sublabel: "Buffer",  state: "future",
+        tasks: ["Revisions to materials"] },
+      { id: "end_project", type: "circle",  label: "End Project",    date: "Apr 29",                                  state: "future" },
+      { id: "offboard",    type: "circle",  label: "Offboarding",    date: "Apr 29 – May 6",  state: "future",
+        tasks: ["Final materials"] },
+    ],
+  },
+  a_la_carte: {
+    label: "À La Carte",
+    nodes: [
+      { id: "interest", type: "circle",  label: "Initial Interest",                                                  state: "done"   },
+      { id: "onboard",  type: "circle",  label: "Onboarding",                                                        state: "done"   },
+      { id: "start",    type: "circle",  label: "Start Project",  date: "Apr 1",                                     state: "done"   },
+      { id: "phase1",   type: "circle",  label: "Phase 1",  state: "active",
+        tasks: ["Résumé + Cover Letter", "OR — 1-page Executive Brief", "OR — 10-pt LinkedIn Audit"],
+        tasksNote: "Selected item due Day 4 (depends on item selected)", tasksStyle: "or" },
+      { id: "call1",    type: "diamond", label: "Call 1",  sublabel: "Working Session #1",  date: "Apr 8",           state: "future", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "call2",    type: "diamond", label: "Call 2",  sublabel: "Working Session #2",  date: "Apr 15",          state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",    date: "Apr 22",                                     state: "future" },
+    ],
+  },
+  mock_interview: {
+    label: "Mock Interview",
+    nodes: [
+      { id: "interest", type: "circle",  label: "Initial Interest",                                                  state: "done"   },
+      { id: "onboard",  type: "circle",  label: "Onboarding",                                                        state: "done"   },
+      { id: "start",    type: "circle",  label: "Start Project",  date: "Apr 1",                                     state: "done"   },
+      { id: "call1",    type: "diamond", label: "Call 1",  sublabel: "Mock Interview #1",    date: "Apr 8",          state: "active", tasks: ["Summary email from Call #1 (due same day)"] },
+      { id: "call2",    type: "diamond", label: "Call 2",  sublabel: "Mock Interview #2",    date: "Apr 15",         state: "future", tasks: ["Summary email from Call #2 (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",    date: "Apr 22",                                     state: "future" },
+    ],
+  },
+  coaching_1off: {
+    label: "Coaching — 1-off Power Session",
+    nodes: [
+      { id: "interest", type: "circle",  label: "Initial Interest",                                                  state: "done"   },
+      { id: "onboard",  type: "circle",  label: "Onboarding",                                                        state: "done"   },
+      { id: "start",    type: "circle",  label: "Start Project",  date: "Apr 1",                                     state: "done"   },
+      { id: "call1",    type: "diamond", label: "Call 1",  sublabel: "Coaching Session",     date: "Apr 8",          state: "active", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",    date: "Apr 15",                                     state: "future" },
+      { id: "offboard", type: "circle",  label: "Offboarding",    date: "Apr 15 – Apr 22",                            state: "future" },
+    ],
+  },
+  coaching_momentum: {
+    label: "Coaching — Momentum Package",
+    nodes: [
+      { id: "interest", type: "circle",  label: "Initial Interest",                                                  state: "done"   },
+      { id: "onboard",  type: "circle",  label: "Onboarding",                                                        state: "done"   },
+      { id: "start",    type: "circle",  label: "Start Project",  date: "Apr 1",                                     state: "done"   },
+      { id: "call1",    type: "diamond", label: "Call 1",  sublabel: "Coaching Session #1",  date: "Apr 8",          state: "active", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "call2",    type: "diamond", label: "Call 2",  sublabel: "Coaching Session #2",  date: "Apr 15",         state: "future", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "call3",    type: "diamond", label: "Call 3",  sublabel: "Coaching Session #3",  date: "Apr 22",         state: "future", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "call4",    type: "diamond", label: "Call 4",  sublabel: "Coaching Session #4",  date: "Apr 29",         state: "future", tasks: ["Summary email from Coaching Session (due same day)"] },
+      { id: "end",      type: "circle",  label: "Project End",    date: "May 6",                                      state: "future" },
+    ],
+  },
+};
+
+function PTNode({ node, selected, onClick }) {
+  const isDone   = node.state === "done";
+  const isActive = node.state === "active";
+  const isFuture = node.state === "future";
+  const isDiamond = node.type === "diamond";
+  const isSegment = node.type === "segment";
+  const purple = "#8211FF";
+  const grey   = "#C8C6C0";
+
+  let shapeStyle;
+  if (isSegment) {
+    shapeStyle = {
+      width: "100%", height: 10, borderRadius: 3,
+      background: isFuture ? grey : purple,
+      cursor: "pointer",
+    };
+  } else if (isDiamond) {
+    const sz = 18;
+    let bg = isFuture ? grey : purple;
+    let border = "none", shadow = "none";
+    if (isActive) { bg = "#fff"; border = `2.5px solid ${purple}`; shadow = `0 0 0 3px rgba(130,17,255,0.15)`; }
+    shapeStyle = {
+      width: sz, height: sz, background: bg, border, boxShadow: shadow,
+      transform: `rotate(45deg) ${selected ? "scale(1.18)" : ""}`,
+      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+    };
+  } else {
+    const sz = 18;
+    let bg = isFuture ? grey : purple;
+    let border = "none", shadow = "none";
+    if (isActive) { bg = "#fff"; border = `2.5px solid ${purple}`; shadow = `0 0 0 3px rgba(130,17,255,0.15)`; }
+    shapeStyle = {
+      width: sz, height: sz, borderRadius: 99, background: bg, border, boxShadow: shadow,
+      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+      transform: selected ? "scale(1.18)" : "scale(1)",
+    };
+  }
+
+  const labelColor = isFuture ? "#AAA" : isActive ? purple : "#555";
+  const labelWeight = isActive ? 600 : 400;
+
+  return (
+    <div onClick={() => onClick(node)}
+      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+        flex: isSegment ? "1 1 40px" : "0 0 auto", minWidth: isSegment ? 24 : 0, cursor: "pointer" }}>
+      {isSegment ? (
+        <div style={{ width: "100%", display: "flex", alignItems: "center", height: 18 }}>
+          <div style={shapeStyle} />
+        </div>
+      ) : (
+        <div style={shapeStyle}>
+          {isDone && (
+            <span style={{ color: "#fff", fontSize: 9, fontWeight: 700,
+              transform: isDiamond ? "rotate(-45deg)" : "none", display: "block", lineHeight: 1 }}>✓</span>
+          )}
+        </div>
+      )}
+      <div style={{ textAlign: "center", maxWidth: 68 }}>
+        <div style={{ fontSize: 10, color: labelColor, fontWeight: labelWeight, lineHeight: 1.25 }}>{node.label}</div>
+        {node.sublabel && <div style={{ fontSize: 9, color: "#AAA", lineHeight: 1.2, marginTop: 2 }}>{node.sublabel}</div>}
+        {node.date && <div style={{ fontSize: 9, color: isFuture ? "#BBB" : "#888", lineHeight: 1.2, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{node.date}</div>}
+      </div>
+    </div>
+  );
+}
+
+function ProjectTimeline({ lockType }) {
+  const typeKeys = Object.keys(PT_CONFIGS);
+  const [activeType, setActiveType] = React.useState(typeKeys[0]);
+  const [selected, setSelected] = React.useState(null);
+  const purple = "#8211FF";
+
+  const config = PT_CONFIGS[activeType];
+  const nodes  = config.nodes;
+
+  const handleSelect = (node) => setSelected((p) => p && p.id === node.id ? null : node);
+
+  return (
+    <div style={{ padding: "24px 32px" }}>
+      {/* Type tabs */}
+      {!lockType && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
+          {typeKeys.map((k) => (
+            <button key={k} onClick={() => { setActiveType(k); setSelected(null); }}
+              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer",
+                border: "1.5px solid",
+                background: activeType === k ? purple : "#fff",
+                color: activeType === k ? "#fff" : "#555",
+                borderColor: activeType === k ? purple : "#D8D5CF" }}>
+              {PT_CONFIGS[k].label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Rail card */}
+      <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 14, padding: "24px 20px 20px", overflowX: "auto" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#333", marginBottom: 20 }}>{config.label}</div>
+        <div style={{ display: "flex", alignItems: "flex-start", minWidth: nodes.length * 72 }}>
+          {nodes.map((node, i) => (
+            <React.Fragment key={node.id}>
+              {i > 0 && (
+                <div style={{
+                  flex: 1, height: 2, alignSelf: "flex-start", marginTop: 8, minWidth: 10,
+                  background: node.state === "future" ? "#E0DDD7" : purple,
+                }} />
+              )}
+              <PTNode node={node} selected={selected && selected.id === node.id} onClick={handleSelect} />
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* Detail panel */}
+      {selected && (
+        <div style={{ marginTop: 14, background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "18px 22px", animation: "fade .15s ease" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#222" }}>{selected.label}</div>
+              {selected.sublabel && <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{selected.sublabel}</div>}
+            </div>
+            {selected.type === "diamond" && (
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <button style={{ padding: "5px 12px", fontSize: 12, borderRadius: 7, border: "1px solid #D8D5CF", background: "#fff", cursor: "pointer" }}>Reschedule</button>
+                <button style={{ padding: "5px 12px", fontSize: 12, borderRadius: 7, border: "none", background: purple, color: "#fff", cursor: "pointer" }}>Join Zoom</button>
+              </div>
+            )}
+          </div>
+          {selected.tasks && selected.tasks.length > 0 && (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#AAA", marginBottom: 8 }}>Tasks</div>
+              {selected.tasksStyle === "or" ? (
+                <div style={{ border: "1px solid #E8E6E0", borderRadius: 10, overflow: "hidden" }}>
+                  {selected.tasks.map((t, i) => {
+                    const isOr = t.startsWith("OR —");
+                    return (
+                      <div key={i}>
+                        {isOr && <div style={{ textAlign: "center", fontSize: 10, fontWeight: 700, color: "#AAA", letterSpacing: 1, padding: "4px 0", background: "#F8F7F5", borderTop: "1px solid #E8E6E0", borderBottom: "1px solid #E8E6E0" }}>OR</div>}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#333", padding: "10px 14px", background: "#fff" }}>
+                          <div style={{ width: 7, height: 7, borderRadius: 99, background: "#8211FF", flexShrink: 0 }} />
+                          {isOr ? t.replace("OR — ", "") : t}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {selected.tasks.map((t, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#444" }}>
+                      <div style={{ width: 16, height: 16, borderRadius: 4, border: "1.5px solid #C8C6C0", flexShrink: 0 }} />
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selected.tasksNote && (
+                <div style={{ fontSize: 11, color: "#999", marginTop: 8, fontStyle: "italic" }}>{selected.tasksNote}</div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminTimelineTypes() {
+  return (
+    <div>
+      <AdminHeader icon="Folder" title="Timeline Types" subtitle="Preview of all project timeline structures (sample data — not a real project)." />
+      <ProjectTimeline />
+    </div>
+  );
+}
+
 </script><script type="text/babel">
 /* ============================================================
    Admin app: routing + context  →  window.AdminApp
@@ -6630,9 +7674,16 @@ function AdminApp({ route }) {
     case "schedule": screen = <AdminSchedule />; break;
     case "inbox": screen = <AdminInbox />; break;
     case "team": screen = <AdminTeam />; break;
-    case "packages": screen = <AdminPackages />; break;
+    case "packages":
+      if (role === "Writer") { screen = <AccessDenied />; }
+      else { screen = <AdminPackages />; }
+      break;
     case "task-templates": screen = <AdminTemplates />; break;
-    case "knowledge-base": screen = <AdminKB />; break;
+    case "knowledge-base":
+      if (role === "Writer") { screen = <AccessDenied />; }
+      else { screen = <AdminKB />; }
+      break;
+    case "timeline-types": screen = <AdminTimelineTypes />; break;
     default: screen = <AdminDashboard />;
   }
 

@@ -37,9 +37,15 @@ function AdminApp({ route }) {
     case "schedule": screen = <AdminSchedule />; break;
     case "inbox": screen = <AdminInbox />; break;
     case "team": screen = <AdminTeam />; break;
-    case "packages": screen = <AdminPackages />; break;
+    case "packages":
+      if (role === "Writer") { screen = <AccessDenied />; }
+      else { screen = <AdminPackages />; }
+      break;
     case "task-templates": screen = <AdminTemplates />; break;
-    case "knowledge-base": screen = <AdminKB />; break;
+    case "knowledge-base":
+      if (role === "Writer") { screen = <AccessDenied />; }
+      else { screen = <AdminKB />; }
+      break;
     case "timeline-types": screen = <AdminTimelineTypes />; break;
     default: screen = <AdminDashboard />;
   }
