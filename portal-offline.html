@@ -7358,6 +7358,16 @@ Kate`;
           </div>
         )}
 
+        {/* Service package link — Email tasks only */}
+        {isEmail && (
+          <div style={{ marginBottom: 16 }}>
+            <button onClick={() => showToast("Service package popup — coming soon")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--purple-light)", color: "var(--purple)", border: "1px solid var(--purple-border)", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+              <Icons.Briefcase size={13} /> View service package
+            </button>
+          </div>
+        )}
+
         {/* Email / Summary section — Email tasks only */}
         {isEmail && (
           <div style={{ marginBottom: 20 }}>
@@ -7545,8 +7555,8 @@ Kate`;
             style={{ width: "100%", minHeight: 80, border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.5 }} />
         </div>
 
-        {/* Comments — hidden for Call tasks */}
-        {!isCall && <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
+        {/* Comments — hidden for Call and Email tasks */}
+        {!isCall && !isEmail && <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)" }}>Comments</div>
             <div style={{ display: "flex", gap: 4 }}>
