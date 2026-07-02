@@ -766,7 +766,8 @@ function TeamMemberModal({ member, onSave, onClose }) {
     onSave(updated);
   };
 
-  const ROLE_COLORS = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
+  const ROLE_COLORS = { admin: "#8211FF", writer: "#00A06C", "admin assistant": "#185FA5" };
+  const ROLE_LABELS = { admin: "Admin", writer: "Writer", "admin assistant": "Admin Assistant" };
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -811,32 +812,26 @@ function TeamMemberModal({ member, onSave, onClose }) {
           {/* Roles */}
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 8 }}>Roles * <span style={{ fontWeight: 400, color: "#aaa" }}>(select all that apply)</span></label>
-            <div style={{ display: "flex", gap: 8 }}>
-              {["admin","writer","editor"].map(r => {
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {["admin","writer","admin assistant"].map(r => {
                 const active = form.roles.includes(r);
                 return (
                   <button key={r} onClick={() => toggleRole(r)}
-                    style={{ padding: "7px 16px", borderRadius: 99, fontSize: 12, fontWeight: 600, cursor: "pointer", border: `1.5px solid ${active ? ROLE_COLORS[r] : "var(--border)"}`, background: active ? ROLE_COLORS[r] : "transparent", color: active ? "#fff" : "var(--text-muted)", transition: "all .12s", textTransform: "capitalize" }}>
-                    {r}
+                    style={{ padding: "7px 16px", borderRadius: 99, fontSize: 12, fontWeight: 600, cursor: "pointer", border: `1.5px solid ${active ? ROLE_COLORS[r] : "var(--border)"}`, background: active ? ROLE_COLORS[r] : "transparent", color: active ? "#fff" : "var(--text-muted)", transition: "all .12s" }}>
+                    {ROLE_LABELS[r]}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Capacity + Status row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Capacity (active / max)</label>
-              <input className="input" placeholder="0 / 5" value={form.cap} onChange={e => set("cap", e.target.value)} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Status</label>
-              <select className="input" value={form.status} onChange={e => set("status", e.target.value)}>
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </div>
+          {/* Status */}
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>Status</label>
+            <select className="input" value={form.status} onChange={e => set("status", e.target.value)}>
+              <option>Active</option>
+              <option>Inactive</option>
+            </select>
           </div>
         </div>
 
