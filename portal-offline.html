@@ -6526,7 +6526,8 @@ function AdminTeam() {
     }
   }, []);
 
-  const ROLE_BG = { admin: "#8211FF", writer: "#00A06C", editor: "#FF6B35" };
+  const ROLE_BG = { admin: "#8211FF", writer: "#00A06C", editor: "#185FA5", "admin assistant": "#185FA5" };
+  const ROLE_DISPLAY = { admin: "Admin", writer: "Writer", editor: "Admin Assistant", "admin assistant": "Admin Assistant" };
 
   const rows = members.filter(t =>
     !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.email.toLowerCase().includes(search.toLowerCase())
@@ -6590,7 +6591,7 @@ function AdminTeam() {
                     <td style={{ color: "#888", fontSize: 13 }}>{t.email}</td>
                     <td>
                       <div className="row" style={{ gap: 5 }}>
-                        {t.roles.map(r => <span key={r} className="badge" style={{ background: ROLE_BG[r], color: "#fff", fontSize: 10 }}>{r}</span>)}
+                        {t.roles.map(r => <span key={r} className="badge" style={{ background: ROLE_BG[r], color: "#fff", fontSize: 10 }}>{ROLE_DISPLAY[r] || r}</span>)}
                       </div>
                     </td>
                     <td>
