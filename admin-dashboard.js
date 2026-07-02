@@ -273,7 +273,7 @@ function FocusRightNow({ setActiveTask }) {
   );
 }
 
-/* ---------- Projects summary card (dark) ---------- */
+/* ---------- Projects summary card (dark) — Admin / Admin Assistant ---------- */
 function ProjectsCard({ navigate, style }) {
   const { ADM } = window;
   const behind = ADM.PROJECTS.filter(p => p.status === "Behind").length;
@@ -309,6 +309,48 @@ function ProjectsCard({ navigate, style }) {
           </button>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ---------- My Projects card (dark) — Writer role ---------- */
+function WriterProjectsCard({ navigate, style }) {
+  const WRITER_PROJECTS = [
+    { id: "p4", name: "Dana Okafor", client: "Dana Okafor", status: "On Track",  done: 18, total: 30 },
+    { id: "p1", name: "Maya Chen",   client: "Maya Chen",   status: "Overdue",   done: 12, total: 30 },
+    { id: "p2", name: "Sarah Klein", client: "Sarah Klein", status: "At Risk",   done: 25, total: 30 },
+    { id: "p6", name: "Tessa Wright",client: "Tessa Wright",status: "On Track",  done: 8,  total: 15 },
+  ];
+  const DOT = { "On Track": "#00A06C", "At Risk": "#E57300", "Overdue": "#E53935" };
+  const shown = WRITER_PROJECTS.slice(0, 8);
+  return (
+    <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)", ...style }}>
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>My Projects</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.08)", borderRadius: 99, padding: "2px 8px" }}>{shown.length}</span>
+      </div>
+      {shown.map((p, i) => {
+        const pct = Math.round((p.done / p.total) * 100);
+        const dot = DOT[p.status] || "#888";
+        return (
+          <div key={p.id}
+            style={{ padding: "10px 6px", borderTop: i ? "0.5px solid rgba(255,255,255,0.08)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
+            onClick={() => navigate("#/admin/projects/" + p.id)}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            <div className="row between" style={{ marginBottom: 6 }}>
+              <div className="row" style={{ gap: 8, minWidth: 0, flex: 1 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 99, background: dot, flex: "0 0 8px", marginTop: 3 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
+              </div>
+              <span style={{ fontSize: 12, fontVariantNumeric: "tabular-nums", color: "rgba(255,255,255,0.55)", flexShrink: 0, marginLeft: 8 }}>{p.done}/{p.total}</span>
+            </div>
+            <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", overflow: "hidden", marginLeft: 16 }}>
+              <div style={{ width: pct + "%", height: "100%", background: dot, borderRadius: 2, transition: "width .3s" }} />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -422,7 +464,10 @@ function AdminDashboard() {
           {/* Right column — both cards share identical width */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "stretch" }}>
             {role !== "Writer" && <WriterCapacityCard navigate={navigate} />}
-            <ProjectsCard navigate={navigate} style={{ flex: 1 }} />
+            {role === "Writer"
+              ? <WriterProjectsCard navigate={navigate} style={{ flex: 1 }} />
+              : <ProjectsCard navigate={navigate} style={{ flex: 1 }} />
+            }
           </div>
 
         </div>
