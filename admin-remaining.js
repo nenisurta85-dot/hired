@@ -1714,8 +1714,30 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
   );
 
   const tt = (task.title || "").toLowerCase();
-  const isCall = /schedule|call|session|zoom/.test(tt);
-  const isUpload = /upload|submit|provide|create/.test(tt) && !isCall;
+  const isEmail = task.type === "Email" || /^email\s*[—–-]/.test(tt);
+  const isCall = !isEmail && /schedule|call|session|zoom/.test(tt);
+  const isUpload = !isEmail && /upload|submit|provide|create/.test(tt) && !isCall;
+
+  const EMAIL_PLACEHOLDER = `Hi ${task.client || "there"},
+
+Great connecting on our call today! Here's a quick recap of what we covered:
+
+• Reviewed your career history and target roles — focusing on senior ops / COO-track positions
+• Aligned on your core narrative: "operational architect who scales teams"
+• Agreed on priorities: résumé first, then LinkedIn headline, then cover letter template
+
+Next steps:
+1. I'll deliver the first draft of your résumé by May 3rd
+2. Please send over any recent performance reviews or promo docs by Apr 30th
+3. Our next session is scheduled for May 6th at 2:00 PM
+
+Feel free to reply here with any questions before then.
+
+Warmly,
+Kate`;
+
+  const [emailBody, setEmailBody] = React.useState(task.emailBody || EMAIL_PLACEHOLDER);
+  const [emailPublished, setEmailPublished] = React.useState(task.emailPublished || false);
 
   const STATUS_OPTIONS = ["not_started", "in_progress", "overdue", "complete"];
   const STATUS_LABELS = { not_started: "Not Started", in_progress: "In Progress", overdue: "Overdue", complete: "Complete" };
@@ -1787,8 +1809,32 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
           </div>
         )}
 
-        {/* Type-specific section */}
-        {isCall ? null : isUpload ? (
+        {/* Email / Summary section — Email tasks only */}
+        {isEmail && (
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>Email / Summary</FieldLabel>
+            <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
+              style={{ width: "100%", minHeight: 240, border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6, color: "var(--text-primary)" }} />
+            <button onClick={() => {
+                setEmailPublished(v => !v);
+                showToast(emailPublished ? "Summary unpublished." : "Summary published to client.");
+              }}
+              style={{ marginTop: 10, fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "8px 16px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                color: emailPublished ? "#555" : "#C8005A",
+                background: emailPublished ? "#F5F4F2" : "#FFF5F9",
+                border: emailPublished ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
+              {emailPublished ? <><Icons.Check size={13} /> Published to client</> : "Publish to client"}
+            </button>
+            {emailPublished && (
+              <div style={{ marginTop: 8, fontSize: 12, color: "#00A06C", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                <Icons.CircleCheck size={13} /> Client can see this summary in their dashboard.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Type-specific section — not shown for Email tasks */}
+        {!isEmail && (isCall ? null : isUpload ? (
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>Documents</FieldLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1910,10 +1956,10 @@ window.AdminTaskModal = function StandaloneAdminTaskModal({ task, onClose }) {
               </div>
             </div>
           </div>
-        )}
+        ))}
 
-        {/* Subtasks — hidden for Call tasks */}
-        {!isCall && subRows.length > 0 && (
+        {/* Subtasks — hidden for Call and Email tasks */}
+        {!isCall && !isEmail && subRows.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>Subtasks</FieldLabel>
             <div style={{ background: "#F8F7FF", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>

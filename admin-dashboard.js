@@ -222,6 +222,8 @@ function FocusRightNow({ setActiveTask }) {
     { type: "Review", title: "Review doc", client: "Maya Chen", status: "ready", due: "Apr 28", action: "Review", borderColor: "#8211FF", dot: "#8211FF", badge: "Review", badgeBg: "rgba(130,17,255,0.1)", badgeFg: "#6009CC", icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)" },
     { type: "Review", title: "Review doc", client: "Maya Chen", status: "ready", due: "Apr 28", action: "Review", borderColor: "#8211FF", dot: "#8211FF", badge: "Review", badgeBg: "rgba(130,17,255,0.1)", badgeFg: "#6009CC", icon: "Eye", iconBg: "rgba(130,17,255,0.08)", iconFg: "var(--purple)" },
     { type: "Create", title: "Create doc", client: "Dana Okafor", status: "not started", due: "Apr 28", action: "Open", borderColor: "#00A06C", dot: "#00A06C", badge: "Create", badgeBg: "rgba(0,160,108,0.1)", badgeFg: "#007A52", icon: "FilePlus", iconBg: "rgba(0,160,108,0.1)", iconFg: "#00A06C" },
+    { type: "Email", title: "Email — Maya Chen", client: "Maya Chen", status: "in progress", due: "Apr 30", action: "Open", borderColor: "#185FA5", dot: "#185FA5", badge: "Email", badgeBg: "rgba(24,95,165,0.1)", badgeFg: "#0C447C", icon: "Mail", iconBg: "rgba(24,95,165,0.08)", iconFg: "#185FA5" },
+    { type: "Email", title: "Email — Dana Okafor", client: "Dana Okafor", status: "not started", due: "May 2", action: "Open", borderColor: "#185FA5", dot: "#185FA5", badge: "Email", badgeBg: "rgba(24,95,165,0.1)", badgeFg: "#0C447C", icon: "Mail", iconBg: "rgba(24,95,165,0.08)", iconFg: "#185FA5" },
   ];
 
   const filtered = tab === "All" ? allTasks : allTasks.filter(t => t.type === tab);
@@ -234,7 +236,7 @@ function FocusRightNow({ setActiveTask }) {
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Focus Right Now</span>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
-          {["All", "Call", "Review", "Create"].map((t) => (
+          {["All", "Call", "Review", "Create", "Email"].map((t) => (
             <button key={t} onClick={() => setTab(t)}
               style={{ fontSize: 11, fontWeight: 500, padding: "4px 11px", borderRadius: 99, cursor: "pointer", border: "1px solid", background: tab === t ? "var(--purple)" : "transparent", color: tab === t ? "#fff" : "var(--text-muted)", borderColor: tab === t ? "var(--purple)" : "var(--border)" }}>
               {t}
@@ -315,14 +317,33 @@ function ProjectsCard({ navigate, style }) {
 
 /* ---------- My Projects card (dark) — Writer role ---------- */
 function WriterProjectsCard({ navigate, style }) {
+  const STATUS_COLOR = {
+    "Overdue":     "#F26D6D",
+    "At Risk":     "#F5A524",
+    "On Track":    "#31D0AA",
+    "Offboarding": "#59B0F5",
+    "90-day":      "#C58BF2",
+  };
+  const today = new Date();
+  const parseDate = (s) => {
+    if (!s) return null;
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+  };
+  const daysLeft = (endStr) => {
+    const end = parseDate(endStr);
+    if (!end) return null;
+    return Math.max(0, Math.ceil((end - today) / 86400000));
+  };
+
   const WRITER_PROJECTS = [
-    { id: "p4", name: "Dana Okafor", client: "Dana Okafor", status: "On Track",  done: 18, total: 30 },
-    { id: "p1", name: "Maya Chen",   client: "Maya Chen",   status: "Overdue",   done: 12, total: 30 },
-    { id: "p2", name: "Sarah Klein", client: "Sarah Klein", status: "At Risk",   done: 25, total: 30 },
-    { id: "p6", name: "Tessa Wright",client: "Tessa Wright",status: "On Track",  done: 8,  total: 15 },
+    { id: "p4", name: "Dana Okafor",  status: "On Track",    done: 18, total: 30, end: "May 22, 2026" },
+    { id: "p1", name: "Maya Chen",    status: "Overdue",     done: 12, total: 30, end: "May 22, 2026" },
+    { id: "p2", name: "Sarah Klein",  status: "At Risk",     done: 25, total: 30, end: "May 22, 2026" },
+    { id: "p6", name: "Tessa Wright", status: "Offboarding", done: 14, total: 15, end: "Jul 14, 2026" },
   ];
-  const DOT = { "On Track": "#00A06C", "At Risk": "#E57300", "Overdue": "#E53935" };
   const shown = WRITER_PROJECTS.slice(0, 8);
+
   return (
     <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)", ...style }}>
       <div className="row between" style={{ marginBottom: 14 }}>
@@ -331,22 +352,24 @@ function WriterProjectsCard({ navigate, style }) {
       </div>
       {shown.map((p, i) => {
         const pct = Math.round((p.done / p.total) * 100);
-        const dot = DOT[p.status] || "#888";
+        const color = STATUS_COLOR[p.status] || "#888";
+        const dl = p.status === "Offboarding" ? daysLeft(p.end) : null;
+        const statusLabel = dl !== null ? `${p.status} · ${dl} days left` : p.status;
         return (
           <div key={p.id}
             style={{ padding: "10px 6px", borderTop: i ? "0.5px solid rgba(255,255,255,0.08)" : "none", borderRadius: 8, cursor: "pointer", transition: "background .12s" }}
             onClick={() => navigate("#/admin/projects/" + p.id)}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <div className="row between" style={{ marginBottom: 6 }}>
-              <div className="row" style={{ gap: 8, minWidth: 0, flex: 1 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 99, background: dot, flex: "0 0 8px", marginTop: 3 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
-              </div>
-              <span style={{ fontSize: 12, fontVariantNumeric: "tabular-nums", color: "rgba(255,255,255,0.55)", flexShrink: 0, marginLeft: 8 }}>{p.done}/{p.total}</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 5 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 99, background: color, flex: "0 0 8px", marginBottom: 1 }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#fff", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {p.name} <span style={{ fontWeight: 500, color, fontSize: 12 }}>({statusLabel})</span>
+              </span>
+              <span style={{ fontSize: 12, fontVariantNumeric: "tabular-nums", color: "rgba(255,255,255,0.55)", flexShrink: 0 }}>{p.done}/{p.total}</span>
             </div>
             <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)", overflow: "hidden", marginLeft: 16 }}>
-              <div style={{ width: pct + "%", height: "100%", background: dot, borderRadius: 2, transition: "width .3s" }} />
+              <div style={{ width: pct + "%", height: "100%", background: color, borderRadius: 2, transition: "width .3s" }} />
             </div>
           </div>
         );
