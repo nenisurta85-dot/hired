@@ -98,20 +98,145 @@ function AddBanner() {
   );
 }
 
+/* ---------- Share your experience widgets ---------- */
+function ShareExperienceRow() {
+  const { Icons } = window;
+  const [done, setDone] = React.useState({ review: false, linkedin: false, survey: false, video: false });
+  const [videoConfirm, setVideoConfirm] = React.useState(false);
+  const fileRef = React.useRef(null);
+
+  const markDone = (key) => setDone(d => ({ ...d, [key]: true }));
+
+  const DoneOverlay = () => (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "12px 0 4px" }}>
+      <div style={{ width: 36, height: 36, borderRadius: 99, background: "rgba(0,160,108,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icons.Check size={18} style={{ color: "#00A06C" }} />
+      </div>
+      <span style={{ fontSize: 12, fontWeight: 600, color: "#00A06C" }}>Done — thank you!</span>
+    </div>
+  );
+
+  const WIDGETS = [
+    {
+      key: "review",
+      bg: "#FBEAF0", border: "#F0AEC5", chip: "#F4C0D1",
+      titleColor: "#4B1528", textColor: "#993556", btnColor: "#993556",
+      icon: "Star", title: "Leave a Google review",
+      text: "Loved the process? A few kind words help others find us.",
+      actions: (
+        <button
+          style={{ background: "#993556", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "100%" }}
+          onClick={() => markDone("review")}>
+          Leave a review
+        </button>
+      ),
+    },
+    {
+      key: "linkedin",
+      bg: "#E6F1FB", border: "#9BC6EE", chip: "#B5D4F4",
+      titleColor: "#042C53", textColor: "#0C447C", btnColor: "#185FA5",
+      icon: "Linkedin", title: "Write a LinkedIn recommendation",
+      text: "Vouch for your writer — it takes two minutes and means a lot.",
+      actions: (
+        <button
+          style={{ background: "#185FA5", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "100%" }}
+          onClick={() => markDone("linkedin")}>
+          Write recommendation
+        </button>
+      ),
+    },
+    {
+      key: "survey",
+      bg: "#E1F5EE", border: "#7FD3B5", chip: "#9FE1CB",
+      titleColor: "#085041", textColor: "#0F6E56", btnColor: "#0F6E56",
+      icon: "ClipboardCheck", title: "Complete the satisfaction survey",
+      text: "Tell us how we did — your feedback shapes what's next.",
+      actions: (
+        <a href="#survey-placeholder"
+          style={{ display: "block", background: "#0F6E56", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "100%", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}
+          onClick={(e) => { e.preventDefault(); markDone("survey"); }}>
+          Take the survey
+        </a>
+      ),
+    },
+    {
+      key: "video",
+      bg: "#EEEDFE", border: "#B8B2F0", chip: "#CECBF6",
+      titleColor: "#26215C", textColor: "#3C3489", btnColor: "#3C3489",
+      icon: "Video", title: "Record a video testimonial",
+      text: "Share your story on camera — or let us handle it for you.",
+      actions: null,
+    },
+  ];
+
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 14 }}>Help us grow — share your experience</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}
+        className="share-experience-grid">
+        {WIDGETS.map((w) => {
+          const IconCmp = Icons[w.icon];
+          const isDone = done[w.key];
+          return (
+            <div key={w.key}
+              style={{ background: w.bg, border: `1px solid ${w.border}`, borderRadius: 14, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 12, opacity: isDone ? 0.7 : 1, transition: "opacity .2s" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: w.chip, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: w.titleColor }}>
+                  {IconCmp && <IconCmp size={18} />}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: w.titleColor, lineHeight: 1.3 }}>{w.title}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: w.textColor, lineHeight: 1.55, flex: 1 }}>{w.text}</div>
+              {isDone ? <DoneOverlay /> : (
+                w.key === "video" ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <input ref={fileRef} type="file" accept="video/mp4,video/quicktime,.mp4,.mov" style={{ display: "none" }}
+                      onChange={() => { if (fileRef.current?.files?.length) markDone("video"); }} />
+                    {videoConfirm
+                      ? <div style={{ fontSize: 12, fontWeight: 600, color: "#3C3489", textAlign: "center", padding: "6px 0" }}>We're on it! Your writer will reach out soon.</div>
+                      : <>
+                          <button
+                            style={{ background: "#3C3489", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                            onClick={() => fileRef.current?.click()}>
+                            I'll record myself
+                          </button>
+                          <button
+                            style={{ background: "transparent", color: "#3C3489", border: "1.5px solid #3C3489", borderRadius: 8, padding: "7px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                            onClick={() => { setVideoConfirm(true); markDone("video"); }}>
+                            Do it for me
+                          </button>
+                        </>
+                    }
+                  </div>
+                ) : w.actions
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   return (
-    <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <Timeline />
-        <div style={{ marginTop: 14 }}>
-          <YourTasks />
-          <AddBanner />
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Timeline />
+          <div style={{ marginTop: 14 }}>
+            <YourTasks />
+            <AddBanner />
+          </div>
+        </div>
+        <div style={{ width: 300, flexShrink: 0, position: "sticky", top: 0 }}>
+          <UpcomingSessions />
+          <RecentComments />
         </div>
       </div>
-      <div style={{ width: 300, flexShrink: 0, position: "sticky", top: 0 }}>
-        <UpcomingSessions />
-        <RecentComments />
-      </div>
+      <ShareExperienceRow />
     </div>
   );
 }

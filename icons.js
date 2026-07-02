@@ -59,6 +59,9 @@
     Mail: (p) => <S {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></S>,
     MapPin: (p) => <S {...p}><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></S>,
     Folder: (p) => <S {...p}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></S>,
+    Star: (p) => <S {...p}><polygon points="12 2 15.1 8.3 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.3"/></S>,
+    ClipboardCheck: (p) => <S {...p}><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></S>,
+    Linkedin: (p) => <S {...p}><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M7 10v8M7 7h.01M11 10v8M11 13a3 3 0 0 1 6 0v5"/></S>,
   };
 
   window.Icons = Icons;

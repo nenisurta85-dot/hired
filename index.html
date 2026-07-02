@@ -445,6 +445,10 @@ a { color: inherit; text-decoration: none; }
 /* progress bar */
 .pbar { height: 6px; border-radius: 4px; background: #EDEAE3; overflow: hidden; }
 .pbar > div { height: 100%; border-radius: 4px; }
+
+/* share experience grid — 4 cols → 2 → 1 */
+@media (max-width: 900px) { .share-experience-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+@media (max-width: 540px) { .share-experience-grid { grid-template-columns: 1fr !important; } }
 </style>
 
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
