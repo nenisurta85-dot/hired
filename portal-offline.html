@@ -7359,38 +7359,58 @@ Kate`;
         )}
 
         {/* Service package link — Email tasks only */}
-        {isEmail && (
-          <div style={{ marginBottom: 16 }}>
-            <button onClick={() => showToast("Service package popup — coming soon")}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--purple-light)", color: "var(--purple)", border: "1px solid var(--purple-border)", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              <Icons.Briefcase size={13} /> View service package
-            </button>
-          </div>
-        )}
-
         {/* Email / Summary section — Email tasks only */}
-        {isEmail && (
-          <div style={{ marginBottom: 20 }}>
-            <FieldLabel>Email / Summary</FieldLabel>
-            <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
-              style={{ width: "100%", minHeight: 240, border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6, color: "var(--text-primary)" }} />
-            <button onClick={() => {
-                setEmailPublished(v => !v);
-                showToast(emailPublished ? "Summary unpublished." : "Summary published to client.");
-              }}
-              style={{ marginTop: 10, fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "8px 16px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                color: emailPublished ? "#555" : "#C8005A",
-                background: emailPublished ? "#F5F4F2" : "#FFF5F9",
-                border: emailPublished ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
-              {emailPublished ? <><Icons.Check size={13} /> Published to client</> : "Publish to client"}
-            </button>
-            {emailPublished && (
-              <div style={{ marginTop: 8, fontSize: 12, color: "#00A06C", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
-                <Icons.CircleCheck size={13} /> Client can see this summary in their dashboard.
+        {isEmail && (() => {
+          const packages = (window.ADM?.PACKAGES || []).concat(window.ADM?.ALACARTE || []);
+          const [recPkg, setRecPkg] = React.useState(packages[0]?.name || "");
+          const recPkgObj = packages.find(p => p.name === recPkg);
+          return (
+            <div style={{ marginBottom: 20 }}>
+              {/* Recommended package field */}
+              <div style={{ marginBottom: 14 }}>
+                <FieldLabel>Recommended package</FieldLabel>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <select value={recPkg} onChange={e => setRecPkg(e.target.value)}
+                    style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                    <option value="">— None —</option>
+                    {packages.map(p => <option key={p.id} value={p.name}>{p.name}{p.price ? " · " + p.price : ""}</option>)}
+                  </select>
+                </div>
+                {recPkg && (
+                  <div style={{ marginTop: 8, background: "rgba(130,17,255,0.04)", border: "1px solid var(--purple-border)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--text-muted)", marginBottom: 2 }}>Will appear in email as:</div>
+                      <span style={{ fontSize: 13, color: "var(--purple)", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
+                        Recommended for you: {recPkg} →
+                      </span>
+                    </div>
+                    {recPkgObj?.price && <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", flexShrink: 0 }}>{recPkgObj.price}</span>}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )}
+
+              <FieldLabel>Email / Summary</FieldLabel>
+              <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
+                style={{ width: "100%", minHeight: 240, border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6, color: "var(--text-primary)" }} />
+
+              <button onClick={() => {
+                  setEmailPublished(v => !v);
+                  showToast(emailPublished ? "Summary unpublished." : "Summary published to client.");
+                }}
+                style={{ marginTop: 10, fontSize: 12, fontWeight: 600, borderRadius: 8, padding: "8px 16px", cursor: "pointer", width: "100%", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  color: emailPublished ? "#555" : "#C8005A",
+                  background: emailPublished ? "#F5F4F2" : "#FFF5F9",
+                  border: emailPublished ? "1.5px solid #D0CEC8" : "1.5px solid #F5C0D2" }}>
+                {emailPublished ? <><Icons.Check size={13} /> Published to client</> : "Publish to client"}
+              </button>
+              {emailPublished && (
+                <div style={{ marginTop: 8, fontSize: 12, color: "#00A06C", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                  <Icons.CircleCheck size={13} /> Client can see this summary{recPkg ? " and package recommendation" : ""} in their dashboard.
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Type-specific section — not shown for Email tasks */}
         {!isEmail && (isCall ? null : isUpload ? (
