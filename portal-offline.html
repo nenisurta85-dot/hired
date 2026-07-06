@@ -1227,10 +1227,98 @@ var e,t,r="function"==typeof Symbol?Symbol:{},a=r.iterator||"@@iterator",n=r.toS
     { id: "m4", who: "Erin Doyle", initials: "ED", role: "team", when: "3 hours ago", text: "Also chiming in — I reviewed your LinkedIn draft and I think it pairs really well with the résumé. We should align the headlines before we publish both.", unread: true },
   ];
 
+  /* ---- Second project: Executive Package (Inactive — expired) ---- */
+  const PROJ2_DASH_TASKS = [
+    { id: "p2d1", type: "review", title: "Review Executive Bio — Draft v1", status: "Ready for Review",
+      desc: "Your executive bio draft is ready for your review.", due: "Expired",
+      detail: "This deliverable was part of your Executive Package.", doc: "Executive Bio v1.pdf",
+      meta: { phase: "Phase 1", due: "Expired", assigned: "Erin Doyle", priority: "Medium" } },
+    { id: "p2d2", type: "none", muted: true, title: "Board-Ready LinkedIn Rewrite", status: "Complete", done: true,
+      desc: "Completed during your engagement.", action: null,
+      meta: { phase: "Phase 2", due: "Completed", assigned: "Kate Wade", priority: "High" } },
+  ];
+  const PROJ2_ALL_TASKS = [
+    { id: "p2t1", type: "none", title: "Accept Package & Complete Payment", week: "Onboarding", due: "Jan 10", status: "Complete", done: true },
+    { id: "p2t2", type: "review", title: "Review Executive Bio — Draft v1", week: "Week 2", due: "Feb 14", status: "Ready for Review",
+      doc: "Executive Bio v1.pdf", meta: { phase: "Week 2", due: "Feb 14", assigned: "Erin Doyle", priority: "Medium" } },
+    { id: "p2t3", type: "none", title: "Board-Ready LinkedIn Rewrite", week: "Week 3", due: "Feb 28", status: "Complete", done: true,
+      meta: { phase: "Week 3", due: "Feb 28", assigned: "Kate Wade", priority: "High" } },
+  ];
+  const PROJ2_COMMENTS = [
+    { id: "p2c1", who: "Erin Doyle", initials: "ED", when: "Feb 15", on: "Executive Bio", taskId: null, unread: false,
+      text: "Your executive bio is in great shape. The board-room voice really comes through." },
+    { id: "p2c2", who: "Kate Wade", initials: "KW", when: "Feb 28", on: "LinkedIn Rewrite", taskId: null, unread: false,
+      text: "LinkedIn rewrite is live! Your headline is performing significantly better. Great work together." },
+  ];
+  const PROJ2_FILES_FROM = [
+    { id: "p2f1", name: "Executive Bio — Draft v1", kind: "PDF", icon: "FileText", date: "Feb 14", status: "Ready for Review", cat: "Executive Bio", actions: ["Open", "Download"] },
+    { id: "p2f2", name: "Board-Ready LinkedIn Rewrite", kind: "Google Doc", icon: "FileText", date: "Feb 28", status: "Complete", cat: "LinkedIn", actions: ["Open", "Download"] },
+  ];
+  const PROJ2_FILES_TO = [];
+  const PROJ2_SESSIONS_UP = [];
+  const PROJ2_SESSIONS_PAST = [
+    { id: "p2s1", title: "Executive Strategy Session", when: "Jan 20", status: "Complete", recording: true },
+    { id: "p2s2", title: "LinkedIn Walkthrough", when: "Feb 10", status: "Complete", recording: true },
+    { id: "p2s3", title: "Final Review Call", when: "Mar 1", status: "Complete", recording: false },
+  ];
+  const PROJ2_MESSAGES = [
+    { id: "p2m1", who: "Kate Wade", initials: "KW", role: "team", when: "Mar 2", text: "It was a pleasure working with you on the Executive Package, Sarah! Your executive presence is really shining through. This project is now complete — reach out anytime.", unread: false },
+    { id: "p2m2", who: "Sarah K.", initials: "SK", role: "client", when: "Mar 2", text: "Thank you so much Kate and Erin! I already have two board interview requests. Amazing work.", unread: false },
+  ];
+  const PROJ2_TIMELINE = [
+    { type: "phase", key: "start", label: "Start Project", date: "Jan 10, 2026", state: "done" },
+    { type: "phase", key: "phase1", label: "Phase 1 — Strategy", date: "", state: "done",
+      tasks: [{ name: "Executive strategy session", state: "done" }, { name: "Board positioning brief", state: "done" }] },
+    { type: "call", key: "call1", label: "Call 1", date: "Jan 20", state: "past", n: 1,
+      session: { title: "Executive Strategy Session", when: "Jan 20 · 10:00 AM", duration: "60 min" },
+      tasks: [{ name: "Strategy alignment", state: "done" }] },
+    { type: "phase", key: "phase2", label: "Phase 2 — Deliverables", date: "", state: "done",
+      tasks: [{ name: "Executive bio — Draft v1", state: "done" }, { name: "Board-ready LinkedIn rewrite", state: "done" }] },
+    { type: "call", key: "call2", label: "Call 2", date: "Feb 10", state: "past", n: 2,
+      session: { title: "LinkedIn Walkthrough", when: "Feb 10 · 2:00 PM", duration: "30 min" },
+      tasks: [{ name: "Review LinkedIn rewrite", state: "done" }] },
+    { type: "phase", key: "offboarding", label: "Complete", date: "Mar 1, 2026", state: "done",
+      tasks: [{ name: "Final review call", state: "done" }, { name: "90-day support period", state: "done" }] },
+  ];
+
+  const PROJECTS = [
+    {
+      id: "proj1",
+      name: "Get Her Hired Package",
+      status: "Active",
+      targetEnd: "May 22, 2026",
+      dashTasks: DASH_TASKS,
+      allTasks: ALL_TASKS,
+      comments: COMMENTS,
+      messages: MESSAGES,
+      filesFrom: FILES_FROM,
+      filesTo: FILES_TO,
+      sessionsUp: SESSIONS_UP,
+      sessionsPast: SESSIONS_PAST,
+      timeline: TIMELINE,
+    },
+    {
+      id: "proj2",
+      name: "Executive Package",
+      status: "Inactive",
+      targetEnd: "Mar 1, 2026",
+      dashTasks: PROJ2_DASH_TASKS,
+      allTasks: PROJ2_ALL_TASKS,
+      comments: PROJ2_COMMENTS,
+      messages: PROJ2_MESSAGES,
+      filesFrom: PROJ2_FILES_FROM,
+      filesTo: PROJ2_FILES_TO,
+      sessionsUp: PROJ2_SESSIONS_UP,
+      sessionsPast: PROJ2_SESSIONS_PAST,
+      timeline: PROJ2_TIMELINE,
+    },
+  ];
+
   window.GHH = {
     STATUS, ICON_STYLE, DASH_TASKS, ALL_TASKS, COMMENTS, MESSAGES,
     FILES_FROM, FILES_TO, SESSIONS_UP, SESSIONS_PAST,
     TOOLKIT, ADDONS, FAQ, TIMELINE,
+    PROJECTS,
     TARGET_END: "May 22, 2026",
     NAV: [
       { key: "dashboard", label: "Dashboard", icon: "Home", path: "#/dashboard" },
@@ -1518,8 +1606,54 @@ Object.assign(window, {
    Sidebar + Layout  →  window
    ============================================================ */
 
+function ProjectSwitcher() {
+  const { projects, activeProject, switchProject, navigate } = usePortal();
+  const { Icons } = window;
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  if (!projects || projects.length <= 1) return null;
+
+  const STATUS_COLOR = { Active: "#00A06C", Inactive: "#AAA" };
+  const STATUS_BG = { Active: "rgba(0,160,108,0.1)", Inactive: "rgba(0,0,0,0.06)" };
+
+  return (
+    <div ref={ref} style={{ position: "relative", padding: "10px 14px 0" }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 9, padding: "8px 11px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#fff", textAlign: "left" }}>
+        <span style={{ flex: 1, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeProject.name}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 7px", background: STATUS_BG[activeProject.status], color: STATUS_COLOR[activeProject.status], flexShrink: 0 }}>{activeProject.status}</span>
+        <Icons.ChevronDown size={13} style={{ flexShrink: 0, opacity: 0.6 }} />
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 14, right: 14, background: "#fff", borderRadius: 10, border: "1px solid var(--border)", boxShadow: "0 4px 20px rgba(0,0,0,0.14)", zIndex: 300, overflow: "hidden" }}>
+          {projects.map(p => {
+            const isActive = p.id === activeProject.id;
+            return (
+              <button key={p.id} onClick={() => { switchProject(p.id); setOpen(false); navigate("#/dashboard"); }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "10px 13px", border: "none", background: isActive ? "rgba(130,17,255,0.05)" : "#fff", cursor: "pointer", borderBottom: "1px solid var(--border)", textAlign: "left" }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: isActive ? 600 : 400, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, borderRadius: 99, padding: "2px 7px", background: STATUS_BG[p.status], color: STATUS_COLOR[p.status], flexShrink: 0 }}>{p.status}</span>
+                {isActive && <Icons.Check size={13} style={{ color: "var(--purple)", flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Sidebar({ route }) {
-  const { navigate } = usePortal();
+  const { navigate, switchProject } = usePortal();
   const { Icons, GHH } = window;
   const activeKey = route.replace("#/", "") || "dashboard";
 
@@ -1534,18 +1668,31 @@ function Sidebar({ route }) {
         </div>
       </div>
 
-      {/* My Projects */}
-      <div style={{ padding: "8px 18px 4px" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>My Projects</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
-          <span style={{ width: 7, height: 7, borderRadius: 99, background: "var(--raspberry)", flex: "0 0 7px" }} />
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>Get Her Hired Package</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <span style={{ width: 7, height: 7, borderRadius: 99, background: "#555", flex: "0 0 7px" }} />
-          <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>Executive Package</span>
-        </div>
-      </div>
+      {/* Project switcher (only shown when >1 project) */}
+      <ProjectSwitcher />
+
+      {/* My Projects — dynamic list */}
+      {(() => {
+        const { projects, activeProject, switchProject } = usePortal();
+        const projs = (projects && projects.length > 0) ? projects : [{ id: "proj1", name: "Get Her Hired Package", status: "Active" }];
+        return (
+          <div style={{ padding: "8px 18px 4px" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>My Projects</div>
+            {projs.map(p => {
+              const isCurrent = activeProject && p.id === activeProject.id;
+              const dotColor = p.status === "Active" ? "var(--raspberry)" : "#555";
+              const textColor = isCurrent ? "#fff" : "rgba(255,255,255,0.45)";
+              return (
+                <button key={p.id} onClick={() => { switchProject && switchProject(p.id); navigate("#/dashboard"); }}
+                  style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6, background: "none", border: "none", padding: 0, cursor: "pointer", width: "100%", textAlign: "left" }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 99, background: dotColor, flex: "0 0 7px" }} />
+                  <span style={{ fontSize: 12, fontWeight: isCurrent ? 500 : 400, color: textColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Nav */}
       <nav style={{ marginTop: 18, flex: 1 }}>
@@ -1783,7 +1930,8 @@ function PhaseDetail({ node }) {
 
 function Timeline() {
   const { GHH, Icons } = window;
-  const nodes = GHH.TIMELINE;
+  const { activeProject } = usePortal();
+  const nodes = (activeProject && activeProject.timeline) || GHH.TIMELINE;
   const N = nodes.length;
   const [open, setOpen] = React.useState(true);  // open by default
   const [active, setActive] = React.useState(null); // no detail until a node is clicked
@@ -1843,7 +1991,7 @@ function Timeline() {
 
             {/* Target end */}
             <div style={{ textAlign: "right", marginTop: 2 }}>
-              <span className="meta">Target End: {GHH.TARGET_END}</span>
+              <span className="meta">Target End: {(activeProject && activeProject.targetEnd) || GHH.TARGET_END}</span>
             </div>
           </div>
 
@@ -2415,15 +2563,17 @@ Object.assign(window, { TaskDetailModal, UploadModal, AddOnsModal, ModalHeader }
 
 /* ---------------- My Files ---------------- */
 function MyFiles() {
-  const { openUpload, showToast } = usePortal();
+  const { openUpload, showToast, activeProject } = usePortal();
   const I = window.Icons;
   const [q, setQ] = React.useState("");
 
   const match = (f) =>
     !q || f.name.toLowerCase().includes(q.toLowerCase());
 
-  const from = window.GHH.FILES_FROM.filter(match);
-  const to = window.GHH.FILES_TO.filter(match);
+  const filesFrom = (activeProject && activeProject.filesFrom) || window.GHH.FILES_FROM;
+  const filesTo = (activeProject && activeProject.filesTo) || window.GHH.FILES_TO;
+  const from = filesFrom.filter(match);
+  const to = filesTo.filter(match);
   const onAction = (a, f) => showToast(`${a} — ${f.name}`);
 
   return (
@@ -2455,9 +2605,11 @@ function MyFiles() {
 
 /* ---------------- My Sessions ---------------- */
 function MySessions() {
-  const { showToast, navigate } = usePortal();
+  const { showToast, navigate, activeProject } = usePortal();
   const I = window.Icons;
   const [tab, setTab] = React.useState("Upcoming");
+  const sessionsUp = (activeProject && activeProject.sessionsUp) || window.GHH.SESSIONS_UP;
+  const sessionsPast = (activeProject && activeProject.sessionsPast) || window.GHH.SESSIONS_PAST;
 
   return (
     <div>
@@ -2466,7 +2618,7 @@ function MySessions() {
 
       {tab === "Upcoming" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {window.GHH.SESSIONS_UP.map((s) => (
+          {sessionsUp.map((s) => (
             <Card key={s.id}>
               <div className="row between" style={{ flexWrap: "wrap", gap: 12 }}>
                 <div className="row" style={{ gap: 12 }}>
@@ -2501,7 +2653,7 @@ function MySessions() {
 
       {tab === "Past" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {window.GHH.SESSIONS_PAST.map((s) => (
+          {sessionsPast.map((s) => (
             <Card key={s.id}>
               <div className="row between" style={{ flexWrap: "wrap", gap: 12 }}>
                 <div className="row" style={{ gap: 12 }}>
@@ -8196,10 +8348,37 @@ function App() {
   const [showAddons, setShowAddons] = React.useState(false);
   const [showUpload, setShowUpload] = React.useState(false);
 
-  const [dashTasks, setDashTasks] = React.useState(window.GHH.DASH_TASKS);
-  const [allTasks, setAllTasks] = React.useState(window.GHH.ALL_TASKS);
-  const [comments, setComments] = React.useState(window.GHH.COMMENTS);
-  const [messages, setMessages] = React.useState(window.GHH.MESSAGES);
+  const PROJECTS = window.GHH.PROJECTS;
+  const [activeProjectId, setActiveProjectId] = React.useState(PROJECTS[0].id);
+
+  // Per-project mutable state — keyed by project id
+  const [projectState, setProjectState] = React.useState(() => {
+    const s = {};
+    PROJECTS.forEach(p => {
+      s[p.id] = {
+        dashTasks: p.dashTasks,
+        allTasks: p.allTasks,
+        comments: p.comments,
+        messages: p.messages,
+      };
+    });
+    return s;
+  });
+
+  const proj = PROJECTS.find(p => p.id === activeProjectId) || PROJECTS[0];
+  const ps = projectState[activeProjectId];
+  const dashTasks = ps.dashTasks;
+  const allTasks = ps.allTasks;
+  const comments = ps.comments;
+  const messages = ps.messages;
+
+  const updateProjectState = (pid, patch) =>
+    setProjectState(prev => ({ ...prev, [pid]: { ...prev[pid], ...patch } }));
+
+  const switchProject = (pid) => {
+    setActiveProjectId(pid);
+    setActiveTask(null);
+  };
 
   const toastTimer = React.useRef(null);
 
@@ -8230,20 +8409,24 @@ function App() {
   const closeTask = () => setActiveTask(null);
 
   const completeInList = (id) => {
-    setDashTasks((list) => list.map((t) => (t.id === id ? { ...t, done: true } : t)));
-    setAllTasks((list) => list.map((t) => (t.id === id ? { ...t, done: true } : t)));
+    updateProjectState(activeProjectId, {
+      dashTasks: ps.dashTasks.map(t => t.id === id ? { ...t, done: true } : t),
+      allTasks: ps.allTasks.map(t => t.id === id ? { ...t, done: true } : t),
+    });
   };
   const completeDash = (id) => { completeInList(id); showToast("Task marked complete."); };
   const completeTask = (id) => { completeInList(id); showToast("Task marked complete."); };
 
   const markCommentRead = (id) => {
-    setComments((list) => list.map((c) => (c.id === id ? { ...c, unread: false } : c)));
+    updateProjectState(activeProjectId, {
+      comments: ps.comments.map(c => c.id === id ? { ...c, unread: false } : c),
+    });
     showToast("Marked as read.");
   };
 
   const sendMessage = (text) => {
     const msg = { id: "m" + Date.now(), who: "Sarah K.", initials: "SK", role: "client", when: "just now", text, unread: false };
-    setMessages((list) => [...list, msg]);
+    updateProjectState(activeProjectId, { messages: [...ps.messages, msg] });
   };
 
   const ctx = {
@@ -8253,6 +8436,10 @@ function App() {
     openUpload: () => setShowUpload(true),
     dashTasks, allTasks, comments, messages,
     completeDash, completeTask, markCommentRead, sendMessage,
+    // project switcher
+    projects: PROJECTS,
+    activeProject: proj,
+    switchProject,
     GHH: window.GHH, Icons: window.Icons,
   };
 

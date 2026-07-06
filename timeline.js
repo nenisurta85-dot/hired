@@ -75,7 +75,8 @@ function PhaseDetail({ node }) {
 
 function Timeline() {
   const { GHH, Icons } = window;
-  const nodes = GHH.TIMELINE;
+  const { activeProject } = usePortal();
+  const nodes = (activeProject && activeProject.timeline) || GHH.TIMELINE;
   const N = nodes.length;
   const [open, setOpen] = React.useState(true);  // open by default
   const [active, setActive] = React.useState(null); // no detail until a node is clicked
@@ -135,7 +136,7 @@ function Timeline() {
 
             {/* Target end */}
             <div style={{ textAlign: "right", marginTop: 2 }}>
-              <span className="meta">Target End: {GHH.TARGET_END}</span>
+              <span className="meta">Target End: {(activeProject && activeProject.targetEnd) || GHH.TARGET_END}</span>
             </div>
           </div>
 

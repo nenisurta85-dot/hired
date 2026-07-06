@@ -217,10 +217,98 @@
     { id: "m4", who: "Erin Doyle", initials: "ED", role: "team", when: "3 hours ago", text: "Also chiming in — I reviewed your LinkedIn draft and I think it pairs really well with the résumé. We should align the headlines before we publish both.", unread: true },
   ];
 
+  /* ---- Second project: Executive Package (Inactive — expired) ---- */
+  const PROJ2_DASH_TASKS = [
+    { id: "p2d1", type: "review", title: "Review Executive Bio — Draft v1", status: "Ready for Review",
+      desc: "Your executive bio draft is ready for your review.", due: "Expired",
+      detail: "This deliverable was part of your Executive Package.", doc: "Executive Bio v1.pdf",
+      meta: { phase: "Phase 1", due: "Expired", assigned: "Erin Doyle", priority: "Medium" } },
+    { id: "p2d2", type: "none", muted: true, title: "Board-Ready LinkedIn Rewrite", status: "Complete", done: true,
+      desc: "Completed during your engagement.", action: null,
+      meta: { phase: "Phase 2", due: "Completed", assigned: "Kate Wade", priority: "High" } },
+  ];
+  const PROJ2_ALL_TASKS = [
+    { id: "p2t1", type: "none", title: "Accept Package & Complete Payment", week: "Onboarding", due: "Jan 10", status: "Complete", done: true },
+    { id: "p2t2", type: "review", title: "Review Executive Bio — Draft v1", week: "Week 2", due: "Feb 14", status: "Ready for Review",
+      doc: "Executive Bio v1.pdf", meta: { phase: "Week 2", due: "Feb 14", assigned: "Erin Doyle", priority: "Medium" } },
+    { id: "p2t3", type: "none", title: "Board-Ready LinkedIn Rewrite", week: "Week 3", due: "Feb 28", status: "Complete", done: true,
+      meta: { phase: "Week 3", due: "Feb 28", assigned: "Kate Wade", priority: "High" } },
+  ];
+  const PROJ2_COMMENTS = [
+    { id: "p2c1", who: "Erin Doyle", initials: "ED", when: "Feb 15", on: "Executive Bio", taskId: null, unread: false,
+      text: "Your executive bio is in great shape. The board-room voice really comes through." },
+    { id: "p2c2", who: "Kate Wade", initials: "KW", when: "Feb 28", on: "LinkedIn Rewrite", taskId: null, unread: false,
+      text: "LinkedIn rewrite is live! Your headline is performing significantly better. Great work together." },
+  ];
+  const PROJ2_FILES_FROM = [
+    { id: "p2f1", name: "Executive Bio — Draft v1", kind: "PDF", icon: "FileText", date: "Feb 14", status: "Ready for Review", cat: "Executive Bio", actions: ["Open", "Download"] },
+    { id: "p2f2", name: "Board-Ready LinkedIn Rewrite", kind: "Google Doc", icon: "FileText", date: "Feb 28", status: "Complete", cat: "LinkedIn", actions: ["Open", "Download"] },
+  ];
+  const PROJ2_FILES_TO = [];
+  const PROJ2_SESSIONS_UP = [];
+  const PROJ2_SESSIONS_PAST = [
+    { id: "p2s1", title: "Executive Strategy Session", when: "Jan 20", status: "Complete", recording: true },
+    { id: "p2s2", title: "LinkedIn Walkthrough", when: "Feb 10", status: "Complete", recording: true },
+    { id: "p2s3", title: "Final Review Call", when: "Mar 1", status: "Complete", recording: false },
+  ];
+  const PROJ2_MESSAGES = [
+    { id: "p2m1", who: "Kate Wade", initials: "KW", role: "team", when: "Mar 2", text: "It was a pleasure working with you on the Executive Package, Sarah! Your executive presence is really shining through. This project is now complete — reach out anytime.", unread: false },
+    { id: "p2m2", who: "Sarah K.", initials: "SK", role: "client", when: "Mar 2", text: "Thank you so much Kate and Erin! I already have two board interview requests. Amazing work.", unread: false },
+  ];
+  const PROJ2_TIMELINE = [
+    { type: "phase", key: "start", label: "Start Project", date: "Jan 10, 2026", state: "done" },
+    { type: "phase", key: "phase1", label: "Phase 1 — Strategy", date: "", state: "done",
+      tasks: [{ name: "Executive strategy session", state: "done" }, { name: "Board positioning brief", state: "done" }] },
+    { type: "call", key: "call1", label: "Call 1", date: "Jan 20", state: "past", n: 1,
+      session: { title: "Executive Strategy Session", when: "Jan 20 · 10:00 AM", duration: "60 min" },
+      tasks: [{ name: "Strategy alignment", state: "done" }] },
+    { type: "phase", key: "phase2", label: "Phase 2 — Deliverables", date: "", state: "done",
+      tasks: [{ name: "Executive bio — Draft v1", state: "done" }, { name: "Board-ready LinkedIn rewrite", state: "done" }] },
+    { type: "call", key: "call2", label: "Call 2", date: "Feb 10", state: "past", n: 2,
+      session: { title: "LinkedIn Walkthrough", when: "Feb 10 · 2:00 PM", duration: "30 min" },
+      tasks: [{ name: "Review LinkedIn rewrite", state: "done" }] },
+    { type: "phase", key: "offboarding", label: "Complete", date: "Mar 1, 2026", state: "done",
+      tasks: [{ name: "Final review call", state: "done" }, { name: "90-day support period", state: "done" }] },
+  ];
+
+  const PROJECTS = [
+    {
+      id: "proj1",
+      name: "Get Her Hired Package",
+      status: "Active",
+      targetEnd: "May 22, 2026",
+      dashTasks: DASH_TASKS,
+      allTasks: ALL_TASKS,
+      comments: COMMENTS,
+      messages: MESSAGES,
+      filesFrom: FILES_FROM,
+      filesTo: FILES_TO,
+      sessionsUp: SESSIONS_UP,
+      sessionsPast: SESSIONS_PAST,
+      timeline: TIMELINE,
+    },
+    {
+      id: "proj2",
+      name: "Executive Package",
+      status: "Inactive",
+      targetEnd: "Mar 1, 2026",
+      dashTasks: PROJ2_DASH_TASKS,
+      allTasks: PROJ2_ALL_TASKS,
+      comments: PROJ2_COMMENTS,
+      messages: PROJ2_MESSAGES,
+      filesFrom: PROJ2_FILES_FROM,
+      filesTo: PROJ2_FILES_TO,
+      sessionsUp: PROJ2_SESSIONS_UP,
+      sessionsPast: PROJ2_SESSIONS_PAST,
+      timeline: PROJ2_TIMELINE,
+    },
+  ];
+
   window.GHH = {
     STATUS, ICON_STYLE, DASH_TASKS, ALL_TASKS, COMMENTS, MESSAGES,
     FILES_FROM, FILES_TO, SESSIONS_UP, SESSIONS_PAST,
     TOOLKIT, ADDONS, FAQ, TIMELINE,
+    PROJECTS,
     TARGET_END: "May 22, 2026",
     NAV: [
       { key: "dashboard", label: "Dashboard", icon: "Home", path: "#/dashboard" },

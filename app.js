@@ -9,10 +9,37 @@ function App() {
   const [showAddons, setShowAddons] = React.useState(false);
   const [showUpload, setShowUpload] = React.useState(false);
 
-  const [dashTasks, setDashTasks] = React.useState(window.GHH.DASH_TASKS);
-  const [allTasks, setAllTasks] = React.useState(window.GHH.ALL_TASKS);
-  const [comments, setComments] = React.useState(window.GHH.COMMENTS);
-  const [messages, setMessages] = React.useState(window.GHH.MESSAGES);
+  const PROJECTS = window.GHH.PROJECTS;
+  const [activeProjectId, setActiveProjectId] = React.useState(PROJECTS[0].id);
+
+  // Per-project mutable state — keyed by project id
+  const [projectState, setProjectState] = React.useState(() => {
+    const s = {};
+    PROJECTS.forEach(p => {
+      s[p.id] = {
+        dashTasks: p.dashTasks,
+        allTasks: p.allTasks,
+        comments: p.comments,
+        messages: p.messages,
+      };
+    });
+    return s;
+  });
+
+  const proj = PROJECTS.find(p => p.id === activeProjectId) || PROJECTS[0];
+  const ps = projectState[activeProjectId];
+  const dashTasks = ps.dashTasks;
+  const allTasks = ps.allTasks;
+  const comments = ps.comments;
+  const messages = ps.messages;
+
+  const updateProjectState = (pid, patch) =>
+    setProjectState(prev => ({ ...prev, [pid]: { ...prev[pid], ...patch } }));
+
+  const switchProject = (pid) => {
+    setActiveProjectId(pid);
+    setActiveTask(null);
+  };
 
   const toastTimer = React.useRef(null);
 
@@ -43,20 +70,24 @@ function App() {
   const closeTask = () => setActiveTask(null);
 
   const completeInList = (id) => {
-    setDashTasks((list) => list.map((t) => (t.id === id ? { ...t, done: true } : t)));
-    setAllTasks((list) => list.map((t) => (t.id === id ? { ...t, done: true } : t)));
+    updateProjectState(activeProjectId, {
+      dashTasks: ps.dashTasks.map(t => t.id === id ? { ...t, done: true } : t),
+      allTasks: ps.allTasks.map(t => t.id === id ? { ...t, done: true } : t),
+    });
   };
   const completeDash = (id) => { completeInList(id); showToast("Task marked complete."); };
   const completeTask = (id) => { completeInList(id); showToast("Task marked complete."); };
 
   const markCommentRead = (id) => {
-    setComments((list) => list.map((c) => (c.id === id ? { ...c, unread: false } : c)));
+    updateProjectState(activeProjectId, {
+      comments: ps.comments.map(c => c.id === id ? { ...c, unread: false } : c),
+    });
     showToast("Marked as read.");
   };
 
   const sendMessage = (text) => {
     const msg = { id: "m" + Date.now(), who: "Sarah K.", initials: "SK", role: "client", when: "just now", text, unread: false };
-    setMessages((list) => [...list, msg]);
+    updateProjectState(activeProjectId, { messages: [...ps.messages, msg] });
   };
 
   const ctx = {
@@ -66,6 +97,10 @@ function App() {
     openUpload: () => setShowUpload(true),
     dashTasks, allTasks, comments, messages,
     completeDash, completeTask, markCommentRead, sendMessage,
+    // project switcher
+    projects: PROJECTS,
+    activeProject: proj,
+    switchProject,
     GHH: window.GHH, Icons: window.Icons,
   };
 

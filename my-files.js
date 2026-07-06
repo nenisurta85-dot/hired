@@ -5,15 +5,17 @@
 
 /* ---------------- My Files ---------------- */
 function MyFiles() {
-  const { openUpload, showToast } = usePortal();
+  const { openUpload, showToast, activeProject } = usePortal();
   const I = window.Icons;
   const [q, setQ] = React.useState("");
 
   const match = (f) =>
     !q || f.name.toLowerCase().includes(q.toLowerCase());
 
-  const from = window.GHH.FILES_FROM.filter(match);
-  const to = window.GHH.FILES_TO.filter(match);
+  const filesFrom = (activeProject && activeProject.filesFrom) || window.GHH.FILES_FROM;
+  const filesTo = (activeProject && activeProject.filesTo) || window.GHH.FILES_TO;
+  const from = filesFrom.filter(match);
+  const to = filesTo.filter(match);
   const onAction = (a, f) => showToast(`${a} — ${f.name}`);
 
   return (
@@ -45,9 +47,11 @@ function MyFiles() {
 
 /* ---------------- My Sessions ---------------- */
 function MySessions() {
-  const { showToast, navigate } = usePortal();
+  const { showToast, navigate, activeProject } = usePortal();
   const I = window.Icons;
   const [tab, setTab] = React.useState("Upcoming");
+  const sessionsUp = (activeProject && activeProject.sessionsUp) || window.GHH.SESSIONS_UP;
+  const sessionsPast = (activeProject && activeProject.sessionsPast) || window.GHH.SESSIONS_PAST;
 
   return (
     <div>
@@ -56,7 +60,7 @@ function MySessions() {
 
       {tab === "Upcoming" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {window.GHH.SESSIONS_UP.map((s) => (
+          {sessionsUp.map((s) => (
             <Card key={s.id}>
               <div className="row between" style={{ flexWrap: "wrap", gap: 12 }}>
                 <div className="row" style={{ gap: 12 }}>
@@ -91,7 +95,7 @@ function MySessions() {
 
       {tab === "Past" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {window.GHH.SESSIONS_PAST.map((s) => (
+          {sessionsPast.map((s) => (
             <Card key={s.id}>
               <div className="row between" style={{ flexWrap: "wrap", gap: 12 }}>
                 <div className="row" style={{ gap: 12 }}>
