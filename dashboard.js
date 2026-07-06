@@ -24,23 +24,62 @@ function YourTasks() {
 }
 
 function UpcomingSessions() {
-  const { showToast, navigate } = usePortal();
+  const { showToast, navigate, activeProject } = usePortal();
   const I = window.Icons;
+  const sessionsUp = (activeProject && activeProject.sessionsUp) || window.GHH.SESSIONS_UP;
+  const [next, ...rest] = sessionsUp;
+
+  if (!next) return (
+    <Card style={{ marginBottom: 16 }}>
+      <div className="label" style={{ marginBottom: 12 }}>Upcoming Sessions</div>
+      <div style={{ fontSize: 13, color: "#aaa" }}>No upcoming sessions.</div>
+      <button className="btn btn-ghost" style={{ marginTop: 10 }} onClick={() => navigate("#/sessions")}>View all sessions →</button>
+    </Card>
+  );
+
   return (
     <Card style={{ marginBottom: 16 }}>
       <div className="label" style={{ marginBottom: 12 }}>Upcoming Sessions</div>
+
+      {/* Next session — prominent */}
       <div className="row" style={{ gap: 11, alignItems: "flex-start" }}>
         <span style={{ width: 32, height: 32, borderRadius: 99, background: "var(--purple-light)", color: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 32px" }}><I.Video size={16} /></span>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>Working Session #2</div>
-          <div className="meta" style={{ marginTop: 2 }}>Thu, May 1 at 2:00 PM</div>
-          <div className="small" style={{ marginTop: 1 }}>60 min</div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{next.title}</div>
+          <div className="meta" style={{ marginTop: 2 }}>{next.when}</div>
+          <div className="small" style={{ marginTop: 1 }}>{next.duration}</div>
         </div>
       </div>
-      <button className="btn btn-primary btn-block" style={{ height: 38, marginTop: 12 }} onClick={() => showToast("Opening Zoom…")}>
-        <I.Video size={15} /> Join on Zoom
-      </button>
-      <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={() => navigate("#/sessions")}>Reschedule</button>
+      {next.booked ? (
+        <>
+          <button className="btn btn-primary btn-block" style={{ height: 38, marginTop: 12 }} onClick={() => showToast("Opening Zoom…")}>
+            <I.Video size={15} /> Join on Zoom
+          </button>
+          <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={() => navigate("#/sessions")}>Reschedule</button>
+        </>
+      ) : (
+        <button className="btn btn-primary btn-block" style={{ height: 38, marginTop: 12 }} onClick={() => showToast("Opening booking calendar…")}>
+          <I.Calendar size={15} /> Book Session
+        </button>
+      )}
+
+      {/* Next 2 sessions — compact */}
+      {rest.slice(0, 2).length > 0 && (
+        <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 10, display: "flex", flexDirection: "column", gap: 7 }}>
+          {rest.slice(0, 2).map(s => (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+              <I.Video size={12} style={{ color: "var(--text-secondary)", flexShrink: 0 }} />
+              <span style={{ flex: 1, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
+              <span className="meta" style={{ flexShrink: 0 }}>{s.when.replace("Not yet scheduled", "TBD")}</span>
+              <button onClick={() => showToast(s.booked ? "Opening Zoom…" : "Opening booking calendar…")}
+                style={{ background: "none", border: "none", color: "var(--purple)", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, padding: 0 }}>
+                {s.booked ? "Join →" : "Book →"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => navigate("#/sessions")}>Reschedule or view all sessions →</button>
     </Card>
   );

@@ -314,7 +314,7 @@
       { key: "dashboard", label: "Dashboard", icon: "Home", path: "#/dashboard" },
       { key: "files", label: "My Files", icon: "FileText", path: "#/files" },
       { key: "sessions", label: "My Sessions", icon: "Calendar", path: "#/sessions" },
-      { key: "comments", label: "Comments", icon: "MessageCircle", path: "#/comments", badge: 3 },
+      { key: "comments", label: "Comments — Deliverables", icon: "MessageCircle", path: "#/comments", badge: 3 },
       { key: "messages", label: "Messages", icon: "Inbox", path: "#/messages", badge: 2 },
       { key: "toolkit", label: "Toolkit", icon: "Wrench", path: "#/toolkit" },
       { key: "tasks", label: "My Tasks", icon: "ListChecks", path: "#/tasks" },

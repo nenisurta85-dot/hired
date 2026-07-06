@@ -134,7 +134,7 @@ function Comments() {
   return (
     <div>
       <PageHeader
-        title="Comments"
+        title="Comments — Deliverables"
         sub="Feedback on your documents from the GHH team"
         right={unreadCount > 0 && <Badge style={{ background: "#FBEAF0", color: "#993556" }}>{unreadCount} unread</Badge>}
       />

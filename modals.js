@@ -35,6 +35,19 @@ function TaskDetailModal({ task, onClose, onComplete }) {
   const isUpload = task.type === "upload";
   const actionNeeded = !task.done;
 
+  // Comment thread state (seeded from task.comment if present)
+  const [threadComments, setThreadComments] = React.useState(() =>
+    task.comment ? [{ id: "tc0", who: task.comment.who, initials: "KW", role: "team", when: task.comment.when, text: task.comment.text }] : []
+  );
+  const [commentText, setCommentText] = React.useState("");
+  const handleSendComment = () => {
+    const t = commentText.trim();
+    if (!t) return;
+    setThreadComments(prev => [...prev, { id: "tc" + Date.now(), who: "Sarah K.", initials: "SK", role: "client", when: "just now", text: t }]);
+    setCommentText("");
+    showToast("Comment posted.");
+  };
+
   const submit = (msg) => { showToast(msg); onComplete(task); onClose(); };
 
   return (
@@ -61,19 +74,6 @@ function TaskDetailModal({ task, onClose, onComplete }) {
               <textarea className="textarea" placeholder="Leave your comments and questions for your writer…" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
             </div>
             <button className="btn btn-primary" disabled={!feedback.trim()} onClick={() => submit("Feedback submitted — your writer has been notified.")}>Submit Feedback</button>
-
-            {task.comment && (
-              <div style={{ marginTop: 20, borderTop: "0.5px solid var(--border-light)", paddingTop: 16 }}>
-                <div className="label" style={{ marginBottom: 10 }}>Comments</div>
-                <div style={{ display: "flex", gap: 11 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 99, background: "var(--raspberry)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, flex: "0 0 28px" }}>KW</div>
-                  <div>
-                    <div style={{ fontSize: 12 }}><span style={{ fontWeight: 500 }}>{task.comment.who}</span><span className="meta"> · {task.comment.when}</span></div>
-                    <div style={{ fontSize: 13, color: "#555", lineHeight: 1.5, marginTop: 3 }}>{task.comment.text}</div>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
 
@@ -122,6 +122,47 @@ function TaskDetailModal({ task, onClose, onComplete }) {
             There's nothing for you to do on this task yet.
           </div>
         )}
+
+        {/* Comment thread — all task types */}
+        <div style={{ marginTop: 20, borderTop: "0.5px solid var(--border-light)", paddingTop: 16 }}>
+          <div className="label" style={{ marginBottom: 10 }}>Comments — Deliverables</div>
+          {threadComments.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 14 }}>
+              {threadComments.map(c => {
+                const isClient = c.role === "client";
+                const avatarBg = isClient ? "var(--raspberry)" : "var(--purple)";
+                return (
+                  <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexDirection: isClient ? "row-reverse" : "row" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 99, background: avatarBg, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, flex: "0 0 28px" }}>{c.initials}</div>
+                    <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", gap: 2, alignItems: isClient ? "flex-end" : "flex-start" }}>
+                      <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                        <span style={{ fontWeight: 600, color: "var(--text-primary)", marginRight: 3 }}>{isClient ? "You" : c.who}</span>· {c.when}
+                      </div>
+                      <div style={{ background: isClient ? "var(--raspberry)" : "var(--page-bg)", color: isClient ? "#fff" : "#555", borderRadius: isClient ? "12px 3px 12px 12px" : "3px 12px 12px 12px", padding: "8px 12px", fontSize: 13, lineHeight: 1.5, border: isClient ? "none" : "1px solid var(--border)" }}>{c.text}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {threadComments.length === 0 && (
+            <div style={{ fontSize: 12, color: "#aaa", marginBottom: 12 }}>No comments yet. Leave a note for your writer.</div>
+          )}
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <textarea
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+              placeholder="Leave a comment for your writer…"
+              rows={2}
+              style={{ flex: 1, resize: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 11px", fontSize: 13, fontFamily: "inherit", outline: "none", lineHeight: 1.5 }}
+            />
+            <button onClick={handleSendComment} disabled={!commentText.trim()}
+              style={{ background: commentText.trim() ? "var(--raspberry)" : "var(--border)", color: commentText.trim() ? "#fff" : "#aaa", border: "none", borderRadius: 8, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: commentText.trim() ? "pointer" : "default", flexShrink: 0 }}>
+              <I.Send size={14} />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
