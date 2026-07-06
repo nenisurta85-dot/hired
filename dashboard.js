@@ -71,9 +71,9 @@ function UpcomingSessions() {
               <I.Video size={12} style={{ color: "var(--text-secondary)", flexShrink: 0 }} />
               <span style={{ flex: 1, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
               <span className="meta" style={{ flexShrink: 0 }}>{s.when.replace("Not yet scheduled", "TBD")}</span>
-              <button onClick={() => showToast(s.booked ? "Opening Zoom…" : "Opening booking calendar…")}
-                style={{ background: "none", border: "none", color: "var(--purple)", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, padding: 0 }}>
-                {s.booked ? "Join →" : "Book →"}
+              <button onClick={() => showToast("Opening Zoom…")}
+                style={{ background: "none", border: "none", color: "var(--purple)", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, padding: 0, whiteSpace: "nowrap" }}>
+                Join on Zoom →
               </button>
             </div>
           ))}

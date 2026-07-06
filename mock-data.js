@@ -120,7 +120,8 @@
 
   const SESSIONS_UP = [
     { id: "s2", title: "Working Session #2", when: "Thu, May 1 · 2:00 PM", duration: "60 min", status: "Scheduled", booked: true },
-    { id: "s3", title: "Working Session #3", when: "Not yet scheduled", duration: "30 min", status: "Pending", booked: false },
+    { id: "s3", title: "Working Session #3", when: "Thu, May 15 · 2:00 PM", duration: "60 min", status: "Scheduled", booked: true },
+    { id: "s4", title: "Follow-Up Session", when: "Not yet scheduled", duration: "30 min", status: "Pending", booked: false },
   ];
   const SESSIONS_PAST = [
     { id: "s1", title: "Working Session #1", when: "Apr 10", status: "Complete", recording: true },
