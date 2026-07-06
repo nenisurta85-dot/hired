@@ -82,7 +82,7 @@ function TaskCard({ task, onOpen, onComplete }) {
   const IconCmp = Icons[is.icon] || Icons.FileText;
   const muted = task.muted && !task.done;
   const docLocked = useLockState(task.docId);
-  const clickable = !!onOpen && task.type !== "none" && !docLocked;
+  const clickable = !!onOpen;
   return (
     <div
       className={"task-card" + (task.highlight && !task.done ? " highlight" : "") + (task.done ? " done" : "") + (clickable ? " clickable" : "")}
