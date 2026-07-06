@@ -1297,6 +1297,7 @@ function NewALaCarteModal({ onClose }) {
   const [description, setDescription] = React.useState("");
   const [price, setPrice] = React.useState(0);
   const [durationWeeks, setDurationWeeks] = React.useState(0);
+  const [offboardingDays, setOffboardingDays] = React.useState("");
   const [active, setActive] = React.useState(true);
   const [type, setType] = React.useState("call");
   const [zoomLink, setZoomLink] = React.useState("");
@@ -1340,7 +1341,7 @@ function NewALaCarteModal({ onClose }) {
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this item..." rows={3} style={{ ...inputStyle, resize: "vertical" }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
           <div>
             <FL>Price</FL>
             <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="$ 0" style={inputStyle} />
@@ -1348,6 +1349,10 @@ function NewALaCarteModal({ onClose }) {
           <div>
             <FL>Duration (weeks)</FL>
             <input type="number" value={durationWeeks} onChange={(e) => setDurationWeeks(e.target.value)} placeholder="0" style={inputStyle} />
+          </div>
+          <div>
+            <FL>Offboarding period (days)</FL>
+            <input type="number" value={offboardingDays} onChange={(e) => setOffboardingDays(e.target.value)} placeholder="0" style={inputStyle} />
           </div>
         </div>
 
@@ -1419,113 +1424,135 @@ function NewALaCarteModal({ onClose }) {
   );
 }
 
-function PackageDetailModal({ pkg, role, onClose, onEdit }) {
+function PackageDetailModal({ pkg, role, onClose }) {
   const { Icons } = window;
+  const { showToast } = useAdmin();
   const isReadOnly = role === "Writer" || role === "Admin Assistant";
+
+  const [name, setName] = React.useState(pkg.name || "");
+  const [desc, setDesc] = React.useState(pkg.tagline || "");
+  const [price, setPrice] = React.useState((pkg.price || "").replace(/[^0-9.]/g, ""));
+  const [weeks, setWeeks] = React.useState((pkg.weeks || "").replace(/[^0-9]/g, ""));
+  const [offboardingDays, setOffboardingDays] = React.useState(pkg.offboardingDurationDays !== undefined ? String(pkg.offboardingDurationDays) : "");
+  const [stripePriceId, setStripePriceId] = React.useState(pkg.stripePriceId || "");
+  const [status, setStatus] = React.useState(pkg.active ? "Active" : "Inactive");
+  const [selected, setSelected] = React.useState(() => {
+    if (!pkg.selected) return new Set(["ssot", "ws-1", "ws-2", "resume-v1", "cover-letter-template"]);
+    return pkg.selected instanceof Set ? new Set(pkg.selected) : new Set(pkg.selected);
+  });
+  const [extras, setExtras] = React.useState(pkg.extras || {});
+  const [addingTo, setAddingTo] = React.useState(null);
+  const [newName, setNewName] = React.useState("");
+  const [targetGroup, setTargetGroup] = React.useState("top_level");
+
   React.useEffect(() => {
     const fn = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
   }, []);
 
-  // Build selected set from pkg.selected (if it's a Set or array)
-  const selectedSet = pkg.selected
-    ? (pkg.selected instanceof Set ? pkg.selected : new Set(pkg.selected))
-    : new Set();
-  const extras = pkg.extras || {};
+  const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  const toggleItem = (id) => {
+    if (isReadOnly) return;
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const handleAddItem = () => {
+    if (!newName.trim()) return;
+    const id = slugify(newName) + "_" + targetGroup;
+    setExtras(prev => ({ ...prev, [targetGroup]: [...(prev[targetGroup] || []), { id, name: newName.trim() }] }));
+    setSelected(prev => { const n = new Set(prev); n.add(id); return n; });
+    setNewName(""); setAddingTo(null);
+  };
+
+  const inputStyle = { width: "100%", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box", background: isReadOnly ? "#FAFAFA" : "#fff" };
+  const FL = ({ children }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>{children}</div>;
+
+  const CheckItem = ({ item, isNew }) => {
+    const checked = selected.has(item.id);
+    return (
+      <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderTop: "1px solid var(--border-light)", cursor: isReadOnly ? "default" : "pointer", background: isNew ? "rgba(130,17,255,0.03)" : "#fff" }}>
+        <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} disabled={isReadOnly} style={{ accentColor: "var(--purple)", width: 15, height: 15, flexShrink: 0 }} />
+        <span style={{ flex: 1, fontSize: 13, fontWeight: checked ? 500 : 400, color: checked ? "var(--text-primary)" : "var(--text-secondary)" }}>{item.name}</span>
+        {isNew && <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(130,17,255,0.12)", color: "var(--purple)", borderRadius: 20, padding: "2px 7px" }}>New</span>}
+      </label>
+    );
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div style={{ padding: "22px 28px 16px", borderBottom: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20, marginBottom: 8 }}>{pkg.name}</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {pkg.active && <span className="badge" style={{ background: "rgba(0,160,108,0.12)", color: "#00A06C", fontSize: 10 }}>Active</span>}
-                {!pkg.active && <span className="badge" style={{ background: "#F1EFE8", color: "#888", fontSize: 10 }}>Inactive</span>}
-                <span className="badge" style={{ background: pkg.alc ? "rgba(200,0,90,0.1)" : "var(--purple-light)", color: pkg.alc ? "var(--raspberry)" : "var(--purple)", fontSize: 10 }}>{pkg.alc ? "À La Carte" : "Package"}</span>
-              </div>
-            </div>
-            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4, flexShrink: 0 }}><Icons.X size={20} /></button>
-          </div>
+      <div style={{ background: "#fff", borderRadius: 16, width: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 32px", boxShadow: "0 8px 40px rgba(0,0,0,0.16)" }} onClick={e => e.stopPropagation()}>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 20 }}>{pkg.name}</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4 }}><Icons.X size={20} /></button>
+        </div>
+        <div style={{ display: "flex", gap: 6, marginBottom: 22 }}>
+          {pkg.active && <span className="badge" style={{ background: "rgba(0,160,108,0.12)", color: "#00A06C", fontSize: 10 }}>Active</span>}
+          {!pkg.active && <span className="badge" style={{ background: "#F1EFE8", color: "#888", fontSize: 10 }}>Inactive</span>}
+          <span className="badge" style={{ background: pkg.alc ? "rgba(200,0,90,0.1)" : "var(--purple-light)", color: pkg.alc ? "var(--raspberry)" : "var(--purple)", fontSize: 10 }}>{pkg.alc ? "À La Carte" : "Package"}</span>
+          {isReadOnly && <span style={{ fontSize: 11, color: "#AAA", marginLeft: 4 }}>Read-only</span>}
         </div>
 
-        {/* Body */}
-        <div style={{ padding: "20px 28px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
-          {pkg.tagline && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div><FL>Name</FL><input value={name} onChange={e => setName(e.target.value)} disabled={isReadOnly} style={inputStyle} /></div>
+          <div><FL>Description</FL><textarea value={desc} onChange={e => setDesc(e.target.value)} disabled={isReadOnly} rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 5 }}>Description</div>
-              <div style={{ fontSize: 13, color: "#555", lineHeight: 1.6 }}>{pkg.tagline}</div>
+              <FL>Price</FL>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#888" }}>$</span>
+                <input type="number" value={price} onChange={e => setPrice(e.target.value)} disabled={isReadOnly} style={{ ...inputStyle, paddingLeft: 24 }} />
+              </div>
             </div>
-          )}
-
-          {/* Pricing row */}
-          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-            {pkg.price && (
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 4 }}>Price</div>
-                <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pkg.price}</div>
-              </div>
-            )}
-            {pkg.weeks && (
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 4 }}>Duration</div>
-                <div style={{ fontSize: 13, fontWeight: 500, paddingTop: 3 }}>{pkg.weeks}</div>
-              </div>
-            )}
-            {(pkg.offboardingDurationDays !== undefined && pkg.offboardingDurationDays !== "") && (
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 4 }}>Offboarding Period</div>
-                <div style={{ fontSize: 13, fontWeight: 500, paddingTop: 3 }}>{pkg.offboardingDurationDays} days</div>
-              </div>
-            )}
-            {pkg.stripePriceId && (
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 4 }}>Stripe Price ID</div>
-                <div style={{ fontSize: 12, fontFamily: "monospace", paddingTop: 3, color: "#555" }}>{pkg.stripePriceId}</div>
-              </div>
-            )}
+            <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} disabled={isReadOnly} style={inputStyle} /></div>
+            <div><FL>Offboarding period (days)</FL><input type="number" value={offboardingDays} onChange={e => setOffboardingDays(e.target.value)} disabled={isReadOnly} placeholder="0" style={inputStyle} /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <FL>Status</FL>
+              <select value={status} onChange={e => setStatus(e.target.value)} disabled={isReadOnly} style={{ ...inputStyle, cursor: isReadOnly ? "default" : "pointer" }}>
+                <option>Active</option><option>Inactive</option>
+              </select>
+            </div>
+            <div><FL>Stripe Price ID</FL><input value={stripePriceId} onChange={e => setStripePriceId(e.target.value)} disabled={isReadOnly} placeholder="price_..." style={inputStyle} /></div>
           </div>
 
-          {/* Deliverables — only for packages (not à la carte) */}
+          {/* Deliverables */}
           {!pkg.alc && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 10 }}>Deliverables Included</div>
-              {DELIVERABLE_GROUPS.map(group => {
-                const groupExtras = extras[group.id] || [];
-                const allItems = [...group.items, ...groupExtras];
-                const included = allItems.filter(item => selectedSet.has(item.id));
-                if (included.length === 0) return null;
-                return (
-                  <div key={group.id} style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--purple)", marginBottom: 6 }}>{group.label}</div>
-                    <div style={{ border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
-                      {allItems.map((item, idx) => {
-                        const checked = selectedSet.has(item.id);
-                        return (
-                          <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderTop: idx > 0 ? "1px solid var(--border-light)" : "none", background: checked ? "#fff" : "#FAFAFA", opacity: checked ? 1 : 0.45 }}>
-                            {checked
-                              ? <Icons.Check size={14} style={{ color: "#00A06C", flexShrink: 0 }} />
-                              : <Icons.Minus size={14} style={{ color: "#CCC", flexShrink: 0 }} />}
-                            <span style={{ fontSize: 13, color: checked ? "var(--text-primary)" : "#AAA", fontWeight: checked ? 500 : 400 }}>{item.name}</span>
-                            {groupExtras.find(e => e.id === item.id) && <span style={{ fontSize: 9, fontWeight: 700, background: "rgba(130,17,255,0.12)", color: "var(--purple)", borderRadius: 20, padding: "2px 7px", marginLeft: "auto" }}>Custom</span>}
+              <FL>Deliverables Included</FL>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {DELIVERABLE_GROUPS.map(group => {
+                  const groupExtras = extras[group.id] || [];
+                  return (
+                    <div key={group.id} style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+                      <div style={{ padding: "8px 12px", background: "var(--page-bg)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--purple)" }}>{group.label}</div>
+                      {group.items.map(item => <CheckItem key={item.id} item={item} />)}
+                      {groupExtras.map(item => <CheckItem key={item.id} item={item} isNew />)}
+                      {!isReadOnly && (
+                        addingTo === group.id ? (
+                          <div style={{ padding: "8px 12px", borderTop: "1px solid var(--border-light)", background: "#fff", display: "flex", gap: 8 }}>
+                            <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleAddItem(); if (e.key === "Escape") setAddingTo(null); }} placeholder="Deliverable name…" style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 6, padding: "5px 8px", fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+                            <button className="btn btn-primary" style={{ padding: "5px 12px", fontSize: 12 }} onClick={handleAddItem}>Add</button>
+                            <button className="btn btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} onClick={() => setAddingTo(null)}>×</button>
                           </div>
-                        );
-                      })}
+                        ) : (
+                          <button onClick={() => setAddingTo(group.id)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "none", border: "none", borderTop: "1px solid var(--border-light)", width: "100%", cursor: "pointer", color: "var(--purple)", fontSize: 12, fontWeight: 500 }}>
+                            <Icons.Plus size={13} /> Add New Deliverable
+                          </button>
+                        )
+                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: "14px 28px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <button className="btn btn-ghost" style={{ color: "#888" }} onClick={onClose}>Close</button>
-          {!isReadOnly && <button className="btn btn-primary" onClick={() => onEdit(pkg)}><Icons.Settings size={14} /> Edit Package</button>}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          {!isReadOnly && <button className="btn btn-primary" onClick={() => { showToast("Package saved."); onClose(); }}>Save Changes</button>}
         </div>
       </div>
     </div>
@@ -1540,7 +1567,6 @@ function AdminPackages() {
   const [showModal, setShowModal] = React.useState(false);
   const [showAlcModal, setShowAlcModal] = React.useState(false);
   const [viewPkg, setViewPkg] = React.useState(null);
-  const [editPkg, setEditPkg] = React.useState(null);
 
   const PkgCard = ({ p }) => (
     <div style={{ background: "#fff", border: "0.5px solid var(--border)", borderRadius: 10, padding: 16, transition: "border-color .15s", cursor: "pointer" }}
@@ -1564,7 +1590,7 @@ function AdminPackages() {
     <div>
       {showModal && <NewPackageModal onClose={() => setShowModal(false)} />}
       {showAlcModal && <NewALaCarteModal onClose={() => setShowAlcModal(false)} />}
-      {viewPkg && <PackageDetailModal pkg={viewPkg} role={role} onClose={() => setViewPkg(null)} onEdit={(p) => { setViewPkg(null); showToast("Edit: " + p.name); }} />}
+      {viewPkg && <PackageDetailModal pkg={viewPkg} role={role} onClose={() => setViewPkg(null)} />}
       <AdminHeader icon="Briefcase" title="Packages" subtitle="Service packages and add-ons" action={isReadOnly ? null : { label: "+ New Package", onClick: () => setShowModal(true) }} />
       <div className="admin-body">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>

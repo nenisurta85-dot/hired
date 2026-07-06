@@ -124,8 +124,14 @@ function WriterCapacityCard({ navigate }) {
   const pkgMap = {};
   (ADM.PACKAGES || []).forEach((p) => { pkgMap[p.name] = p; });
 
-  // Mock self-available flags (writer-controlled from their own account)
-  const SELF_AVAILABLE = { "lh": true, "mb": true };
+  // Self-available flags set by each writer via their My Projects card toggle
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => {
+    const handler = () => forceUpdate();
+    window.addEventListener("writerAvailabilityChanged", handler);
+    return () => window.removeEventListener("writerAvailabilityChanged", handler);
+  }, []);
+  const SELF_AVAILABLE = window.__writerAvailable || { "lh": true, "mb": true };
 
   const team = (ADM.TEAM || []).filter((m) =>
     m.status === "Active" && m.roles && (m.roles.includes("writer") || m.roles.includes("editor"))
@@ -344,12 +350,45 @@ function WriterProjectsCard({ navigate, style }) {
   ];
   const shown = WRITER_PROJECTS.slice(0, 8);
 
+  // Availability toggle — keyed to this writer's id ("lh")
+  const WRITER_ID = "lh";
+  const [available, setAvailable] = React.useState(() => {
+    const store = window.__writerAvailable || {};
+    return store[WRITER_ID] !== undefined ? store[WRITER_ID] : true;
+  });
+  const toggleAvailable = () => {
+    const next = !available;
+    setAvailable(next);
+    if (!window.__writerAvailable) window.__writerAvailable = {};
+    window.__writerAvailable[WRITER_ID] = next;
+    window.dispatchEvent(new Event("writerAvailabilityChanged"));
+  };
+
   return (
     <div style={{ background: "#2D1060", borderRadius: 12, padding: "18px 18px 10px", boxShadow: "0 2px 8px rgba(0,0,0,0.25)", ...style }}>
-      <div className="row between" style={{ marginBottom: 14 }}>
+      <div className="row between" style={{ marginBottom: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".7px", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>My Projects</span>
         <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.08)", borderRadius: 99, padding: "2px 8px" }}>{shown.length}</span>
       </div>
+
+      {/* Availability toggle */}
+      <button
+        onClick={toggleAvailable}
+        style={{
+          display: "flex", alignItems: "center", gap: 9, width: "100%",
+          background: available ? "rgba(0,160,108,0.18)" : "rgba(255,255,255,0.06)",
+          border: available ? "1px solid rgba(0,160,108,0.4)" : "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 8, padding: "8px 11px", cursor: "pointer", marginBottom: 12, transition: "background .15s, border-color .15s",
+        }}>
+        {/* Track */}
+        <div style={{ width: 32, height: 18, borderRadius: 99, background: available ? "#00A06C" : "rgba(255,255,255,0.2)", position: "relative", flexShrink: 0, transition: "background .2s" }}>
+          <div style={{ position: "absolute", top: 3, left: available ? 17 : 3, width: 12, height: 12, borderRadius: 99, background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }} />
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 600, color: available ? "#31D0AA" : "rgba(255,255,255,0.4)", flex: 1, textAlign: "left" }}>
+          I'm available for more projects
+        </span>
+      </button>
+
       {shown.map((p, i) => {
         const pct = Math.round((p.done / p.total) * 100);
         const color = STATUS_COLOR[p.status] || "#888";
