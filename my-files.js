@@ -323,26 +323,14 @@ function Settings() {
           </div>
           <div className="field">
             <label className="field-label">Email</label>
-            <input className="input" value="sarah@example.com" readOnly />
+            <input className="input" value="sarah@example.com" readOnly style={{ background: "var(--page-bg)", color: "var(--text-secondary)", cursor: "default" }} />
+            <div style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>To change your email, contact your admin.</div>
           </div>
           <div className="field">
             <label className="field-label">LinkedIn URL</label>
             <input className="input" value={li} onChange={(e) => setLi(e.target.value)} />
           </div>
           <button className="btn btn-primary" onClick={() => showToast("Profile saved.")}>Save Changes</button>
-        </Card>
-
-        <Card>
-          <div className="label" style={{ marginBottom: 14 }}>Preferences</div>
-          <div className="field">
-            <label className="field-label">Preferred file format</label>
-            <select className="select"><option>Word</option><option>Google Docs</option><option>PDF</option></select>
-          </div>
-          <div className="field">
-            <label className="field-label">Email notifications</label>
-            <select className="select"><option>All</option><option>Important only</option><option>None</option></select>
-          </div>
-          <button className="btn btn-primary" onClick={() => showToast("Preferences saved.")}>Save Preferences</button>
         </Card>
 
         <Card>

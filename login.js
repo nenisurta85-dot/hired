@@ -79,6 +79,12 @@ function Login() {
               <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: 4 }}>
                 Sign In <Icons.ArrowRight size={15} />
               </button>
+              <div style={{ marginTop: 12, textAlign: "center" }}>
+                <button type="button" onClick={() => alert("A password reset link will be sent to your email.")}
+                  style={{ background: "none", border: "none", fontSize: 12, color: "var(--purple)", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>
+                  Forgot password?
+                </button>
+              </div>
             </div>
           )}
 

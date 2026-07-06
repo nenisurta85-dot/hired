@@ -1734,6 +1734,9 @@ Kate`;
 
   const [emailBody, setEmailBody] = React.useState(task.emailBody || EMAIL_PLACEHOLDER);
   const [emailPublished, setEmailPublished] = React.useState(task.emailPublished || false);
+  const [recPkgs, setRecPkgs] = React.useState([]);
+  const [discountEnabled, setDiscountEnabled] = React.useState(false);
+  const DISCOUNT_CODE = "GHH10-24H";
 
   const STATUS_OPTIONS = ["not_started", "in_progress", "overdue", "complete"];
   const STATUS_LABELS = { not_started: "Not Started", in_progress: "In Progress", overdue: "Overdue", complete: "Complete" };
@@ -1805,40 +1808,69 @@ Kate`;
           </div>
         )}
 
-        {/* Service package link — Email tasks only */}
         {/* Email / Summary section — Email tasks only */}
         {isEmail && (() => {
-          const packages = (window.ADM?.PACKAGES || []).concat(window.ADM?.ALACARTE || []);
-          const [recPkg, setRecPkg] = React.useState(packages[0]?.name || "");
-          const recPkgObj = packages.find(p => p.name === recPkg);
+          const allPkgs = (window.ADM?.PACKAGES || []).concat(window.ADM?.ALACARTE || []);
+          const togglePkg = (id) => {
+            setRecPkgs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+          };
+          const selectedObjs = allPkgs.filter(p => recPkgs.includes(p.id));
+          const discountLine = discountEnabled ? `\nReply within 24 hours for 10% off — code: ${DISCOUNT_CODE}` : "";
+          const pkgLines = selectedObjs.length
+            ? "\n\nServices I'd recommend for you:\n" + selectedObjs.map(p => `• ${p.name}${p.price ? " — " + p.price : ""} →`).join("\n") + discountLine
+            : (discountEnabled ? "\n" + discountLine : "");
+
           return (
             <div style={{ marginBottom: 20 }}>
-              {/* Recommended package field */}
+              {/* Multi-select recommended packages */}
               <div style={{ marginBottom: 14 }}>
-                <FieldLabel>Recommended package</FieldLabel>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <select value={recPkg} onChange={e => setRecPkg(e.target.value)}
-                    style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", fontSize: 13, background: "#fff", outline: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                    <option value="">— None —</option>
-                    {packages.map(p => <option key={p.id} value={p.name}>{p.name}{p.price ? " · " + p.price : ""}</option>)}
-                  </select>
+                <FieldLabel>Recommended packages & à la carte</FieldLabel>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {allPkgs.map(p => {
+                    const sel = recPkgs.includes(p.id);
+                    return (
+                      <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${sel ? "var(--purple)" : "var(--border)"}`, background: sel ? "rgba(130,17,255,0.04)" : "#fff", cursor: "pointer", transition: "border-color .12s, background .12s" }}>
+                        <input type="checkbox" checked={sel} onChange={() => togglePkg(p.id)} style={{ accentColor: "var(--purple)", width: 14, height: 14, flexShrink: 0 }} />
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: sel ? 600 : 400, color: sel ? "var(--purple)" : "var(--text-primary)" }}>{p.name}</span>
+                        {p.price && <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", flexShrink: 0 }}>{p.price}</span>}
+                        {p.tagline && <span style={{ fontSize: 11, color: "#aaa", flexShrink: 0 }}>{p.tagline}</span>}
+                      </label>
+                    );
+                  })}
                 </div>
-                {recPkg && (
-                  <div style={{ marginTop: 8, background: "rgba(130,17,255,0.04)", border: "1px solid var(--purple-border)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--text-muted)", marginBottom: 2 }}>Will appear in email as:</div>
-                      <span style={{ fontSize: 13, color: "var(--purple)", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
-                        Recommended for you: {recPkg} →
-                      </span>
-                    </div>
-                    {recPkgObj?.price && <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", flexShrink: 0 }}>{recPkgObj.price}</span>}
+                {selectedObjs.length > 0 && (
+                  <div style={{ marginTop: 10, background: "rgba(130,17,255,0.04)", border: "1px solid var(--purple-border)", borderRadius: 8, padding: "10px 14px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--text-muted)", marginBottom: 6 }}>Will appear in email as:</div>
+                    {selectedObjs.map(p => (
+                      <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 13, color: "var(--purple)", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>{p.name}{p.price ? " — " + p.price : ""} →</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Discount code toggle */}
+              <div style={{ marginBottom: 14 }}>
+                <FieldLabel>Discount code</FieldLabel>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, border: `1.5px solid ${discountEnabled ? "#185FA5" : "var(--border)"}`, background: discountEnabled ? "rgba(24,95,165,0.04)" : "#fff", cursor: "pointer", transition: "border-color .12s, background .12s" }}>
+                  <input type="checkbox" checked={discountEnabled} onChange={e => setDiscountEnabled(e.target.checked)} style={{ accentColor: "#185FA5", width: 14, height: 14, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 13, fontWeight: discountEnabled ? 600 : 400, color: discountEnabled ? "#185FA5" : "var(--text-primary)" }}>Include 10% discount — 24-hour reply offer</span>
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Code: <span style={{ fontWeight: 700, fontFamily: "monospace", letterSpacing: ".5px" }}>{DISCOUNT_CODE}</span> · Valid if client replies within 24 hours</div>
+                  </div>
+                </label>
+                {discountEnabled && (
+                  <div style={{ marginTop: 8, background: "rgba(24,95,165,0.04)", border: "1px solid rgba(24,95,165,0.2)", borderRadius: 8, padding: "9px 14px", fontSize: 12, color: "#185FA5", fontWeight: 500 }}>
+                    Will appear in email: "Reply within 24 hours for 10% off — code: <strong>{DISCOUNT_CODE}</strong>"
                   </div>
                 )}
               </div>
 
               <FieldLabel>Email / Summary</FieldLabel>
-              <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
+              <textarea value={emailBody + pkgLines} onChange={e => setEmailBody(e.target.value.replace(pkgLines, ""))}
                 style={{ width: "100%", minHeight: 240, border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6, color: "var(--text-primary)" }} />
+              <div style={{ marginTop: 6, fontSize: 11, color: "#aaa" }}>Selected packages and discount code are appended automatically below your message.</div>
 
               <button onClick={() => {
                   setEmailPublished(v => !v);
@@ -1852,7 +1884,7 @@ Kate`;
               </button>
               {emailPublished && (
                 <div style={{ marginTop: 8, fontSize: 12, color: "#00A06C", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Icons.CircleCheck size={13} /> Client can see this summary{recPkg ? " and package recommendation" : ""} in their dashboard.
+                  <Icons.CircleCheck size={13} /> Client can see this summary{selectedObjs.length ? " and package recommendations" : ""} in their dashboard.
                 </div>
               )}
             </div>

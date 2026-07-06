@@ -167,6 +167,18 @@ function UploadModal({ onClose }) {
 function AddOnsModal({ onClose }) {
   const { showToast, GHH } = usePortal();
   const I = window.Icons;
+  const [discountCode, setDiscountCode] = React.useState("");
+  const [discountApplied, setDiscountApplied] = React.useState(false);
+
+  const applyCode = () => {
+    if (discountCode.trim().toUpperCase() === "GHH10-24H") {
+      setDiscountApplied(true);
+      showToast("10% discount applied!");
+    } else {
+      showToast("Invalid or expired code.");
+    }
+  };
+
   return (
     <Modal onClose={onClose} wide>
       <ModalHeader title="Expand Your Package" onClose={onClose} />
@@ -182,6 +194,26 @@ function AddOnsModal({ onClose }) {
               </button>
             </div>
           ))}
+        </div>
+        {/* Discount code field */}
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text-secondary)", marginBottom: 8 }}>Discount code</div>
+          {discountApplied ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#00A06C", fontWeight: 600 }}>
+              <I.CircleCheck size={15} /> 10% discount applied — code: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>GHH10-24H</span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={discountCode}
+                onChange={e => setDiscountCode(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") applyCode(); }}
+                placeholder="Enter code (e.g. GHH10-24H)"
+                style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "#fff" }}
+              />
+              <button onClick={applyCode} style={{ background: "var(--purple)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>Apply</button>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
