@@ -1220,8 +1220,15 @@ var e,t,r="function"==typeof Symbol?Symbol:{},a=r.iterator||"@@iterator",n=r.toS
       tasks: [{ name: "Final deliverables handoff", state: "future" }, { name: "90-day support begins", state: "future" }] },
   ];
 
+  const MESSAGES = [
+    { id: "m1", who: "Kate Wade", initials: "KW", role: "team", when: "2 days ago", text: "Hi Sarah! Just wanted to check in — how are you feeling about the résumé draft so far? Any sections you'd like to revisit before we finalize?", unread: false },
+    { id: "m2", who: "Sarah K.", initials: "SK", role: "client", when: "2 days ago", text: "Hi Kate! Overall I love it. I think the executive summary could be a bit stronger — I'd like it to lead with the leadership angle more clearly.", unread: false },
+    { id: "m3", who: "Kate Wade", initials: "KW", role: "team", when: "1 day ago", text: "Great feedback! I'll rework the opening to highlight your team leadership and strategic impact right up front. I'll have the updated version ready by end of week.", unread: true },
+    { id: "m4", who: "Erin Doyle", initials: "ED", role: "team", when: "3 hours ago", text: "Also chiming in — I reviewed your LinkedIn draft and I think it pairs really well with the résumé. We should align the headlines before we publish both.", unread: true },
+  ];
+
   window.GHH = {
-    STATUS, ICON_STYLE, DASH_TASKS, ALL_TASKS, COMMENTS,
+    STATUS, ICON_STYLE, DASH_TASKS, ALL_TASKS, COMMENTS, MESSAGES,
     FILES_FROM, FILES_TO, SESSIONS_UP, SESSIONS_PAST,
     TOOLKIT, ADDONS, FAQ, TIMELINE,
     TARGET_END: "May 22, 2026",
@@ -1230,6 +1237,7 @@ var e,t,r="function"==typeof Symbol?Symbol:{},a=r.iterator||"@@iterator",n=r.toS
       { key: "files", label: "My Files", icon: "FileText", path: "#/files" },
       { key: "sessions", label: "My Sessions", icon: "Calendar", path: "#/sessions" },
       { key: "comments", label: "Comments", icon: "MessageCircle", path: "#/comments", badge: 3 },
+      { key: "messages", label: "Messages", icon: "Inbox", path: "#/messages", badge: 2 },
       { key: "toolkit", label: "Toolkit", icon: "Wrench", path: "#/toolkit" },
       { key: "tasks", label: "My Tasks", icon: "ListChecks", path: "#/tasks" },
       { key: "help", label: "Help", icon: "HelpCircle", path: "#/help" },
@@ -1935,6 +1943,74 @@ function RecentComments() {
   );
 }
 
+function MessageTeamCard() {
+  const { messages, sendMessage, navigate } = usePortal();
+  const { Icons } = window;
+  const [text, setText] = React.useState("");
+  const unreadCount = messages.filter(m => m.unread).length;
+  const preview = messages.slice(-2);
+
+  const handleSend = () => {
+    const t = text.trim();
+    if (!t) return;
+    sendMessage(t);
+    setText("");
+  };
+
+  return (
+    <Card style={{ marginTop: 14 }}>
+      <div className="row between" style={{ marginBottom: 10 }}>
+        <div className="row" style={{ gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".6px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Message Your Team</span>
+          {unreadCount > 0 && (
+            <span style={{ background: "var(--raspberry)", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 99, minWidth: 17, height: 17, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{unreadCount}</span>
+          )}
+        </div>
+      </div>
+
+      {preview.length === 0 ? (
+        <div style={{ fontSize: 12, color: "#aaa", padding: "8px 0 10px", lineHeight: 1.5 }}>Questions about your project? Message your team.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+          {preview.map(m => (
+            <div key={m.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{ width: 24, height: 24, borderRadius: 99, background: m.role === "client" ? "var(--raspberry)" : "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, flex: "0 0 24px" }}>{m.initials}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11 }}>
+                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{m.role === "client" ? "You" : m.who}</span>
+                  <span className="meta"> · {m.when}</span>
+                  {m.unread && <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 99, background: "var(--raspberry)", marginLeft: 5, verticalAlign: "middle" }} />}
+                </div>
+                <div style={{ fontSize: 11, color: "#888", lineHeight: 1.4, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }}
+          placeholder="Write a message…"
+          style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", fontSize: 12, fontFamily: "inherit", outline: "none", background: "var(--page-bg)", color: "var(--text-primary)" }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!text.trim()}
+          style={{ background: text.trim() ? "var(--raspberry)" : "var(--border)", color: text.trim() ? "#fff" : "#aaa", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: text.trim() ? "pointer" : "default", flexShrink: 0 }}>
+          <Icons.Send size={13} />
+        </button>
+      </div>
+
+      <button className="btn btn-ghost" style={{ marginTop: 10, width: "100%", textAlign: "left", fontSize: 11 }} onClick={() => navigate("#/messages")}>
+        Open messages →
+      </button>
+    </Card>
+  );
+}
+
 function AddBanner() {
   const { openAddons } = usePortal();
   return (
@@ -2090,6 +2166,7 @@ function Dashboard() {
         <div style={{ width: 300, flexShrink: 0, position: "sticky", top: 0 }}>
           <UpcomingSessions />
           <RecentComments />
+          <MessageTeamCard />
         </div>
       </div>
       <ShareExperienceRow />
@@ -4741,6 +4818,74 @@ function ProjectComments({ setTab }) {
   );
 }
 
+/* ProjectMessages — client ↔ team thread */
+const PROJECT_MESSAGES_SEED = [
+  { id: "m1", who: "Kate Wade", initials: "KW", role: "team", when: "2 days ago", text: "Hi Sarah! Just wanted to check in — how are you feeling about the résumé draft so far? Any sections you'd like to revisit before we finalize?" },
+  { id: "m2", who: "Sarah K.", initials: "SK", role: "client", when: "2 days ago", text: "Hi Kate! Overall I love it. I think the executive summary could be a bit stronger — I'd like it to lead with the leadership angle more clearly." },
+  { id: "m3", who: "Kate Wade", initials: "KW", role: "team", when: "1 day ago", text: "Great feedback! I'll rework the opening to highlight your team leadership and strategic impact right up front. I'll have the updated version ready by end of week." },
+  { id: "m4", who: "Erin Doyle", initials: "ED", role: "team", when: "3 hours ago", text: "Also chiming in — I reviewed your LinkedIn draft and I think it pairs really well with the résumé. We should align the headlines before we publish both." },
+];
+
+function ProjectMessages() {
+  const { Icons } = window;
+  const [msgs, setMsgs] = React.useState([...PROJECT_MESSAGES_SEED]);
+  const [text, setText] = React.useState("");
+  const bottomRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
+
+  const handleSend = () => {
+    const t = text.trim();
+    if (!t) return;
+    setMsgs(prev => [...prev, { id: "m" + Date.now(), who: "Kate Wade", initials: "KW", role: "team", when: "just now", text: t }]);
+    setText("");
+  };
+
+  return (
+    <div className="admin-body">
+      <Card>
+        <div className="label" style={{ marginBottom: 14 }}>Client Messages</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 480, overflowY: "auto", marginBottom: 16, paddingRight: 4 }} className="scrollbar-thin">
+          {msgs.map((m) => {
+            const isClient = m.role === "client";
+            return (
+              <div key={m.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexDirection: isClient ? "row-reverse" : "row" }}>
+                <div style={{ width: 32, height: 32, borderRadius: 99, background: isClient ? "#C8005A" : "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flex: "0 0 32px" }}>{m.initials}</div>
+                <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", gap: 3, alignItems: isClient ? "flex-end" : "flex-start" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                    <span style={{ fontWeight: 600, marginRight: 4, color: "var(--text-primary)" }}>{m.who}</span>
+                    {m.when}
+                  </div>
+                  <div style={{ background: isClient ? "rgba(200,0,90,0.08)" : "var(--page-bg)", color: "var(--text-primary)", borderRadius: isClient ? "14px 4px 14px 14px" : "4px 14px 14px 14px", padding: "10px 14px", fontSize: 13, lineHeight: 1.55, border: "1px solid var(--border)" }}>{m.text}</div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+        <div style={{ display: "flex", gap: 9, alignItems: "flex-end", borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Reply to client…"
+            rows={2}
+            style={{ flex: 1, resize: "none", border: "1px solid var(--border)", borderRadius: 10, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "var(--page-bg)", color: "var(--text-primary)", lineHeight: 1.5 }}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!text.trim()}
+            style={{ background: text.trim() ? "var(--purple)" : "var(--border)", color: text.trim() ? "#fff" : "#aaa", border: "none", borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: text.trim() ? "pointer" : "default", transition: "background .15s", flexShrink: 0 }}>
+            <Icons.Send size={16} />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 /* ProjectNotes — read-only internal notes */
 function ProjectNotes({ setTab }) {
   const { Icons } = window;
@@ -5190,7 +5335,7 @@ function AdminProjectDetail({ id }) {
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
   const [activeTask, setActiveTask] = React.useState(null);
-  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Intake"];
+  const tabs = ["Tasks", "Documents", "Comments", "Messages", "Notes", "Intake"];
 
   return (
     <div>
@@ -5233,6 +5378,7 @@ function AdminProjectDetail({ id }) {
       {tab === "Tasks" && <ProjectTasks project={project} focusPhase={focusPhase} />}
       {tab === "Documents" && <ProjectDocs client={project.client} />}
       {tab === "Comments" && <ProjectComments setTab={setTab} />}
+      {tab === "Messages" && <ProjectMessages />}
       {tab === "Notes" && <ProjectNotes setTab={setTab} />}
       {tab === "Project Info" && <ProjectInfo />}
       {tab === "Intake" && <ProjectOnboarding projectId={project.id} />}
@@ -7995,6 +8141,7 @@ function App() {
   const [dashTasks, setDashTasks] = React.useState(window.GHH.DASH_TASKS);
   const [allTasks, setAllTasks] = React.useState(window.GHH.ALL_TASKS);
   const [comments, setComments] = React.useState(window.GHH.COMMENTS);
+  const [messages, setMessages] = React.useState(window.GHH.MESSAGES);
 
   const toastTimer = React.useRef(null);
 
@@ -8036,13 +8183,18 @@ function App() {
     showToast("Marked as read.");
   };
 
+  const sendMessage = (text) => {
+    const msg = { id: "m" + Date.now(), who: "Sarah K.", initials: "SK", role: "client", when: "just now", text, unread: false };
+    setMessages((list) => [...list, msg]);
+  };
+
   const ctx = {
     navigate, showToast,
     openTask, openTaskById, closeTask,
     openAddons: () => setShowAddons(true),
     openUpload: () => setShowUpload(true),
-    dashTasks, allTasks, comments,
-    completeDash, completeTask, markCommentRead,
+    dashTasks, allTasks, comments, messages,
+    completeDash, completeTask, markCommentRead, sendMessage,
     GHH: window.GHH, Icons: window.Icons,
   };
 
@@ -8055,6 +8207,7 @@ function App() {
   else if (r === "/files") screen = <MyFiles />;
   else if (r === "/sessions") screen = <MySessions />;
   else if (r === "/comments") screen = <Comments />;
+  else if (r === "/messages") screen = <Messages />;
   else if (r === "/toolkit") screen = <Toolkit />;
   else if (r === "/tasks") screen = <MyTasks />;
   else if (r === "/help") screen = <Help />;

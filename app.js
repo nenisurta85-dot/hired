@@ -12,6 +12,7 @@ function App() {
   const [dashTasks, setDashTasks] = React.useState(window.GHH.DASH_TASKS);
   const [allTasks, setAllTasks] = React.useState(window.GHH.ALL_TASKS);
   const [comments, setComments] = React.useState(window.GHH.COMMENTS);
+  const [messages, setMessages] = React.useState(window.GHH.MESSAGES);
 
   const toastTimer = React.useRef(null);
 
@@ -53,13 +54,18 @@ function App() {
     showToast("Marked as read.");
   };
 
+  const sendMessage = (text) => {
+    const msg = { id: "m" + Date.now(), who: "Sarah K.", initials: "SK", role: "client", when: "just now", text, unread: false };
+    setMessages((list) => [...list, msg]);
+  };
+
   const ctx = {
     navigate, showToast,
     openTask, openTaskById, closeTask,
     openAddons: () => setShowAddons(true),
     openUpload: () => setShowUpload(true),
-    dashTasks, allTasks, comments,
-    completeDash, completeTask, markCommentRead,
+    dashTasks, allTasks, comments, messages,
+    completeDash, completeTask, markCommentRead, sendMessage,
     GHH: window.GHH, Icons: window.Icons,
   };
 
@@ -72,6 +78,7 @@ function App() {
   else if (r === "/files") screen = <MyFiles />;
   else if (r === "/sessions") screen = <MySessions />;
   else if (r === "/comments") screen = <Comments />;
+  else if (r === "/messages") screen = <Messages />;
   else if (r === "/toolkit") screen = <Toolkit />;
   else if (r === "/tasks") screen = <MyTasks />;
   else if (r === "/help") screen = <Help />;

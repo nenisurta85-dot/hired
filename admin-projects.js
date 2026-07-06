@@ -946,6 +946,74 @@ function ProjectComments({ setTab }) {
   );
 }
 
+/* ProjectMessages — client ↔ team thread */
+const PROJECT_MESSAGES_SEED = [
+  { id: "m1", who: "Kate Wade", initials: "KW", role: "team", when: "2 days ago", text: "Hi Sarah! Just wanted to check in — how are you feeling about the résumé draft so far? Any sections you'd like to revisit before we finalize?" },
+  { id: "m2", who: "Sarah K.", initials: "SK", role: "client", when: "2 days ago", text: "Hi Kate! Overall I love it. I think the executive summary could be a bit stronger — I'd like it to lead with the leadership angle more clearly." },
+  { id: "m3", who: "Kate Wade", initials: "KW", role: "team", when: "1 day ago", text: "Great feedback! I'll rework the opening to highlight your team leadership and strategic impact right up front. I'll have the updated version ready by end of week." },
+  { id: "m4", who: "Erin Doyle", initials: "ED", role: "team", when: "3 hours ago", text: "Also chiming in — I reviewed your LinkedIn draft and I think it pairs really well with the résumé. We should align the headlines before we publish both." },
+];
+
+function ProjectMessages() {
+  const { Icons } = window;
+  const [msgs, setMsgs] = React.useState([...PROJECT_MESSAGES_SEED]);
+  const [text, setText] = React.useState("");
+  const bottomRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
+
+  const handleSend = () => {
+    const t = text.trim();
+    if (!t) return;
+    setMsgs(prev => [...prev, { id: "m" + Date.now(), who: "Kate Wade", initials: "KW", role: "team", when: "just now", text: t }]);
+    setText("");
+  };
+
+  return (
+    <div className="admin-body">
+      <Card>
+        <div className="label" style={{ marginBottom: 14 }}>Client Messages</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 480, overflowY: "auto", marginBottom: 16, paddingRight: 4 }} className="scrollbar-thin">
+          {msgs.map((m) => {
+            const isClient = m.role === "client";
+            return (
+              <div key={m.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", flexDirection: isClient ? "row-reverse" : "row" }}>
+                <div style={{ width: 32, height: 32, borderRadius: 99, background: isClient ? "#C8005A" : "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flex: "0 0 32px" }}>{m.initials}</div>
+                <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", gap: 3, alignItems: isClient ? "flex-end" : "flex-start" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                    <span style={{ fontWeight: 600, marginRight: 4, color: "var(--text-primary)" }}>{m.who}</span>
+                    {m.when}
+                  </div>
+                  <div style={{ background: isClient ? "rgba(200,0,90,0.08)" : "var(--page-bg)", color: "var(--text-primary)", borderRadius: isClient ? "14px 4px 14px 14px" : "4px 14px 14px 14px", padding: "10px 14px", fontSize: 13, lineHeight: 1.55, border: "1px solid var(--border)" }}>{m.text}</div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+        <div style={{ display: "flex", gap: 9, alignItems: "flex-end", borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Reply to client…"
+            rows={2}
+            style={{ flex: 1, resize: "none", border: "1px solid var(--border)", borderRadius: 10, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "var(--page-bg)", color: "var(--text-primary)", lineHeight: 1.5 }}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!text.trim()}
+            style={{ background: text.trim() ? "var(--purple)" : "var(--border)", color: text.trim() ? "#fff" : "#aaa", border: "none", borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: text.trim() ? "pointer" : "default", transition: "background .15s", flexShrink: 0 }}>
+            <Icons.Send size={16} />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 /* ProjectNotes — read-only internal notes */
 function ProjectNotes({ setTab }) {
   const { Icons } = window;
@@ -1395,7 +1463,7 @@ function AdminProjectDetail({ id }) {
   const [tab, setTab] = React.useState("Tasks");
   const [focusPhase, setFocusPhase] = React.useState(null);
   const [activeTask, setActiveTask] = React.useState(null);
-  const tabs = ["Tasks", "Documents", "Comments", "Notes", "Intake"];
+  const tabs = ["Tasks", "Documents", "Comments", "Messages", "Notes", "Intake"];
 
   return (
     <div>
@@ -1438,6 +1506,7 @@ function AdminProjectDetail({ id }) {
       {tab === "Tasks" && <ProjectTasks project={project} focusPhase={focusPhase} />}
       {tab === "Documents" && <ProjectDocs client={project.client} />}
       {tab === "Comments" && <ProjectComments setTab={setTab} />}
+      {tab === "Messages" && <ProjectMessages />}
       {tab === "Notes" && <ProjectNotes setTab={setTab} />}
       {tab === "Project Info" && <ProjectInfo />}
       {tab === "Intake" && <ProjectOnboarding projectId={project.id} />}

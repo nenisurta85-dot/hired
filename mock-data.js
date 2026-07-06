@@ -210,8 +210,15 @@
       tasks: [{ name: "Final deliverables handoff", state: "future" }, { name: "90-day support begins", state: "future" }] },
   ];
 
+  const MESSAGES = [
+    { id: "m1", who: "Kate Wade", initials: "KW", role: "team", when: "2 days ago", text: "Hi Sarah! Just wanted to check in — how are you feeling about the résumé draft so far? Any sections you'd like to revisit before we finalize?", unread: false },
+    { id: "m2", who: "Sarah K.", initials: "SK", role: "client", when: "2 days ago", text: "Hi Kate! Overall I love it. I think the executive summary could be a bit stronger — I'd like it to lead with the leadership angle more clearly.", unread: false },
+    { id: "m3", who: "Kate Wade", initials: "KW", role: "team", when: "1 day ago", text: "Great feedback! I'll rework the opening to highlight your team leadership and strategic impact right up front. I'll have the updated version ready by end of week.", unread: true },
+    { id: "m4", who: "Erin Doyle", initials: "ED", role: "team", when: "3 hours ago", text: "Also chiming in — I reviewed your LinkedIn draft and I think it pairs really well with the résumé. We should align the headlines before we publish both.", unread: true },
+  ];
+
   window.GHH = {
-    STATUS, ICON_STYLE, DASH_TASKS, ALL_TASKS, COMMENTS,
+    STATUS, ICON_STYLE, DASH_TASKS, ALL_TASKS, COMMENTS, MESSAGES,
     FILES_FROM, FILES_TO, SESSIONS_UP, SESSIONS_PAST,
     TOOLKIT, ADDONS, FAQ, TIMELINE,
     TARGET_END: "May 22, 2026",
@@ -220,6 +227,7 @@
       { key: "files", label: "My Files", icon: "FileText", path: "#/files" },
       { key: "sessions", label: "My Sessions", icon: "Calendar", path: "#/sessions" },
       { key: "comments", label: "Comments", icon: "MessageCircle", path: "#/comments", badge: 3 },
+      { key: "messages", label: "Messages", icon: "Inbox", path: "#/messages", badge: 2 },
       { key: "toolkit", label: "Toolkit", icon: "Wrench", path: "#/toolkit" },
       { key: "tasks", label: "My Tasks", icon: "ListChecks", path: "#/tasks" },
       { key: "help", label: "Help", icon: "HelpCircle", path: "#/help" },

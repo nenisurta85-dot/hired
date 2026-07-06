@@ -79,6 +79,74 @@ function RecentComments() {
   );
 }
 
+function MessageTeamCard() {
+  const { messages, sendMessage, navigate } = usePortal();
+  const { Icons } = window;
+  const [text, setText] = React.useState("");
+  const unreadCount = messages.filter(m => m.unread).length;
+  const preview = messages.slice(-2);
+
+  const handleSend = () => {
+    const t = text.trim();
+    if (!t) return;
+    sendMessage(t);
+    setText("");
+  };
+
+  return (
+    <Card style={{ marginTop: 14 }}>
+      <div className="row between" style={{ marginBottom: 10 }}>
+        <div className="row" style={{ gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".6px", textTransform: "uppercase", color: "var(--text-secondary)" }}>Message Your Team</span>
+          {unreadCount > 0 && (
+            <span style={{ background: "var(--raspberry)", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 99, minWidth: 17, height: 17, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{unreadCount}</span>
+          )}
+        </div>
+      </div>
+
+      {preview.length === 0 ? (
+        <div style={{ fontSize: 12, color: "#aaa", padding: "8px 0 10px", lineHeight: 1.5 }}>Questions about your project? Message your team.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+          {preview.map(m => (
+            <div key={m.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{ width: 24, height: 24, borderRadius: 99, background: m.role === "client" ? "var(--raspberry)" : "var(--purple)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, flex: "0 0 24px" }}>{m.initials}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11 }}>
+                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{m.role === "client" ? "You" : m.who}</span>
+                  <span className="meta"> · {m.when}</span>
+                  {m.unread && <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 99, background: "var(--raspberry)", marginLeft: 5, verticalAlign: "middle" }} />}
+                </div>
+                <div style={{ fontSize: 11, color: "#888", lineHeight: 1.4, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }}
+          placeholder="Write a message…"
+          style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", fontSize: 12, fontFamily: "inherit", outline: "none", background: "var(--page-bg)", color: "var(--text-primary)" }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!text.trim()}
+          style={{ background: text.trim() ? "var(--raspberry)" : "var(--border)", color: text.trim() ? "#fff" : "#aaa", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: text.trim() ? "pointer" : "default", flexShrink: 0 }}>
+          <Icons.Send size={13} />
+        </button>
+      </div>
+
+      <button className="btn btn-ghost" style={{ marginTop: 10, width: "100%", textAlign: "left", fontSize: 11 }} onClick={() => navigate("#/messages")}>
+        Open messages →
+      </button>
+    </Card>
+  );
+}
+
 function AddBanner() {
   const { openAddons } = usePortal();
   return (
@@ -234,6 +302,7 @@ function Dashboard() {
         <div style={{ width: 300, flexShrink: 0, position: "sticky", top: 0 }}>
           <UpcomingSessions />
           <RecentComments />
+          <MessageTeamCard />
         </div>
       </div>
       <ShareExperienceRow />
