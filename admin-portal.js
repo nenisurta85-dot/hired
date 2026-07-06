@@ -154,7 +154,7 @@
   }));
 
   const DOCS = [
-    { id: "d1", name: "Résumé — Draft v1", client: "Maya Chen", type: "Resume", status: "overdue", version: "v1", dir: "GHH to Client", modified: "Apr 28", drive: true },
+    { id: "d1", name: "Résumé", client: "Maya Chen", type: "Resume", status: "overdue", version: "v1", dir: "GHH to Client", modified: "Apr 28", drive: true },
     { id: "d2", name: "LinkedIn Audit", client: "Maya Chen", type: "LinkedIn Audit", status: "not_started", version: "v1", dir: "GHH to Client", modified: "Apr 25", drive: true },
     { id: "d3", name: "Maya — Original Résumé.pdf", client: "Maya Chen", type: "Resume", status: "in_progress", version: "—", dir: "Client to GHH", modified: "Apr 1", drive: false },
     { id: "d4", name: "Cover Letter Template", client: "Sarah Klein", type: "Cover Letter Template", status: "complete", version: "v2", dir: "GHH to Client", modified: "Apr 22", drive: true },
@@ -202,7 +202,7 @@
       { title: "Build client brief", week: "Onboarding", resp: "writer", dur: "45m", vis: false, type: "Strategy", order: 3, active: true },
     ],
     "Tits Up": [
-      { title: "Résumé — Draft v1", week: "Week 1", resp: "writer", dur: "3h", vis: true, type: "Deliverable", order: 1, active: true },
+      { title: "Résumé", week: "Week 1", resp: "writer", dur: "3h", vis: true, type: "Deliverable", order: 1, active: true },
       { title: "LinkedIn audit", week: "Week 1", resp: "writer", dur: "1h", vis: true, type: "Deliverable", order: 2, active: true },
     ],
     "MFD": [], "Scroll-Stopper": [], "Offboarding": [
@@ -232,21 +232,21 @@
   };
 
   const ACTIVITY = [
-    { who: "Kate Wade", initials: "KW", color: "#C8005A", action: "reviewed Résumé — Draft v1", client: "Maya Chen", when: "2h ago" },
+    { who: "Kate Wade", initials: "KW", color: "#C8005A", action: "reviewed Résumé", client: "Maya Chen", when: "2h ago" },
     { who: "Mimi Bishop", initials: "MB", color: "#0F9E75", action: "uploaded LinkedIn Audit", client: "Priya Nair", when: "4h ago" },
     { who: "Lourdes H-D", initials: "LH", color: "#185FA5", action: "completed Working Session #1 prep", client: "Maya Chen", when: "6h ago" },
     { who: "Jhoneth Briones", initials: "JB", color: "#8211FF", action: "onboarded new client", client: "Nina Patel", when: "1d ago" },
   ];
 
   const MY_TASKS = [
-    { title: "Review Résumé — Draft v1", client: "Maya Chen", due: "Today", overdue: false, done: false },
+    { title: "Review Résumé", client: "Maya Chen", due: "Today", overdue: false, done: false },
     { title: "Approve LinkedIn Audit", client: "Priya Nair", due: "Yesterday", overdue: true, done: false },
     { title: "Prep Working Session #2", client: "Maya Chen", due: "Apr 30", overdue: false, done: false },
     { title: "Send brief to writer", client: "Tessa Wright", due: "May 1", overdue: false, done: true },
   ];
 
   const REVIEW_QUEUE = [
-    { name: "Résumé — Draft v1", client: "Maya Chen", type: "Resume" },
+    { name: "Résumé", client: "Maya Chen", type: "Resume" },
     { name: "Cover Letter Template", client: "Sarah Klein", type: "Cover Letter" },
   ];
 

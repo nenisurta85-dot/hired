@@ -24,10 +24,10 @@
 
   // Dashboard "Your Tasks" (4)
   const DASH_TASKS = [
-    { id: "d1", type: "review", highlight: true, title: "Résumé — Draft v1",
+    { id: "d1", type: "review", highlight: true, title: "Résumé",
       status: "Ready for Review", desc: "Open the doc, leave your comments, submit feedback",
       due: "Due May 12",
-      action: "Review Draft", doc: "Résumé — Draft v1.pdf", docId: "d1",
+      action: "Review Draft", doc: "Résumé.pdf", docId: "d1",
       detail: "Your writer has completed the first draft of your résumé. Open it, leave inline comments, and submit your feedback so we can refine it before your next session.",
       meta: { phase: "Phase 1", due: "Due May 12", assigned: "Kate Wade", priority: "High" },
       comment: { who: "Kate Wade", when: "4 days ago", text: "I've focused the executive summary on your P&L ownership and the team scale-up. Let me know if the framing feels right." } },
@@ -82,7 +82,7 @@
       meta: { phase: "Week 1", due: "Due Apr 24", assigned: "Kate Wade", priority: "Medium" },
       comment: { who: "Kate Wade", when: "2 days ago", text: "This is the foundation everything else is built from — flag anything inaccurate or missing." } },
     { id: "t10", type: "review", title: "Review Resume", week: "Week 2", due: "Due Apr 30", status: "Ready for Review",
-      detail: "Review the first draft of your résumé and leave feedback for your writer.", doc: "Resume — Draft v1.pdf",
+      detail: "Review the first draft of your résumé and leave feedback for your writer.", doc: "Resume.pdf",
       meta: { phase: "Week 2", due: "Due Apr 30", assigned: "Kate Wade", priority: "High" },
       comment: { who: "Kate Wade", when: "4 days ago", text: "First draft is looking great — please review the executive summary and bullet points." } },
     { id: "t11", type: "review", title: "Review Toolkit (20 Scripts, Worksheets, Guides)", week: "Week 2", due: "Due Apr 30", status: "Ready for Review",
@@ -102,7 +102,7 @@
       meta: { phase: "Week 2", due: "Due May 1", assigned: "Kate Wade", priority: "High" } },
   ];
   const COMMENTS = [
-    { id: "c1", who: "Kate Wade", initials: "KW", when: "2 hours ago", on: "Résumé — Draft v1", taskId: "d1", unread: true,
+    { id: "c1", who: "Kate Wade", initials: "KW", when: "2 hours ago", on: "Résumé", taskId: "d1", unread: true,
       text: "I've started your résumé and the first draft is looking great! Please review the executive summary section and let me know if it captures your leadership story the way you'd want a board to read it." },
     { id: "c2", who: "Kate Wade", initials: "KW", when: "3 days ago", on: "LinkedIn Profile", taskId: null, unread: true,
       text: "A few questions: should I emphasize the team leadership aspect more, or focus on individual contributor expertise? Also, what's your preferred headline direction?" },
@@ -111,8 +111,8 @@
   ];
 
   const FILES_FROM = [
-    { id: "f1", name: "Résumé — Draft v1", kind: "PDF", icon: "FileText", date: "Apr 28", status: "Ready for Review", cat: "Résumé", actions: ["Open", "Download"] },
-    { id: "f2", name: "LinkedIn Profile — Draft v1", kind: "Google Doc", icon: "FileText", date: "Apr 25", status: "In Progress", cat: "LinkedIn", actions: ["Open"] },
+    { id: "f1", name: "Résumé", kind: "PDF", icon: "FileText", date: "Apr 28", status: "Ready for Review", cat: "Résumé", actions: ["Open", "Download"] },
+    { id: "f2", name: "LinkedIn Profile", kind: "Google Doc", icon: "FileText", date: "Apr 25", status: "In Progress", cat: "LinkedIn", actions: ["Open"] },
   ];
   const FILES_TO = [
     { id: "f3", name: "My Résumé — Original.pdf", kind: "PDF", icon: "Paperclip", date: "Jan 16", status: null, cat: "Other", actions: ["View"] },
@@ -220,9 +220,9 @@
 
   /* ---- Second project: Executive Package (Inactive — expired) ---- */
   const PROJ2_DASH_TASKS = [
-    { id: "p2d1", type: "review", title: "Review Executive Bio — Draft v1", status: "Ready for Review",
+    { id: "p2d1", type: "review", title: "Review Executive Bio", status: "Ready for Review",
       desc: "Your executive bio draft is ready for your review.", due: "Expired",
-      detail: "This deliverable was part of your Executive Package.", doc: "Executive Bio v1.pdf",
+      detail: "This deliverable was part of your Executive Package.", doc: "Executive Bio.pdf",
       meta: { phase: "Phase 1", due: "Expired", assigned: "Erin Doyle", priority: "Medium" } },
     { id: "p2d2", type: "none", muted: true, title: "Board-Ready LinkedIn Rewrite", status: "Complete", done: true,
       desc: "Completed during your engagement.", action: null,
@@ -230,8 +230,8 @@
   ];
   const PROJ2_ALL_TASKS = [
     { id: "p2t1", type: "none", title: "Accept Package & Complete Payment", week: "Onboarding", due: "Jan 10", status: "Complete", done: true },
-    { id: "p2t2", type: "review", title: "Review Executive Bio — Draft v1", week: "Week 2", due: "Feb 14", status: "Ready for Review",
-      doc: "Executive Bio v1.pdf", meta: { phase: "Week 2", due: "Feb 14", assigned: "Erin Doyle", priority: "Medium" } },
+    { id: "p2t2", type: "review", title: "Review Executive Bio", week: "Week 2", due: "Feb 14", status: "Ready for Review",
+      doc: "Executive Bio.pdf", meta: { phase: "Week 2", due: "Feb 14", assigned: "Erin Doyle", priority: "Medium" } },
     { id: "p2t3", type: "none", title: "Board-Ready LinkedIn Rewrite", week: "Week 3", due: "Feb 28", status: "Complete", done: true,
       meta: { phase: "Week 3", due: "Feb 28", assigned: "Kate Wade", priority: "High" } },
   ];
@@ -242,7 +242,7 @@
       text: "LinkedIn rewrite is live! Your headline is performing significantly better. Great work together." },
   ];
   const PROJ2_FILES_FROM = [
-    { id: "p2f1", name: "Executive Bio — Draft v1", kind: "PDF", icon: "FileText", date: "Feb 14", status: "Ready for Review", cat: "Executive Bio", actions: ["Open", "Download"] },
+    { id: "p2f1", name: "Executive Bio", kind: "PDF", icon: "FileText", date: "Feb 14", status: "Ready for Review", cat: "Executive Bio", actions: ["Open", "Download"] },
     { id: "p2f2", name: "Board-Ready LinkedIn Rewrite", kind: "Google Doc", icon: "FileText", date: "Feb 28", status: "Complete", cat: "LinkedIn", actions: ["Open", "Download"] },
   ];
   const PROJ2_FILES_TO = [];
@@ -264,7 +264,7 @@
       session: { title: "Executive Strategy Session", when: "Jan 20 · 10:00 AM", duration: "60 min" },
       tasks: [{ name: "Strategy alignment", state: "done" }] },
     { type: "phase", key: "phase2", label: "Phase 2 — Deliverables", date: "", state: "done",
-      tasks: [{ name: "Executive bio — Draft v1", state: "done" }, { name: "Board-ready LinkedIn rewrite", state: "done" }] },
+      tasks: [{ name: "Executive Bio", state: "done" }, { name: "Board-ready LinkedIn rewrite", state: "done" }] },
     { type: "call", key: "call2", label: "Call 2", date: "Feb 10", state: "past", n: 2,
       session: { title: "LinkedIn Walkthrough", when: "Feb 10 · 2:00 PM", duration: "30 min" },
       tasks: [{ name: "Review LinkedIn rewrite", state: "done" }] },
