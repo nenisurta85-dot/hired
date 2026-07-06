@@ -7174,6 +7174,7 @@ function NewPackageModal({ onClose }) {
   const [desc, setDesc] = React.useState("");
   const [price, setPrice] = React.useState("");
   const [weeks, setWeeks] = React.useState("");
+  const [offboardingDays, setOffboardingDays] = React.useState("");
   const [status, setStatus] = React.useState("Active");
   const [stripePriceId, setStripePriceId] = React.useState("");
 
@@ -7238,7 +7239,7 @@ function NewPackageModal({ onClose }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div><FL>Name</FL><input value={name} onChange={e => setName(e.target.value)} placeholder="Package name" style={inputStyle} /></div>
           <div><FL>Description</FL><textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe this package…" rows={3} style={{ ...inputStyle, resize: "vertical" }} /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             <div>
               <FL>Price</FL>
               <div style={{ position: "relative" }}>
@@ -7247,6 +7248,7 @@ function NewPackageModal({ onClose }) {
               </div>
             </div>
             <div><FL>Duration (weeks)</FL><input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} placeholder="0" style={inputStyle} /></div>
+            <div><FL>Offboarding period (days)</FL><input type="number" value={offboardingDays} onChange={e => setOffboardingDays(e.target.value)} placeholder="0" style={inputStyle} /></div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div style={{ maxWidth: "100%" }}>
@@ -7503,6 +7505,12 @@ function PackageDetailModal({ pkg, role, onClose, onEdit }) {
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 4 }}>Duration</div>
                 <div style={{ fontSize: 13, fontWeight: 500, paddingTop: 3 }}>{pkg.weeks}</div>
+              </div>
+            )}
+            {(pkg.offboardingDurationDays !== undefined && pkg.offboardingDurationDays !== "") && (
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-muted)", marginBottom: 4 }}>Offboarding Period</div>
+                <div style={{ fontSize: 13, fontWeight: 500, paddingTop: 3 }}>{pkg.offboardingDurationDays} days</div>
               </div>
             )}
             {pkg.stripePriceId && (
