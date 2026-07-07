@@ -187,6 +187,7 @@ function MessageTeamCard() {
 }
 
 function AddBanner() {
+  const { navigate } = usePortal();
   return (
     <div style={{ background: "var(--page-bg)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: "14px 16px", marginTop: 14, boxShadow: "var(--shadow-card)" }}>
       <div className="row between" style={{ gap: 16, flexWrap: "wrap" }}>
@@ -196,9 +197,9 @@ function AddBanner() {
           </div>
           <div className="meta" style={{ marginTop: 4 }}>Interview prep, LinkedIn optimization, cover letters — you can add services anytime.</div>
         </div>
-        <a href="addon-landing.html" style={{ color: "var(--raspberry)", fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+        <button onClick={() => navigate("#/add-ons")} style={{ background: "none", border: "none", color: "var(--raspberry)", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
           View Add-ons &amp; Upgrades →
-        </a>
+        </button>
       </div>
     </div>
   );

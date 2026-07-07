@@ -2206,6 +2206,7 @@ function MessageTeamCard() {
 }
 
 function AddBanner() {
+  const { navigate } = usePortal();
   return (
     <div style={{ background: "var(--page-bg)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: "14px 16px", marginTop: 14, boxShadow: "var(--shadow-card)" }}>
       <div className="row between" style={{ gap: 16, flexWrap: "wrap" }}>
@@ -2215,9 +2216,9 @@ function AddBanner() {
           </div>
           <div className="meta" style={{ marginTop: 4 }}>Interview prep, LinkedIn optimization, cover letters — you can add services anytime.</div>
         </div>
-        <a href="addon-landing.html" style={{ color: "var(--raspberry)", fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+        <button onClick={() => navigate("#/add-ons")} style={{ background: "none", border: "none", color: "var(--raspberry)", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
           View Add-ons &amp; Upgrades →
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -2634,6 +2635,218 @@ function AddOnsModal({ onClose }) {
 }
 
 Object.assign(window, { TaskDetailModal, UploadModal, AddOnsModal, ModalHeader });
+
+</script><script type="text/babel">
+/* ============================================================
+   AddOnsLandingPage  →  window
+   ============================================================ */
+
+const LANDING_COACHES = [
+  { id: "kw", initials: "KW", name: "Kate Wade",     specialty: "Executive Brand & Resume Strategy",      bio: "Kate specialises in C-suite repositioning. She's helped 200+ senior leaders land roles at FAANG, Fortune 500, and VC-backed startups.", fee: 497, color: "#C8005A" },
+  { id: "mb", initials: "MB", name: "Mimi Bishop",   specialty: "LinkedIn & Personal Brand Coach",        bio: "Mimi turns passive LinkedIn profiles into inbound pipelines — optimizing every section for executive search and speaking opportunities.", fee: 297, color: "#0F9E75" },
+  { id: "cr", initials: "CR", name: "Cecilia Reyes", specialty: "Career Transition & Salary Negotiation", bio: "Cecilia guides professionals through bold pivots and salary negotiations, helping clients secure offers 20–40% above initial bids.", fee: 397, color: "#8211FF" },
+];
+
+function AddOnsLandingPage() {
+  const { navigate, showToast } = usePortal();
+  const ADM = window.ADM || { PACKAGES: [], ALACARTE: [] };
+  const packages = ADM.PACKAGES || [];
+  const alacarte = ADM.ALACARTE || [];
+
+  const [selectedId, setSelectedId] = React.useState(null);
+  const [selectedCoachId, setSelectedCoachId] = React.useState(null);
+  const [discountCode, setDiscountCode] = React.useState("");
+  const [discountApplied, setDiscountApplied] = React.useState(false);
+  const coachRef = React.useRef(null);
+
+  const allItems = [...packages.map(p => ({ ...p, _grp: "pkg" })), ...alacarte.map(a => ({ ...a, alc: true, _grp: "alc" }))];
+  const selItem  = allItems.find(i => i.id === selectedId) || null;
+  const selCoach = LANDING_COACHES.find(c => c.id === selectedCoachId) || null;
+
+  const parseP = (s) => parseFloat((s || "0").replace(/[^0-9.]/g, "")) || 0;
+  const fmt    = (n) => "$" + n.toLocaleString("en-US");
+  const itemAmt  = selItem  ? parseP(selItem.price) : 0;
+  const coachAmt = selCoach ? selCoach.fee : 0;
+  const subtotal = itemAmt + coachAmt;
+  const total    = discountApplied ? Math.round(subtotal * 0.9) : subtotal;
+
+  const selectItem = (id) => {
+    const fresh = selectedId !== id;
+    setSelectedId(fresh ? id : null);
+    setSelectedCoachId(null);
+    if (fresh && !selectedId) setTimeout(() => coachRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 420);
+  };
+
+  const applyDiscount = () => {
+    if (discountCode.trim().toUpperCase() === "GHH10-24H") { setDiscountApplied(true); showToast("10% discount applied!"); }
+    else showToast("Invalid or expired code.");
+  };
+
+  const sLabel = { fontSize: 11, fontWeight: 700, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--text-muted)", margin: "28px 0 12px", display: "block" };
+  const itemGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(190px,1fr))", gap: 12 };
+  const coachGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 12 };
+
+  const ItemCard = ({ item }) => {
+    const sel = selectedId === item.id;
+    const isAlc = item._grp === "alc";
+    return (
+      <div onClick={() => selectItem(item.id)} style={{
+        background: "#fff", border: sel ? "2px solid var(--purple)" : "1.5px solid var(--border)",
+        borderRadius: 14, padding: 16, cursor: "pointer", position: "relative",
+        boxShadow: sel ? "0 0 0 3px var(--purple-light), 0 2px 12px rgba(0,0,0,.07)" : "0 2px 8px rgba(0,0,0,.05)",
+        display: "flex", flexDirection: "column", gap: 7,
+        transition: "border-color .15s, box-shadow .15s",
+      }}>
+        {sel && (
+          <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: 99, background: "var(--purple)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <window.Icons.Check size={11} color="#fff" />
+          </div>
+        )}
+        <div style={{ fontSize: 13, fontWeight: 700, paddingRight: 26, lineHeight: 1.3 }}>{item.name}</div>
+        {item.tagline && <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.45 }}>{item.tagline}</div>}
+        <div style={{ marginTop: "auto", paddingTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+            <span style={{ fontSize: 17, fontWeight: 700 }}>{item.price}</span>
+            {item.weeks && item.weeks !== "0 weeks" && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>· {item.weeks}</span>}
+          </div>
+          <div style={{ marginTop: 5, display: "flex", gap: 4, flexWrap: "wrap" }}>
+            <span style={{ display: "inline-flex", fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "2px 7px", background: isAlc ? "rgba(15,158,117,.1)" : "var(--purple-light)", color: isAlc ? "var(--green)" : "var(--purple)" }}>
+              {isAlc ? "À La Carte" : "Package"}
+            </span>
+            {!isAlc && item.active && (
+              <span style={{ display: "inline-flex", fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "2px 7px", background: "rgba(15,158,117,.1)", color: "var(--green)" }}>Active</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const CoachCard = ({ coach }) => {
+    const sel = selectedCoachId === coach.id;
+    return (
+      <div onClick={() => setSelectedCoachId(sel ? null : coach.id)} style={{
+        background: "#fff", border: sel ? "2px solid var(--purple)" : "1.5px solid var(--border)",
+        borderRadius: 14, padding: "16px", cursor: "pointer",
+        boxShadow: sel ? "0 0 0 3px var(--purple-light), 0 2px 12px rgba(0,0,0,.07)" : "0 2px 8px rgba(0,0,0,.05)",
+        display: "flex", flexDirection: "column", gap: 11,
+        transition: "border-color .15s, box-shadow .15s",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+          <div style={{ width: 46, height: 46, borderRadius: 99, background: coach.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{coach.initials}</div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{coach.name}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{coach.specialty}</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.55 }}>{coach.bio}</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+          <div>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{fmt(coach.fee)}</span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 3 }}>/ session</span>
+          </div>
+          {sel && <span style={{ fontSize: 11, fontWeight: 700, background: "var(--purple)", color: "#fff", borderRadius: 99, padding: "3px 10px" }}>Selected ✓</span>}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--page-bg)", paddingBottom: 100 }}>
+      {/* Banner */}
+      <div style={{ background: "linear-gradient(135deg,#1C0638 0%,#3B0A6E 40%,#7B1FA2 72%,#C8005A 100%)", color: "#fff", padding: "44px 24px 40px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 60% at 50% 110%,rgba(200,0,90,.25) 0%,transparent 70%)", pointerEvents: "none" }} />
+        <button onClick={() => navigate("#/dashboard")} style={{ position: "absolute", top: 16, left: 16, background: "rgba(255,255,255,.15)", border: "none", color: "#fff", borderRadius: 8, padding: "7px 13px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+          <window.Icons.ChevronLeft size={14} /> Back
+        </button>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", opacity: .65, marginBottom: 16 }}>Get Her Hired</div>
+        <h1 style={{ fontSize: "clamp(20px,4vw,32px)", fontWeight: 700, lineHeight: 1.18, letterSpacing: "-.02em", margin: "0 0 10px" }}>Upgrade your package.<br />Add a coach. Ship your brand.</h1>
+        <p style={{ fontSize: 14, opacity: .8, maxWidth: 480, margin: "0 auto" }}>Choose a package or à la carte service, then optionally pair it with a dedicated career coach.</p>
+      </div>
+
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 20px" }}>
+        {/* Packages */}
+        <span style={sLabel}>Packages</span>
+        <div style={itemGrid}>{packages.map(p => <ItemCard key={p.id} item={{ ...p, _grp: "pkg" }} />)}</div>
+
+        {/* À La Carte */}
+        <span style={{ ...sLabel, marginTop: 28 }}>À La Carte</span>
+        <div style={itemGrid}>{alacarte.map(a => <ItemCard key={a.id} item={{ ...a, alc: true, _grp: "alc" }} />)}</div>
+
+        {/* Coach section */}
+        <div ref={coachRef} style={{ overflow: "hidden", maxHeight: selectedId ? 1200 : 0, opacity: selectedId ? 1 : 0, transition: "max-height .4s cubic-bezier(.4,0,.2,1), opacity .3s ease" }}>
+          <div style={{ height: 1, background: "var(--border)", margin: "28px 0 0" }} />
+          <span style={sLabel}>
+            Add a coach
+            <span style={{ fontWeight: 500, textTransform: "none", letterSpacing: 0, fontSize: 11, marginLeft: 6 }}>(optional)</span>
+          </span>
+          <div style={coachGrid}>{LANDING_COACHES.map(c => <CoachCard key={c.id} coach={c} />)}</div>
+          <div style={{ textAlign: "center", marginTop: 14 }}>
+            <button onClick={() => setSelectedCoachId(null)} style={{ background: "none", color: "var(--text-muted)", fontSize: 12, fontWeight: 600, textDecoration: "underline", padding: "6px 0", cursor: "pointer", border: "none" }}>
+              {selectedCoachId ? "Remove coach selection" : "Continue without a coach"}
+            </button>
+          </div>
+
+          {/* Discount code */}
+          <div style={{ maxWidth: 440, marginTop: 28 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "var(--text-muted)", marginBottom: 8 }}>Discount code</div>
+            {discountApplied ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--green)", fontWeight: 600 }}>
+                <window.Icons.CircleCheck size={15} /> 10% applied — <span style={{ fontFamily: "monospace" }}>GHH10-24H</span>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8 }}>
+                <input value={discountCode} onChange={e => setDiscountCode(e.target.value)} onKeyDown={e => { if (e.key === "Enter") applyDiscount(); }}
+                  placeholder="Enter code (e.g. GHH10-24H)"
+                  style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "#fff" }} />
+                <button onClick={applyDiscount} style={{ background: "var(--purple)", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>Apply</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Summary bar */}
+      {selectedId && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid var(--border)", padding: "14px 24px", display: "flex", justifyContent: "center", boxShadow: "0 -4px 20px rgba(0,0,0,.08)", zIndex: 100 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", maxWidth: 920, width: "100%" }}>
+            {selItem && (
+              <div style={{ display: "flex", alignItems: "baseline", gap: 5, fontSize: 12, color: "var(--text-secondary)" }}>
+                <span>Item</span><strong style={{ fontSize: 14, color: "var(--text-primary)" }}>{selItem.price}</strong>
+              </div>
+            )}
+            {selCoach && (
+              <>
+                <span style={{ color: "#ccc", fontSize: 16 }}>+</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 5, fontSize: 12, color: "var(--text-secondary)" }}>
+                  <span>Coach ({selCoach.name.split(" ")[0]})</span><strong style={{ fontSize: 14, color: "var(--text-primary)" }}>{fmt(selCoach.fee)}</strong>
+                </div>
+              </>
+            )}
+            {discountApplied && (
+              <>
+                <span style={{ color: "#ccc", fontSize: 16 }}>−</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 5, fontSize: 12, color: "var(--green)" }}>
+                  <span>Discount (10%)</span><strong style={{ fontSize: 14, color: "var(--green)" }}>{fmt(Math.round(subtotal * 0.1))}</strong>
+                </div>
+              </>
+            )}
+            <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--text-muted)" }}>Total</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(total)}</div>
+            </div>
+            <button onClick={() => showToast(selCoach ? "Opening scheduling with " + selCoach.name.split(" ")[0] + "…" : "Redirecting to checkout…")}
+              style={{ background: "var(--purple)", color: "#fff", fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 10, border: "none", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {selCoach ? "Book time & checkout →" : "Continue to checkout →"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { AddOnsLandingPage });
 
 </script><script type="text/babel">
 /* ============================================================
@@ -8807,6 +9020,7 @@ function App() {
   else if (r === "/tasks") screen = <MyTasks />;
   else if (r === "/help") screen = <Help />;
   else if (r === "/settings") screen = <Settings />;
+  else if (r === "/add-ons") { isAuthed = true; screen = <AddOnsLandingPage />; }
   else { screen = <Dashboard />; }
 
   return (
