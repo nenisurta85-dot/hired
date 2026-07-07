@@ -2465,26 +2465,10 @@ function TaskDetailModal({ task, onClose, onComplete }) {
 
         {isUpload && (
           <>
-            {task.checklist && (
-              <div style={{ marginBottom: 16 }}>
-                <div className="field-label">What to upload</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {task.checklist.map((c, i) => (
-                    <div key={i} className="row" style={{ gap: 9, fontSize: 13, color: "#555" }}>
-                      <span style={{ width: 15, height: 15, borderRadius: 4, border: "1.5px solid #D0CEC8", flex: "0 0 15px" }} /> {c}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             <div style={{ border: "1.5px dashed #E0C0D0", background: "#FEF8FB", borderRadius: 10, padding: "26px 16px", textAlign: "center", marginBottom: 16 }}>
               <div style={{ color: "var(--raspberry)", display: "flex", justifyContent: "center", marginBottom: 8 }}><I.Upload size={26} /></div>
               <div style={{ fontSize: 13, fontWeight: 500 }}>Drag & drop your files here</div>
               <div className="meta" style={{ marginTop: 3 }}>or <span style={{ color: "var(--raspberry)", fontWeight: 500 }}>browse to choose</span> — PDF, Word, or images</div>
-            </div>
-            <div className="field">
-              <label className="field-label">Notes for your writer (optional)</label>
-              <textarea className="textarea" placeholder="Anything we should know about these materials?" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
             <button className="btn btn-primary btn-block" onClick={() => submit("Materials uploaded — thank you! Your writer will review them.")}>I've uploaded my materials</button>
           </>
