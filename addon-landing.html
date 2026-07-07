@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Add to Your Package — Get Her Hired</title>
+
+<style>
+@font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 400; src: url('4e619c4f-99af-47b5-a0a6-15e1095221d7.woff2') format('woff2'); }
+@font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 500; src: url('6ff60c8c-d8ff-4723-9123-a27452414f8c.woff2') format('woff2'); }
+@font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 600; src: url('81a280fc-2838-45a8-b53f-61f5052554e4.woff2') format('woff2'); }
+@font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 700; src: url('f8129ac3-01d3-4a22-8a75-048ede81c48a.woff2') format('woff2'); }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple:        #8211FF;
+  --purple-light:  rgba(130,17,255,0.09);
+  --purple-border: rgba(130,17,255,0.35);
+  --raspberry:     #C8005A;
+  --green:         #0F9E75;
+  --green-bg:      rgba(15,158,117,0.1);
+  --border:        #E8E6E0;
+  --text-primary:  #1A1A2E;
+  --text-secondary:#666;
+  --text-muted:    #AAAAAA;
+  --page-bg:       #F7F6F4;
+  --surface:       #FFFFFF;
+  --shadow:        0 2px 12px rgba(0,0,0,0.07);
+  --shadow-hover:  0 6px 24px rgba(0,0,0,0.11);
+  --radius:        14px;
+}
+
+html, body { min-height: 100%; }
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; }
+
+/* ── Banner ─────────────────────────────────────── */
+.banner {
+  background: linear-gradient(135deg, #1C0638 0%, #3B0A6E 40%, #7B1FA2 72%, #C8005A 100%);
+  color: #fff;
+  padding: 52px 24px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 110%, rgba(200,0,90,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+.banner-wordmark { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .65; margin-bottom: 20px; }
+.banner h1 { font-size: clamp(22px, 4vw, 34px); font-weight: 700; line-height: 1.18; letter-spacing: -.02em; margin-bottom: 10px; }
+.banner p  { font-size: 14px; font-weight: 500; opacity: .8; max-width: 500px; margin: 0 auto; }
+
+/* ── Shell ───────────────────────────────────────── */
+.shell { max-width: 920px; margin: 0 auto; padding: 0 20px 100px; }
+
+/* ── Section label ───────────────────────────────── */
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin: 36px 0 14px;
+}
+
+/* ── Badge ───────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  border-radius: 99px; padding: 2px 8px; white-space: nowrap;
+}
+.badge-pkg  { background: var(--purple-light); color: var(--purple); }
+.badge-alc  { background: rgba(15,158,117,0.1); color: var(--green); }
+.badge-active { background: rgba(15,158,117,0.1); color: var(--green); }
+
+/* ── Item grid ───────────────────────────────────── */
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+
+.item-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .12s;
+  position: relative;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.item-card:hover { border-color: var(--purple-border); box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.item-card.selected { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-light), var(--shadow); }
+
+.item-check {
+  position: absolute; top: 12px; right: 12px;
+  width: 20px; height: 20px; border-radius: 99px;
+  background: var(--purple);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: scale(.6);
+  transition: opacity .15s, transform .15s;
+}
+.item-card.selected .item-check { opacity: 1; transform: scale(1); }
+
+.item-name   { font-size: 13px; font-weight: 700; padding-right: 28px; line-height: 1.3; }
+.item-desc   { font-size: 12px; color: var(--text-secondary); line-height: 1.45; flex: 1; }
+.item-footer { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
+.item-price  { font-size: 17px; font-weight: 700; }
+.item-weeks  { font-size: 11px; color: var(--text-muted); }
+
+/* ── Coach section ───────────────────────────────── */
+.coach-section { overflow: hidden; max-height: 0; opacity: 0; transition: max-height .4s cubic-bezier(.4,0,.2,1), opacity .3s ease; }
+.coach-section.visible { max-height: 1000px; opacity: 1; }
+
+.coach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+
+.coach-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .12s;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.coach-card:hover { border-color: var(--purple-border); box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.coach-card.selected { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-light), var(--shadow); }
+
+.coach-top { display: flex; align-items: center; gap: 12px; }
+.coach-avatar {
+  width: 48px; height: 48px; border-radius: 99px; flex: 0 0 48px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: #fff;
+}
+.coach-name      { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.coach-specialty { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.coach-bio       { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.coach-fee-row   { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 10px; margin-top: auto; }
+.coach-fee       { font-size: 15px; font-weight: 700; }
+.coach-fee-label { font-size: 11px; color: var(--text-muted); }
+.coach-sel-badge { font-size: 11px; font-weight: 700; background: var(--purple); color: #fff; border-radius: 99px; padding: 3px 10px; opacity: 0; transition: opacity .15s; }
+.coach-card.selected .coach-sel-badge { opacity: 1; }
+
+.skip-coach { text-align: center; margin-top: 14px; }
+.skip-coach button { background: none; color: var(--text-muted); font-size: 12px; font-weight: 600; text-decoration: underline; padding: 6px 0; transition: color .12s; }
+.skip-coach button:hover { color: var(--purple); }
+
+/* ── Discount code ───────────────────────────────── */
+.discount-wrap {
+  overflow: hidden; max-height: 0; opacity: 0;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s ease;
+}
+.discount-wrap.visible { max-height: 120px; opacity: 1; }
+.discount-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 8px; }
+.discount-row   { display: flex; gap: 8px; }
+.discount-input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
+.discount-input:focus { border-color: var(--purple-border); }
+.discount-btn   { background: var(--purple); color: #fff; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; white-space: nowrap; transition: background .12s; }
+.discount-btn:hover { background: #6e0ee0; }
+.discount-ok    { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--green); font-weight: 600; }
+
+/* ── Summary bar ─────────────────────────────────── */
+.summary-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; border-top: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.summary-bar.visible { transform: translateY(0); }
+.summary-inner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; max-width: 920px; width: 100%; }
+.summary-line { display: flex; align-items: baseline; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.summary-line strong { font-size: 14px; color: var(--text-primary); font-weight: 700; }
+.summary-sep  { color: #ccc; font-size: 16px; user-select: none; }
+.summary-total { display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; }
+.summary-total-label  { font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); }
+.summary-total-amount { font-size: 22px; font-weight: 700; }
+.btn-cta { background: var(--purple); color: #fff; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 10px; white-space: nowrap; transition: background .15s, transform .1s; flex-shrink: 0; }
+.btn-cta:hover { background: #6e0ee0; transform: translateY(-1px); }
+
+/* ── Toast ───────────────────────────────────────── */
+.toast-wrap { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 200; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.toast-msg  { background: #1A1A2E; color: #fff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 99px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); animation: tIn .25s ease forwards, tOut .25s ease 2.75s forwards; }
+@keyframes tIn  { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes tOut { from { opacity:1; } to { opacity:0; } }
+
+/* ── Divider ─────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 32px 0 0; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div id="toasts" class="toast-wrap"></div>
+
+<!-- Portal dependencies (provide window.ADM) -->
+<script src="react.js"></script>
+<script src="react-dom.js"></script>
+<script src="babel.js"></script>
+<script src="icons.js"></script>
+<script src="admin-portal.js"></script>
+
+<script type="text/babel">
+
+/* ── Coaches ────────────────────────────────────────────────────────── */
+const COACHES = [
+  {
+    id: "kw", initials: "KW",
+    name: "Kate Wade",
+    specialty: "Executive Brand & Resume Strategy",
+    bio: "Kate specialises in C-suite repositioning. She's helped 200+ senior leaders land roles at FAANG, Fortune 500, and VC-backed startups.",
+    fee: 497, color: "#C8005A",
+  },
+  {
+    id: "mb", initials: "MB",
+    name: "Mimi Bishop",
+    specialty: "LinkedIn & Personal Brand Coach",
+    bio: "Mimi turns passive LinkedIn profiles into inbound pipelines — optimizing every section for executive search and speaking opportunities.",
+    fee: 297, color: "#0F9E75",
+  },
+  {
+    id: "cr", initials: "CR",
+    name: "Cecilia Reyes",
+    specialty: "Career Transition & Salary Negotiation",
+    bio: "Cecilia guides professionals through bold pivots and salary negotiations, helping clients secure offers 20–40% above initial bids.",
+    fee: 397, color: "#8211FF",
+  },
+];
+
+/* ── Helpers ─────────────────────────────────────────────────────────── */
+function parsePrice(str) {
+  return parseFloat((str || "0").replace(/[^0-9.]/g, "")) || 0;
+}
+function fmtPrice(n) {
+  return "$" + n.toLocaleString("en-US");
+}
+function showToast(msg) {
+  const wrap = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast-msg";
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+/* ── CheckIcon ───────────────────────────────────────────────────────── */
+function ChkIcon({ size = 11 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+/* ── Item card (package OR à la carte) ──────────────────────────────── */
+function ItemCard({ item, selected, onSelect }) {
+  const isAlc = item.alc !== false; // ADM.ALACARTE items don't have .alc; PACKAGES have alc:false
+  return (
+    <div className={"item-card" + (selected ? " selected" : "")} onClick={() => onSelect(item.id)}>
+      <div className="item-check"><ChkIcon /></div>
+      <div>
+        <div className="item-name">{item.name}</div>
+      </div>
+      {item.tagline && <div className="item-desc">{item.tagline}</div>}
+      <div style={{ marginTop: "auto", paddingTop: 8 }}>
+        <div className="item-footer">
+          <span className="item-price">{item.price}</span>
+          {item.weeks && item.weeks !== "0 weeks" && (
+            <span className="item-weeks">· {item.weeks}</span>
+          )}
+        </div>
+        <div style={{ marginTop: 6 }}>
+          {isAlc
+            ? <span className="badge badge-alc">À La Carte</span>
+            : <span className="badge badge-pkg">Package</span>
+          }
+          {!isAlc && item.active && (
+            <span className="badge badge-active" style={{ marginLeft: 4 }}>Active</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Coach card ──────────────────────────────────────────────────────── */
+function CoachCard({ coach, selected, onSelect }) {
+  return (
+    <div className={"coach-card" + (selected ? " selected" : "")} onClick={() => onSelect(coach.id)}>
+      <div className="coach-top">
+        <div className="coach-avatar" style={{ background: coach.color }}>{coach.initials}</div>
+        <div>
+          <div className="coach-name">{coach.name}</div>
+          <div className="coach-specialty">{coach.specialty}</div>
+        </div>
+      </div>
+      <div className="coach-bio">{coach.bio}</div>
+      <div className="coach-fee-row">
+        <div>
+          <div className="coach-fee">{fmtPrice(coach.fee)}<span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-muted)", marginLeft: 3 }}>/ session</span></div>
+          <div className="coach-fee-label">Coaching add-on</div>
+        </div>
+        <div className="coach-sel-badge">Selected ✓</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main App ────────────────────────────────────────────────────────── */
+function AddOnsLanding() {
+  const ADM = window.ADM || { PACKAGES: [], ALACARTE: [] };
+  const packages  = ADM.PACKAGES  || [];
+  const alacarte  = ADM.ALACARTE  || [];
+
+  const allItems = [
+    ...packages.map(p => ({ ...p, _group: "pkg" })),
+    ...alacarte.map(a => ({ ...a, alc: true, _group: "alc" })),
+  ];
+
+  const [selectedId, setSelectedId] = React.useState(null);
+  const [selectedCoachId, setSelectedCoachId] = React.useState(null);
+  const [discountCode, setDiscountCode] = React.useState("");
+  const [discountApplied, setDiscountApplied] = React.useState(false);
+  const coachRef = React.useRef(null);
+
+  const selectedItem  = allItems.find(i => i.id === selectedId) || null;
+  const selectedCoach = COACHES.find(c => c.id === selectedCoachId) || null;
+
+  const itemPrice  = selectedItem  ? parsePrice(selectedItem.price) : 0;
+  const coachFee   = selectedCoach ? selectedCoach.fee              : 0;
+  const total      = itemPrice + coachFee;
+
+  const handleSelectItem = (id) => {
+    const wasSelected = selectedId === id;
+    setSelectedId(wasSelected ? null : id);
+    setSelectedCoachId(null);
+    if (!wasSelected && !selectedId) {
+      setTimeout(() => coachRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 420);
+    }
+  };
+
+  const handleSelectCoach = (id) => {
+    setSelectedCoachId(prev => prev === id ? null : id);
+  };
+
+  const handleContinue = () => {
+    showToast("Redirecting to checkout…");
+  };
+
+  const handleBook = () => {
+    showToast("Opening scheduling with " + (selectedCoach?.name.split(" ")[0] || "coach") + "…");
+  };
+
+  const applyDiscount = () => {
+    if (discountCode.trim().toUpperCase() === "GHH10-24H") {
+      setDiscountApplied(true);
+      showToast("10% discount applied!");
+    } else {
+      showToast("Invalid or expired code.");
+    }
+  };
+
+  return (
+    <>
+      {/* Banner */}
+      <div className="banner">
+        <div className="banner-wordmark">Get Her Hired</div>
+        <h1>Upgrade your package.<br />Add a coach. Ship your brand.</h1>
+        <p>Choose a package or à la carte service, then optionally pair it with a dedicated career coach.</p>
+      </div>
+
+      <div className="shell">
+
+        {/* ─── Packages ─────────────────────────────── */}
+        <div className="section-label">Packages</div>
+        <div className="item-grid">
+          {packages.map(p => (
+            <ItemCard
+              key={p.id}
+              item={p}
+              selected={selectedId === p.id}
+              onSelect={handleSelectItem}
+            />
+          ))}
+        </div>
+
+        {/* ─── À La Carte ───────────────────────────── */}
+        <div className="section-label" style={{ marginTop: 28 }}>À La Carte</div>
+        <div className="item-grid">
+          {alacarte.map(a => (
+            <ItemCard
+              key={a.id}
+              item={a}
+              selected={selectedId === a.id}
+              onSelect={handleSelectItem}
+            />
+          ))}
+        </div>
+
+        {/* ─── Coach section (inline reveal) ────────── */}
+        <div ref={coachRef} className={"coach-section" + (selectedId ? " visible" : "")}>
+          <div className="divider" />
+          <div className="section-label">
+            Add a coach
+            <span style={{ fontWeight: 500, textTransform: "none", letterSpacing: 0, fontSize: 11, marginLeft: 6 }}>(optional)</span>
+          </div>
+          <div className="coach-grid">
+            {COACHES.map(c => (
+              <CoachCard
+                key={c.id}
+                coach={c}
+                selected={selectedCoachId === c.id}
+                onSelect={handleSelectCoach}
+              />
+            ))}
+          </div>
+          <div className="skip-coach">
+            <button onClick={() => setSelectedCoachId(null)}>
+              {selectedCoachId ? "Remove coach selection" : "Continue without a coach"}
+            </button>
+          </div>
+
+          {/* Discount code */}
+          <div className={"discount-wrap" + (selectedId ? " visible" : "")} style={{ marginTop: 28 }}>
+            <div style={{ maxWidth: 480 }}>
+              <div className="discount-label">Discount code</div>
+              {discountApplied ? (
+                <div className="discount-ok">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                  10% discount applied — code: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>GHH10-24H</span>
+                </div>
+              ) : (
+                <div className="discount-row">
+                  <input
+                    className="discount-input"
+                    value={discountCode}
+                    onChange={e => setDiscountCode(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") applyDiscount(); }}
+                    placeholder="Enter code (e.g. GHH10-24H)"
+                  />
+                  <button className="discount-btn" onClick={applyDiscount}>Apply</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ─── Summary bar ──────────────────────────────────────────────── */}
+      <div className={"summary-bar" + (selectedId ? " visible" : "")}>
+        <div className="summary-inner">
+          {selectedItem && (
+            <div className="summary-line">
+              <span>Item</span>
+              <strong>{selectedItem.price}</strong>
+            </div>
+          )}
+          {selectedCoach && (
+            <>
+              <span className="summary-sep">+</span>
+              <div className="summary-line">
+                <span>Coach ({selectedCoach.name.split(" ")[0]})</span>
+                <strong>{fmtPrice(selectedCoach.fee)}</strong>
+              </div>
+            </>
+          )}
+          {discountApplied && (
+            <>
+              <span className="summary-sep">−</span>
+              <div className="summary-line" style={{ color: "var(--green)" }}>
+                <span>Discount (10%)</span>
+                <strong style={{ color: "var(--green)" }}>{fmtPrice(Math.round(total * 0.1))}</strong>
+              </div>
+            </>
+          )}
+          <div className="summary-total">
+            <div className="summary-total-label">Total</div>
+            <div className="summary-total-amount">
+              {fmtPrice(discountApplied ? Math.round(total * 0.9) : total)}
+            </div>
+          </div>
+          {selectedCoach ? (
+            <button className="btn-cta" onClick={handleBook}>
+              Book time &amp; checkout →
+            </button>
+          ) : (
+            <button className="btn-cta" onClick={handleContinue}>
+              Continue to checkout →
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<AddOnsLanding />);
+</script>
+</body>
+</html>
