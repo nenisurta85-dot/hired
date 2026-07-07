@@ -2758,7 +2758,7 @@ function AddOnsLandingPage() {
   const cgrid  = { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 12 };
 
   return (
-    <div style={{ background: "var(--page-bg)", paddingBottom: 100, minHeight: "100vh", overflowY: "auto" }}>
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "var(--page-bg)", overflowY: "auto", zIndex: 500 }}>
       <div style={{ background: "linear-gradient(135deg,#1C0638 0%,#3B0A6E 40%,#7B1FA2 72%,#C8005A 100%)", color: "#fff", padding: "44px 24px 40px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse 70% 60% at 50% 110%,rgba(200,0,90,.25) 0%,transparent 70%)", pointerEvents: "none" }} />
         <button onClick={function() { navigate("#/dashboard"); }} style={{ position: "absolute", top: 16, left: 16, background: "rgba(255,255,255,.15)", border: "none", color: "#fff", borderRadius: 8, padding: "7px 13px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
@@ -2772,7 +2772,7 @@ function AddOnsLandingPage() {
         <p style={{ fontSize: 14, opacity: .8, maxWidth: 480, margin: "0 auto" }}>Choose a package or a la carte service, then optionally pair it with a career coach.</p>
       </div>
 
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 20px" }}>
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 20px 120px" }}>
         <span style={sLabel}>Packages</span>
         <div style={grid}>
           {packages.map(function(p) {
@@ -2819,7 +2819,7 @@ function AddOnsLandingPage() {
       </div>
 
       {selId ? (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid var(--border)", padding: "14px 24px", display: "flex", justifyContent: "center", boxShadow: "0 -4px 20px rgba(0,0,0,.08)", zIndex: 100 }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid var(--border)", padding: "14px 24px", display: "flex", justifyContent: "center", boxShadow: "0 -4px 20px rgba(0,0,0,.08)", zIndex: 600 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", maxWidth: 920, width: "100%" }}>
             {selItem ? (
               <div style={{ display: "flex", alignItems: "baseline", gap: 5, fontSize: 12, color: "var(--text-secondary)" }}>
