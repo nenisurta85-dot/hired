@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// Simple local server for dist/ (works the way Netlify does: /blog/ -> /blog/index.html, 404.html).
+// Simple local server for dist/ (works like Cloudflare Pages: /blog/ -> /blog/index.html, 404.html).
 const http = require('http');
 const fs = require('fs');
 const path = require('path');

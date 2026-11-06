@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Tim's HVAC site (timhvac.com): a Webflow export, deployed on Netlify.
+Tim's HVAC site (timhvac.com): a Webflow export, deployed on Cloudflare Pages (`main` → production, `staging` → preview).
 Repository: https://gitlab.com/piesoft-public-sites/timhvac.com
 
 ## Git rules (required)
@@ -18,7 +18,8 @@ Repository: https://gitlab.com/piesoft-public-sites/timhvac.com
   it has edits (Formspree form, Blog link, Google Maps iframe, partial markers), listed in the README.
 - `content/blog/*.csv` — blog posts; `templates/` — blog page templates; `site/css/blog.css` — their styles.
 - `scripts/build.js` — build into `dist/` (dependency-free, Node 18+).
-- Settings: `FORMSPREE_FORM_ID`, `SITE_URL` (env, or `site.config.json`).
+- Settings: `FORMSPREE_FORM_ID`, `SITE_URL` (Cloudflare Pages variables, or `site.config.json`).
+- Cloudflare Pages config: `site/_headers`, `site/_redirects`, `.nvmrc` (Node 20).
 
 ## Commands
 

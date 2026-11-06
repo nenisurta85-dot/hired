@@ -1,0 +1,3 @@
+# Cloudflare Pages: redirects (https://developers.cloudflare.com/pages/configuration/redirects/)
+# Format: <from> <to> [status]. Example for old Webflow URLs:
+# /post/* /blog/:splat 301

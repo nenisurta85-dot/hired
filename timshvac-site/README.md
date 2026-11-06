@@ -1,6 +1,6 @@
-# Tim's HVAC: Webflow → Netlify
+# Tim's HVAC: Webflow → Cloudflare Pages
 
-The Webflow export turned into a static site for Netlify:
+The Webflow export turned into a static site for Cloudflare Pages:
 
 - **Forms** are sent through [Formspree](https://formspree.io) (instead of the Webflow backend, which doesn't work after export).
 - **Blog**: the `/blog/` page and one `/blog/<slug>/` page per post are generated from CSV files.
@@ -11,15 +11,17 @@ No dependencies: the build is plain Node.js (18+).
 ## Structure
 
 ```
-timshvac-site/
 ├── site/                 ← Webflow export (index.html, 404.html, css/, js/, images/)
+│   ├── _headers          ← Cloudflare Pages headers
+│   ├── _redirects        ← Cloudflare Pages redirects
 │   ├── css/blog.css      ← blog styles (new)
 │   └── js/formspree.js   ← form submission to Formspree (new)
 ├── content/blog/*.csv    ← blog posts
 ├── templates/            ← blog page templates (layout, list, card, post)
 ├── scripts/build.js      ← build → dist/
 ├── site.config.json      ← settings (Formspree ID, URL, blog text)
-└── netlify.toml
+├── .nvmrc                ← Node version for the Cloudflare build
+└── CLAUDE.md             ← rules for Claude (staging only)
 ```
 
 ## Updating from Webflow
@@ -36,19 +38,35 @@ npm run build        # build only, into dist/
 npm run build:strict # fails if there are warnings (missing files, no Formspree ID)
 ```
 
-## Deploying to Netlify
+## Deploying to Cloudflare Pages
 
-1. Netlify → **Add new site → Import an existing project**, pick the repository.
-2. If the site is in a subfolder of the repository, set **Base directory** = `timshvac-site`.
-   Everything else is taken from `netlify.toml` (`npm run build`, publish `dist`).
-3. **Site configuration → Environment variables**: add `FORMSPREE_FORM_ID` (see below).
-4. Deploy. `URL` (for the sitemap and canonical) is set by Netlify itself; for your own domain
-   you can set `SITE_URL=https://example.com`.
+1. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → GitLab,
+   repository `piesoft-public-sites/timhvac.com`.
+2. Build settings:
+   - Framework preset: **None**
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+   - Production branch: **`main`**
+3. **Settings → Variables and Secrets**: add `FORMSPREE_FORM_ID` (see below) for Production and Preview.
+   Node 20 is taken from `.nvmrc`.
+4. **Settings → Builds → Branch control**: enable preview deployments for `staging`.
+   The staging version will be at `https://staging.<project>.pages.dev`, and Cloudflare closes it from
+   indexing on its own.
+5. **Custom domains**: add `timhvac.com` (and `www.timhvac.com` if needed).
+
+Branches: `main` → production (timhvac.com), `staging` → preview. Changes go to `staging`, and after checking the
+preview `staging` is merged into `main` through a Merge Request (see `CLAUDE.md`).
+
+The production domain for canonical and `sitemap.xml` is taken from `site.config.json` → `siteUrl`
+(`https://timhvac.com`); it can be overridden with the `SITE_URL` variable.
+
+Headers are in `site/_headers`, redirects in `site/_redirects` (Cloudflare Pages format). Cloudflare serves
+`404.html` for missing pages and opens pages without `.html` on its own.
 
 ## Formspree
 
 1. Create a form at formspree.io. Its endpoint looks like `https://formspree.io/f/abcdwxyz`.
-2. The ID is `abcdwxyz`. Put it in `FORMSPREE_FORM_ID` on Netlify (or in `site.config.json` → `formspreeFormId`).
+2. The ID is `abcdwxyz`. Put it in `FORMSPREE_FORM_ID` in Cloudflare Pages (or in `site.config.json` → `formspreeFormId`).
 3. In the Formspree form settings, add your site domain to **Allowed domains**.
 
 How it works: the form in `index.html` has `action="__FORMSPREE_ENDPOINT__"`, which the build replaces

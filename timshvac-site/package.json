@@ -2,7 +2,7 @@
   "name": "timshvac-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Tim's HVAC site (Webflow export) for deploying on Netlify: Formspree forms and a blog generated from CSV.",
+  "description": "Tim's HVAC site (Webflow export) for deploying on Cloudflare Pages: Formspree forms and a blog generated from CSV.",
   "scripts": {
     "build": "node scripts/build.js",
     "build:strict": "STRICT=1 node scripts/build.js",

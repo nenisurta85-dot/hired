@@ -2,17 +2,17 @@
 'use strict';
 
 /**
- * Site build for Netlify.
+ * Site build for Cloudflare Pages.
  *
  *   site/            Webflow export (copied to dist/ as is)
  *   content/blog/    CSV files with blog posts (all *.csv are merged)
  *   templates/       blog page templates
- *   dist/            result (publish directory on Netlify)
+ *   dist/            result (Build output directory on Cloudflare Pages)
  *
  * Settings (environment variables override site.config.json):
  *   FORMSPREE_FORM_ID  ID of the Formspree form (https://formspree.io/f/<ID>)
- *   SITE_URL / URL     site URL, used for canonical and sitemap.xml
- *                      (Netlify sets URL automatically)
+ *   SITE_URL           production site URL, used for canonical and sitemap.xml
+ *                      (by default siteUrl from site.config.json)
  */
 
 const fs = require('fs');
@@ -35,7 +35,7 @@ function loadConfig() {
   const file = path.join(ROOT, 'site.config.json');
   const cfg = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
   const formId = (process.env.FORMSPREE_FORM_ID || cfg.formspreeFormId || '').trim();
-  const siteUrl = (process.env.SITE_URL || process.env.URL || cfg.siteUrl || '').trim().replace(/\/+$/, '');
+  const siteUrl = (process.env.SITE_URL || cfg.siteUrl || '').trim().replace(/\/+$/, '');
   return {
     formId,
     siteUrl,
@@ -357,7 +357,7 @@ function applyFormspree(cfg) {
     if (endpoint) fs.writeFileSync(file, html.split(FORMSPREE_PLACEHOLDER).join(endpoint));
   }
   if (found && !endpoint) {
-    warn('FORMSPREE_FORM_ID is not set: forms will not send. Set it in the Netlify env vars or in site.config.json.');
+    warn('FORMSPREE_FORM_ID is not set: forms will not send. Set it in the Cloudflare Pages variables or in site.config.json.');
   }
 }
 
@@ -365,7 +365,7 @@ function applyFormspree(cfg) {
 
 function buildSitemap(cfg, posts) {
   if (!cfg.siteUrl) {
-    warn('Site URL unknown (SITE_URL/URL): sitemap.xml skipped. Netlify sets URL automatically.');
+    warn('Site URL unknown (SITE_URL or siteUrl in site.config.json): sitemap.xml skipped.');
     return;
   }
   const urls = [
