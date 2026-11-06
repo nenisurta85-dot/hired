@@ -22,20 +22,11 @@ timshvac-site/
 └── netlify.toml
 ```
 
-## ⚠️ Add the missing export files
+## Updating from Webflow
 
-Not every export file was uploaded. Copy these from the Webflow export archive into `site/`
-(the build lists everything that's missing):
-
-- `css/webflow.css` — Webflow base styles (grid, menu, forms, `box-sizing`)
-- `js/webflow.js` — mobile menu, map, **animations**. Without it the hero content stays hidden
-  (Webflow hides elements until its script loads).
-- `images/`: `image-22-1.png`, `image-22-1-p-1080.png`, `image-28-3.png`, `image-26-1.png`,
-  `image-26-1-p-500.png`, `image-27-1.png`, `image-23.png`, `image-25.png`, `webclip.png`,
-  `db0d8a65-5818-4d26-bbaf-1ec20c31da97.avif`
-
-The simplest way is to unpack the whole export into `site/` **without overwriting `index.html`**
-(it has changes, see below).
+The whole export (`timshvac.webflow.zip`) is unpacked into `site/`. On a re-export, copy the new files
+into `site/` **without overwriting `index.html`** (it has changes, see the end of this file), or carry
+those changes over by hand.
 
 ## Local run
 
@@ -103,7 +94,10 @@ The look of the pages is in `templates/` (`{{var}}` is escaped, `{{{var}}}` is i
 - a **Blog** link in the menu and in the footer (in place of the empty link);
 - the e-mail in contacts is now a `mailto:` link;
 - `js/formspree.js` is included;
-- `partial:nav` / `partial:footer` markers for the blog templates.
+- `partial:nav` / `partial:footer` markers for the blog templates;
+- the Webflow map widget (it needs Webflow's Google Maps key, which doesn't work on another domain)
+  is replaced with a plain Google Maps `<iframe>` for 3301 Allen St, Easton, PA: satellite view,
+  zoom 12, height 400px, as in the original.
 
 When you re-export from Webflow, carry these changes over (or make the same ones in Webflow:
 the Blog link, the form's custom action, the field names).
